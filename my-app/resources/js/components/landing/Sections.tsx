@@ -1,5 +1,6 @@
 import { featureCards, howItWorksSteps, targetUsers } from './data';
 import { SignUpButton } from './SignUpButton';
+import { LandingLink } from './Header';
 
 function HeroSection() {
     return (
@@ -18,9 +19,12 @@ function HeroSection() {
                         </p>
                         <div className="hero-actions">
                             <SignUpButton />
-                            <a href="#about" className="btn btn-secondary">
+                            <LandingLink
+                                href="#about"
+                                className="btn btn-secondary"
+                            >
                                 Uzzināt vairāk
-                            </a>
+                            </LandingLink>
                         </div>
                     </div>
                     <div className="hero-visual">

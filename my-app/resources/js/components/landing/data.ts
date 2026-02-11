@@ -1,3 +1,5 @@
+export const HEADER_SCROLL_OFFSET_PX = 80;
+
 export const howItWorksSteps = [
     {
         title: 'Pasūtījumu izveide',
