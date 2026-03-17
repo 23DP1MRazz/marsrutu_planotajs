@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Model;
 
 class Courier extends Model
@@ -31,5 +33,15 @@ class Courier extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function transportVehicle(): HasOne
+    {
+        return $this->hasOne(TransportVehicle::class, 'courier_user_id', 'user_id');
+    }
+
+    public function routes(): HasMany
+    {
+        return $this->hasMany(DeliveryRoute::class, 'courier_user_id', 'user_id');
     }
 }

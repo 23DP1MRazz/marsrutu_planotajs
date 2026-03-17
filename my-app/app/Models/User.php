@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -56,6 +57,16 @@ class User extends Authenticatable
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function dispatcherProfile(): HasOne
+    {
+        return $this->hasOne(Dispatcher::class, 'user_id');
+    }
+
+    public function courierProfile(): HasOne
+    {
+        return $this->hasOne(Courier::class, 'user_id');
     }
 
     public function isAdmin(): bool

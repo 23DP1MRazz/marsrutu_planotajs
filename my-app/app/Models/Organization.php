@@ -22,4 +22,24 @@ class Organization extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function routes(): HasMany
+    {
+        return $this->hasMany(DeliveryRoute::class);
+    }
 }
