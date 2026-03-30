@@ -2,9 +2,24 @@
 
 namespace App\Providers;
 
+use App\Models\Address;
+use App\Models\Client;
+use App\Models\DeliveryRoute;
+use App\Models\Order;
+use App\Models\ProofOfDelivery;
+use App\Models\RouteStop;
+use App\Models\TransportVehicle;
+use App\Policies\AddressPolicy;
+use App\Policies\ClientPolicy;
+use App\Policies\DeliveryRoutePolicy;
+use App\Policies\OrderPolicy;
+use App\Policies\ProofOfDeliveryPolicy;
+use App\Policies\RouteStopPolicy;
+use App\Policies\TransportVehiclePolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configurePolicies();
     }
 
     protected function configureDefaults(): void
@@ -43,5 +59,16 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null
         );
+    }
+
+    protected function configurePolicies(): void
+    {
+        Gate::policy(Client::class, ClientPolicy::class);
+        Gate::policy(Address::class, AddressPolicy::class);
+        Gate::policy(Order::class, OrderPolicy::class);
+        Gate::policy(DeliveryRoute::class, DeliveryRoutePolicy::class);
+        Gate::policy(RouteStop::class, RouteStopPolicy::class);
+        Gate::policy(ProofOfDelivery::class, ProofOfDeliveryPolicy::class);
+        Gate::policy(TransportVehicle::class, TransportVehiclePolicy::class);
     }
 }
