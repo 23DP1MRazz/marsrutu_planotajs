@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Client;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,12 +22,15 @@ class DispatcherPagesTest extends TestCase
     {
         $organization = Organization::factory()->create();
         $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $client = Client::factory()->create([
+            'organization_id' => $organization->id,
+        ]);
 
         $this->actingAs($dispatcher);
 
         $this->get('/dispatcher/clients')->assertOk();
         $this->get('/dispatcher/clients/create')->assertOk();
-        $this->get('/dispatcher/clients/42/edit')->assertOk();
+        $this->get("/dispatcher/clients/{$client->id}/edit")->assertOk();
         $this->get('/dispatcher/addresses')->assertOk();
         $this->get('/dispatcher/addresses/create')->assertOk();
         $this->get('/dispatcher/addresses/42/edit')->assertOk();
@@ -53,4 +57,3 @@ class DispatcherPagesTest extends TestCase
         $this->get('/dispatcher/addresses')->assertForbidden();
     }
 }
-

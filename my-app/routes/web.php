@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Dispatcher\ClientController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -26,25 +27,12 @@ Route::middleware(['auth', 'verified'])
             );
         };
 
-        Route::get('clients', function (Request $request) use ($ensureDispatcherAccess) {
-            $ensureDispatcherAccess($request);
-
-            return Inertia::render('dispatcher/clients/index');
-        })->name('clients.index');
-
-        Route::get('clients/create', function (Request $request) use ($ensureDispatcherAccess) {
-            $ensureDispatcherAccess($request);
-
-            return Inertia::render('dispatcher/clients/create');
-        })->name('clients.create');
-
-        Route::get('clients/{client}/edit', function (Request $request, string $client) use ($ensureDispatcherAccess) {
-            $ensureDispatcherAccess($request);
-
-            return Inertia::render('dispatcher/clients/edit', [
-                'clientId' => $client,
-            ]);
-        })->name('clients.edit');
+        Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
+        Route::get('clients/create', [ClientController::class, 'create'])->name('clients.create');
+        Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
+        Route::get('clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
+        Route::patch('clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+        Route::delete('clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
 
         Route::get('addresses', function (Request $request) use ($ensureDispatcherAccess) {
             $ensureDispatcherAccess($request);
