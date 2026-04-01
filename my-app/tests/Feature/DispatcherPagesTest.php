@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Client;
+use App\Models\Address;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,6 +26,9 @@ class DispatcherPagesTest extends TestCase
         $client = Client::factory()->create([
             'organization_id' => $organization->id,
         ]);
+        $address = Address::factory()->create([
+            'organization_id' => $organization->id,
+        ]);
 
         $this->actingAs($dispatcher);
 
@@ -33,7 +37,7 @@ class DispatcherPagesTest extends TestCase
         $this->get("/dispatcher/clients/{$client->id}/edit")->assertOk();
         $this->get('/dispatcher/addresses')->assertOk();
         $this->get('/dispatcher/addresses/create')->assertOk();
-        $this->get('/dispatcher/addresses/42/edit')->assertOk();
+        $this->get("/dispatcher/addresses/{$address->id}/edit")->assertOk();
     }
 
     public function test_admin_can_open_dispatcher_pages(): void

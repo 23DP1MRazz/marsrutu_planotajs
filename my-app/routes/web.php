@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Dispatcher\AddressController;
 use App\Http\Controllers\Dispatcher\ClientController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -34,25 +35,12 @@ Route::middleware(['auth', 'verified'])
         Route::patch('clients/{client}', [ClientController::class, 'update'])->name('clients.update');
         Route::delete('clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
 
-        Route::get('addresses', function (Request $request) use ($ensureDispatcherAccess) {
-            $ensureDispatcherAccess($request);
-
-            return Inertia::render('dispatcher/addresses/index');
-        })->name('addresses.index');
-
-        Route::get('addresses/create', function (Request $request) use ($ensureDispatcherAccess) {
-            $ensureDispatcherAccess($request);
-
-            return Inertia::render('dispatcher/addresses/create');
-        })->name('addresses.create');
-
-        Route::get('addresses/{address}/edit', function (Request $request, string $address) use ($ensureDispatcherAccess) {
-            $ensureDispatcherAccess($request);
-
-            return Inertia::render('dispatcher/addresses/edit', [
-                'addressId' => $address,
-            ]);
-        })->name('addresses.edit');
+        Route::get('addresses', [AddressController::class, 'index'])->name('addresses.index');
+        Route::get('addresses/create', [AddressController::class, 'create'])->name('addresses.create');
+        Route::post('addresses', [AddressController::class, 'store'])->name('addresses.store');
+        Route::get('addresses/{address}/edit', [AddressController::class, 'edit'])->name('addresses.edit');
+        Route::patch('addresses/{address}', [AddressController::class, 'update'])->name('addresses.update');
+        Route::delete('addresses/{address}', [AddressController::class, 'destroy'])->name('addresses.destroy');
     });
 
 require __DIR__.'/settings.php';
