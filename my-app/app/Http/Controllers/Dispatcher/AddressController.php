@@ -35,6 +35,7 @@ class AddressController extends Controller
 
         return Inertia::render('dispatcher/addresses/create', [
             'organizations' => $this->organizationsForUser($request),
+            'canSelectOrganization' => $request->user()->isAdmin(),
         ]);
     }
 
@@ -65,6 +66,7 @@ class AddressController extends Controller
             'addressId' => (string) $address->id,
             'address' => $address->only('id', 'organization_id', 'city', 'street', 'lat', 'lng'),
             'organizations' => $this->organizationsForUser($request),
+            'canSelectOrganization' => $request->user()->isAdmin(),
         ]);
     }
 

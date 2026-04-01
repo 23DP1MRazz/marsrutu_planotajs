@@ -34,6 +34,7 @@ class ClientController extends Controller
 
         return Inertia::render('dispatcher/clients/create', [
             'organizations' => $this->organizationsForUser($request),
+            'canSelectOrganization' => $request->user()->isAdmin(),
         ]);
     }
 
@@ -62,6 +63,7 @@ class ClientController extends Controller
             'clientId' => (string) $client->id,
             'client' => $client->only('id', 'organization_id', 'name', 'phone'),
             'organizations' => $this->organizationsForUser($request),
+            'canSelectOrganization' => $request->user()->isAdmin(),
         ]);
     }
 
