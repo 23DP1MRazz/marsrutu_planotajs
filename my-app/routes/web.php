@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Dispatcher\AddressController;
 use App\Http\Controllers\Dispatcher\ClientController;
+use App\Http\Controllers\Dispatcher\OrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -41,6 +42,13 @@ Route::middleware(['auth', 'verified'])
         Route::get('addresses/{address}/edit', [AddressController::class, 'edit'])->name('addresses.edit');
         Route::patch('addresses/{address}', [AddressController::class, 'update'])->name('addresses.update');
         Route::delete('addresses/{address}', [AddressController::class, 'destroy'])->name('addresses.destroy');
+
+        Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/create', [OrderController::class, 'create'])->name('orders.create');
+        Route::post('orders', [OrderController::class, 'store'])->name('orders.store');
+        Route::get('orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+        Route::patch('orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+        Route::delete('orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
     });
 
 require __DIR__.'/settings.php';

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Client;
 use App\Models\Address;
+use App\Models\Order;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +18,7 @@ class DispatcherPagesTest extends TestCase
     {
         $this->get('/dispatcher/clients')->assertRedirect(route('login'));
         $this->get('/dispatcher/addresses')->assertRedirect(route('login'));
+        $this->get('/dispatcher/orders')->assertRedirect(route('login'));
     }
 
     public function test_dispatcher_can_open_dispatcher_pages(): void
@@ -29,6 +31,11 @@ class DispatcherPagesTest extends TestCase
         $address = Address::factory()->create([
             'organization_id' => $organization->id,
         ]);
+        $order = Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'address_id' => $address->id,
+        ]);
 
         $this->actingAs($dispatcher);
 
@@ -38,6 +45,9 @@ class DispatcherPagesTest extends TestCase
         $this->get('/dispatcher/addresses')->assertOk();
         $this->get('/dispatcher/addresses/create')->assertOk();
         $this->get("/dispatcher/addresses/{$address->id}/edit")->assertOk();
+        $this->get('/dispatcher/orders')->assertOk();
+        $this->get('/dispatcher/orders/create')->assertOk();
+        $this->get("/dispatcher/orders/{$order->id}/edit")->assertOk();
     }
 
     public function test_admin_can_open_dispatcher_pages(): void
@@ -48,6 +58,7 @@ class DispatcherPagesTest extends TestCase
 
         $this->get('/dispatcher/clients')->assertOk();
         $this->get('/dispatcher/addresses')->assertOk();
+        $this->get('/dispatcher/orders')->assertOk();
     }
 
     public function test_courier_is_forbidden_from_dispatcher_pages(): void
@@ -59,5 +70,6 @@ class DispatcherPagesTest extends TestCase
 
         $this->get('/dispatcher/clients')->assertForbidden();
         $this->get('/dispatcher/addresses')->assertForbidden();
+        $this->get('/dispatcher/orders')->assertForbidden();
     }
 }
