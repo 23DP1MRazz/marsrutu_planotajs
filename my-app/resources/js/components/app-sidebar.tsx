@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, MapPinned, Users } from 'lucide-react';
+import { BookOpen, ClipboardList, Folder, LayoutGrid, MapPinned, Users } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -51,6 +51,11 @@ export function AppSidebar() {
                       title: 'Addresses',
                       href: '/dispatcher/addresses',
                       icon: MapPinned,
+                  },
+                  {
+                      title: 'Orders',
+                      href: '/dispatcher/orders',
+                      icon: ClipboardList,
                   },
               ]
             : []),
