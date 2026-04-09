@@ -33,24 +33,41 @@ class OrderController extends Controller
         $this->authorizeDispatcherAccess($request);
         $this->authorize('viewAny', Order::class);
 
+        $filters = [
+            'date' => $request->string('date')->toString(),
+            'status' => $request->string('status')->toString(),
+            'client' => $request->string('client')->toString(),
+        ];
+
+        $orders = Order::query()
+            ->with(['client:id,name', 'address:id,city,street'])
+            ->visibleTo($request->user())
+            ->when($filters['date'] !== '', fn ($query) => $query->whereDate('date', $filters['date']))
+            ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
+            ->when(
+                $filters['client'] !== '',
+                fn ($query) => $query->whereHas(
+                    'client',
+                    fn ($clientQuery) => $clientQuery->where('name', 'like', '%'.$filters['client'].'%'),
+                ),
+            )
+            ->orderByDesc('date')
+            ->orderBy('time_from')
+            ->get([
+                'id',
+                'organization_id',
+                'client_id',
+                'address_id',
+                'date',
+                'time_from',
+                'time_to',
+                'status',
+                'notes',
+                'updated_at',
+            ]);
+
         return Inertia::render('dispatcher/orders/index', [
-            'orders' => Order::query()
-                ->with(['client:id,name', 'address:id,city,street'])
-                ->visibleTo($request->user())
-                ->orderByDesc('date')
-                ->orderBy('time_from')
-                ->get([
-                    'id',
-                    'organization_id',
-                    'client_id',
-                    'address_id',
-                    'date',
-                    'time_from',
-                    'time_to',
-                    'status',
-                    'notes',
-                    'updated_at',
-                ])
+            'orders' => $orders
                 ->map(fn (Order $order) => [
                     'id' => $order->id,
                     'organization_id' => $order->organization_id,
@@ -67,6 +84,8 @@ class OrderController extends Controller
                         ->filter()
                         ->join(', '),
                 ]),
+            'filters' => $filters,
+            'statuses' => self::STATUSES,
         ]);
     }
 

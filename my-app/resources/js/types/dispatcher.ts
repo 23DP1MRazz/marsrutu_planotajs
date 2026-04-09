@@ -48,3 +48,9 @@ export type OrderRecord = {
     client_name: string | null;
     address_label: string;
 };
+
+export type OrderFilters = {
+    date: string;
+    status: string;
+    client: string;
+};

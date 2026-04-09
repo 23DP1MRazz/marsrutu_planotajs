@@ -47,6 +47,53 @@ class OrderCrudTest extends TestCase
                 ->where('orders.0.client_name', $clientA->name));
     }
 
+    public function test_dispatcher_can_filter_orders_by_date_status_and_client_name(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        [$clientA, $addressA] = $this->createClientAndAddress($organization);
+        [$clientB, $addressB] = $this->createClientAndAddress($organization);
+
+        $matchingOrder = Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $clientA->id,
+            'address_id' => $addressA->id,
+            'date' => '2026-04-10',
+            'status' => 'ASSIGNED',
+        ]);
+
+        Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $clientB->id,
+            'address_id' => $addressB->id,
+            'date' => '2026-04-10',
+            'status' => 'NEW',
+        ]);
+
+        Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $clientA->id,
+            'address_id' => $addressA->id,
+            'date' => '2026-04-11',
+            'status' => 'ASSIGNED',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.orders.index', [
+                'date' => '2026-04-10',
+                'status' => 'ASSIGNED',
+                'client' => $clientA->name,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/orders/index')
+                ->has('orders', 1)
+                ->where('orders.0.id', $matchingOrder->id)
+                ->where('filters.date', '2026-04-10')
+                ->where('filters.status', 'ASSIGNED')
+                ->where('filters.client', $clientA->name));
+    }
+
     public function test_dispatcher_can_create_update_and_delete_own_organization_order(): void
     {
         $organization = Organization::factory()->create();
