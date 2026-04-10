@@ -3,6 +3,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ResourceShell } from '@/components/dispatcher/resource-shell';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
+import { formatShortDate } from '@/lib/date';
 import type { OrderFilters, OrderRecord } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
 
@@ -10,12 +11,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
     { title: 'Orders', href: '/dispatcher/orders' },
 ];
-
-const orderDateFormatter = new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-});
 
 type DispatcherOrdersIndexProps = {
     orders: OrderRecord[];
@@ -37,9 +32,6 @@ export default function DispatcherOrdersIndex({
     const deleteOrder = (orderId: number) => {
         router.delete(`/dispatcher/orders/${orderId}`);
     };
-
-    const formatOrderDate = (date: string) =>
-        orderDateFormatter.format(new Date(`${date}T00:00:00`));
 
     const submitFilters = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -172,7 +164,7 @@ export default function DispatcherOrdersIndex({
                                     <tr key={order.id} className="border-b">
                                         <td className="p-2">{order.client_name ?? '-'}</td>
                                         <td className="p-2">{order.address_label || '-'}</td>
-                                        <td className="p-2">{formatOrderDate(order.date)}</td>
+                                        <td className="p-2">{formatShortDate(order.date)}</td>
                                         <td className="p-2">
                                             {order.time_from} - {order.time_to}
                                         </td>

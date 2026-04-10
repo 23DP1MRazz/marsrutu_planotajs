@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ClipboardList, Folder, LayoutGrid, MapPinned, Users } from 'lucide-react';
+import { BookOpen, ClipboardList, Folder, LayoutGrid, MapPinned, Route, Users } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -56,6 +56,11 @@ export function AppSidebar() {
                       title: 'Orders',
                       href: '/dispatcher/orders',
                       icon: ClipboardList,
+                  },
+                  {
+                      title: 'Routes',
+                      href: '/dispatcher/routes',
+                      icon: Route,
                   },
               ]
             : []),

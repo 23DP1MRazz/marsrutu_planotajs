@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Dispatcher\AddressController;
 use App\Http\Controllers\Dispatcher\ClientController;
+use App\Http\Controllers\Dispatcher\DeliveryRouteController;
 use App\Http\Controllers\Dispatcher\OrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +50,12 @@ Route::middleware(['auth', 'verified'])
         Route::get('orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
         Route::patch('orders/{order}', [OrderController::class, 'update'])->name('orders.update');
         Route::delete('orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
+
+        Route::get('routes', [DeliveryRouteController::class, 'index'])->name('routes.index');
+        Route::get('routes/create', [DeliveryRouteController::class, 'create'])->name('routes.create');
+        Route::post('routes', [DeliveryRouteController::class, 'store'])->name('routes.store');
+        Route::get('routes/{deliveryRoute}', [DeliveryRouteController::class, 'show'])->name('routes.show');
+        Route::post('routes/{deliveryRoute}/orders', [DeliveryRouteController::class, 'assignOrders'])->name('routes.orders.store');
     });
 
 require __DIR__.'/settings.php';
