@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dispatcher;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Dispatcher\AssignRouteOrdersRequest;
+use App\Http\Requests\Dispatcher\ReorderRouteStopsRequest;
 use App\Http\Requests\Dispatcher\StoreDeliveryRouteRequest;
 use App\Models\DeliveryRoute;
 use App\Models\Order;
@@ -114,6 +115,20 @@ class DeliveryRouteController extends Controller
         return to_route('dispatcher.routes.show', $deliveryRoute);
     }
 
+    public function reorderStops(
+        ReorderRouteStopsRequest $request,
+        DeliveryRoute $deliveryRoute,
+    ): RedirectResponse {
+        $this->authorizeDispatcherAccess($request);
+        $data = $request->validated();
+
+        DB::transaction(function () use ($deliveryRoute, $data): void {
+            $this->reorderRouteStops($deliveryRoute, $data['stop_ids']);
+        });
+
+        return to_route('dispatcher.routes.show', $deliveryRoute);
+    }
+
     /**
      * @param  array<int, int>  $orderIds
      */
@@ -150,6 +165,41 @@ class DeliveryRouteController extends Controller
 
             $nextSequence++;
         }
+    }
+
+    /**
+     * @param  array<int, int>  $stopIds
+     */
+    private function reorderRouteStops(DeliveryRoute $deliveryRoute, array $stopIds): void
+    {
+        $routeStops = RouteStop::query()
+            ->with('order:id,date,time_from')
+            ->where('route_id', $deliveryRoute->id)
+            ->whereIn('id', $stopIds)
+            ->get()
+            ->keyBy('id');
+
+        foreach (array_values($stopIds) as $index => $stopId) {
+            $routeStops[$stopId]->update([
+                'seq_no' => 1000 + $index + 1,
+            ]);
+        }
+
+        foreach (array_values($stopIds) as $index => $stopId) {
+            $routeStops[$stopId]->update([
+                'seq_no' => $index + 1,
+                'planned_eta' => $this->plannedEtaForStop($routeStops[$stopId]),
+            ]);
+        }
+    }
+
+    private function plannedEtaForStop(RouteStop $routeStop): ?Carbon
+    {
+        if (! $routeStop->order?->date || ! $routeStop->order?->time_from) {
+            return null;
+        }
+
+        return Carbon::parse($routeStop->order->date.' '.$routeStop->order->time_from);
     }
 
     /**

@@ -216,6 +216,101 @@ class RoutePlanningTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_dispatcher_can_reorder_stops_for_own_route(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $firstOrder = $this->createOrder($organization, [
+            'date' => '2026-04-15',
+            'time_from' => '09:00:00',
+        ]);
+        $secondOrder = $this->createOrder($organization, [
+            'date' => '2026-04-15',
+            'time_from' => '11:30:00',
+        ]);
+
+        $firstStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $firstOrder->id,
+            'seq_no' => 1,
+            'planned_eta' => '2026-04-15 09:00:00',
+        ]);
+
+        $secondStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $secondOrder->id,
+            'seq_no' => 2,
+            'planned_eta' => '2026-04-15 11:30:00',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->patch(route('dispatcher.routes.stops.reorder', $deliveryRoute), [
+                'stop_ids' => [$secondStop->id, $firstStop->id],
+            ])
+            ->assertRedirect(route('dispatcher.routes.show', $deliveryRoute));
+
+        $this->assertDatabaseHas('route_stops', [
+            'id' => $secondStop->id,
+            'seq_no' => 1,
+            'planned_eta' => '2026-04-15 11:30:00',
+        ]);
+
+        $this->assertDatabaseHas('route_stops', [
+            'id' => $firstStop->id,
+            'seq_no' => 2,
+            'planned_eta' => '2026-04-15 09:00:00',
+        ]);
+    }
+
+    public function test_dispatcher_cannot_reorder_route_with_missing_or_foreign_stops(): void
+    {
+        $organizationA = Organization::factory()->create();
+        $organizationB = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organizationA->id)->create();
+        $courierA = $this->createCourier($organizationA);
+        $courierB = $this->createCourier($organizationB);
+        $routeA = DeliveryRoute::factory()->create([
+            'organization_id' => $organizationA->id,
+            'courier_user_id' => $courierA->id,
+        ]);
+        $routeB = DeliveryRoute::factory()->create([
+            'organization_id' => $organizationB->id,
+            'courier_user_id' => $courierB->id,
+        ]);
+        $orderA = $this->createOrder($organizationA);
+        $orderB = $this->createOrder($organizationB);
+
+        $stopA = RouteStop::factory()->create([
+            'organization_id' => $organizationA->id,
+            'route_id' => $routeA->id,
+            'order_id' => $orderA->id,
+            'seq_no' => 1,
+        ]);
+
+        $foreignStop = RouteStop::factory()->create([
+            'organization_id' => $organizationB->id,
+            'route_id' => $routeB->id,
+            'order_id' => $orderB->id,
+            'seq_no' => 1,
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.routes.show', $routeA))
+            ->patch(route('dispatcher.routes.stops.reorder', $routeA), [
+                'stop_ids' => [$stopA->id, $foreignStop->id],
+            ])
+            ->assertRedirect(route('dispatcher.routes.show', $routeA))
+            ->assertSessionHasErrors(['stop_ids.1', 'stop_ids']);
+    }
+
     private function createCourier(Organization $organization): User
     {
         $courier = User::factory()->courier($organization->id)->create();

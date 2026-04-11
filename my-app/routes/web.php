@@ -56,6 +56,7 @@ Route::middleware(['auth', 'verified'])
         Route::post('routes', [DeliveryRouteController::class, 'store'])->name('routes.store');
         Route::get('routes/{deliveryRoute}', [DeliveryRouteController::class, 'show'])->name('routes.show');
         Route::post('routes/{deliveryRoute}/orders', [DeliveryRouteController::class, 'assignOrders'])->name('routes.orders.store');
+        Route::patch('routes/{deliveryRoute}/stops/reorder', [DeliveryRouteController::class, 'reorderStops'])->name('routes.stops.reorder');
     });
 
 require __DIR__.'/settings.php';
