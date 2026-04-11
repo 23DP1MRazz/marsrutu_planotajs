@@ -23,9 +23,16 @@ export default function DispatcherRoutesShow({
     availableOrders,
 }: DispatcherRoutesShowProps) {
     const [orderedStops, setOrderedStops] = useState(stops);
+    const reorderForm = useForm({
+        stop_ids: stops.map((stop) => stop.id),
+    });
 
     useEffect(() => {
         setOrderedStops(stops);
+        reorderForm.setData(
+            'stop_ids',
+            stops.map((stop) => stop.id),
+        );
     }, [stops]);
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -70,6 +77,16 @@ export default function DispatcherRoutesShow({
         nextStops.splice(targetIndex, 0, movedStop);
 
         setOrderedStops(nextStops);
+        reorderForm.setData(
+            'stop_ids',
+            nextStops.map((stop) => stop.id),
+        );
+    };
+
+    const saveStopOrder = () => {
+        reorderForm.patch(`/dispatcher/routes/${deliveryRoute.id}/stops/reorder`, {
+            preserveScroll: true,
+        });
     };
 
     return (
@@ -86,13 +103,29 @@ export default function DispatcherRoutesShow({
                         <h2 className="font-medium">Stops</h2>
 
                         {hasLocalReorderChanges && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setOrderedStops(stops)}
-                            >
-                                Reset preview
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    onClick={saveStopOrder}
+                                    disabled={reorderForm.processing}
+                                >
+                                    Save order
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setOrderedStops(stops);
+                                        reorderForm.setData(
+                                            'stop_ids',
+                                            stops.map((stop) => stop.id),
+                                        );
+                                    }}
+                                    disabled={reorderForm.processing}
+                                >
+                                    Reset preview
+                                </Button>
+                            </div>
                         )}
                     </div>
 
@@ -127,7 +160,7 @@ export default function DispatcherRoutesShow({
                                             variant="outline"
                                             size="sm"
                                             onClick={() => moveStop(index, -1)}
-                                            disabled={index === 0}
+                                            disabled={index === 0 || reorderForm.processing}
                                         >
                                             Up
                                         </Button>
@@ -136,7 +169,10 @@ export default function DispatcherRoutesShow({
                                             variant="outline"
                                             size="sm"
                                             onClick={() => moveStop(index, 1)}
-                                            disabled={index === orderedStops.length - 1}
+                                            disabled={
+                                                index === orderedStops.length - 1
+                                                || reorderForm.processing
+                                            }
                                         >
                                             Down
                                         </Button>
@@ -148,8 +184,14 @@ export default function DispatcherRoutesShow({
 
                     {hasLocalReorderChanges && (
                         <p className="mt-4 text-sm text-muted-foreground">
-                            Reorder preview is local for now. Saving this order comes in the
-                            next step.
+                            Review the new order, then save it to update sequence numbers and
+                            ETA values.
+                        </p>
+                    )}
+
+                    {reorderForm.errors.stop_ids && (
+                        <p className="mt-4 text-sm text-red-600">
+                            {reorderForm.errors.stop_ids}
                         </p>
                     )}
                 </div>
