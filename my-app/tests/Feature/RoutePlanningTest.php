@@ -311,6 +311,96 @@ class RoutePlanningTest extends TestCase
             ->assertSessionHasErrors(['stop_ids.1', 'stop_ids']);
     }
 
+    public function test_dispatcher_cannot_reorder_route_with_partial_stop_list(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+        ]);
+        $firstOrder = $this->createOrder($organization);
+        $secondOrder = $this->createOrder($organization);
+
+        $firstStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $firstOrder->id,
+            'seq_no' => 1,
+        ]);
+
+        $secondStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $secondOrder->id,
+            'seq_no' => 2,
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.routes.show', $deliveryRoute))
+            ->patch(route('dispatcher.routes.stops.reorder', $deliveryRoute), [
+                'stop_ids' => [$firstStop->id],
+            ])
+            ->assertRedirect(route('dispatcher.routes.show', $deliveryRoute))
+            ->assertSessionHasErrors(['stop_ids']);
+
+        $this->assertDatabaseHas('route_stops', [
+            'id' => $firstStop->id,
+            'seq_no' => 1,
+        ]);
+
+        $this->assertDatabaseHas('route_stops', [
+            'id' => $secondStop->id,
+            'seq_no' => 2,
+        ]);
+    }
+
+    public function test_dispatcher_cannot_reorder_route_with_duplicate_stop_ids(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+        ]);
+        $firstOrder = $this->createOrder($organization);
+        $secondOrder = $this->createOrder($organization);
+
+        $firstStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $firstOrder->id,
+            'seq_no' => 1,
+        ]);
+
+        $secondStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $secondOrder->id,
+            'seq_no' => 2,
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.routes.show', $deliveryRoute))
+            ->patch(route('dispatcher.routes.stops.reorder', $deliveryRoute), [
+                'stop_ids' => [$firstStop->id, $firstStop->id],
+            ])
+            ->assertRedirect(route('dispatcher.routes.show', $deliveryRoute))
+            ->assertSessionHasErrors(['stop_ids.1', 'stop_ids']);
+
+        $this->assertDatabaseHas('route_stops', [
+            'id' => $firstStop->id,
+            'seq_no' => 1,
+        ]);
+
+        $this->assertDatabaseHas('route_stops', [
+            'id' => $secondStop->id,
+            'seq_no' => 2,
+        ]);
+    }
+
     private function createCourier(Organization $organization): User
     {
         $courier = User::factory()->courier($organization->id)->create();
