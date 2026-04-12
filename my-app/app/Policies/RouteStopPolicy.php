@@ -17,7 +17,14 @@ class RouteStopPolicy
 
     public function view(User $user, RouteStop $routeStop): bool
     {
-        return $this->canViewOrganizationResource($user, $routeStop);
+        if ($this->canViewOrganizationResource($user, $routeStop) && ! $user->isCourier()) {
+            return true;
+        }
+
+        return $user->isCourier()
+            && $user->organization_id !== null
+            && (int) $user->organization_id === (int) $routeStop->organization_id
+            && (int) $routeStop->route?->courier_user_id === (int) $user->id;
     }
 
     public function create(User $user): bool
@@ -27,7 +34,14 @@ class RouteStopPolicy
 
     public function update(User $user, RouteStop $routeStop): bool
     {
-        return $this->canOperateOrganizationResource($user, $routeStop);
+        if ($this->canManageOrganizationResource($user, $routeStop)) {
+            return true;
+        }
+
+        return $user->isCourier()
+            && $user->organization_id !== null
+            && (int) $user->organization_id === (int) $routeStop->organization_id
+            && (int) $routeStop->route?->courier_user_id === (int) $user->id;
     }
 
     public function delete(User $user, RouteStop $routeStop): bool
@@ -35,4 +49,3 @@ class RouteStopPolicy
         return $this->canManageOrganizationResource($user, $routeStop);
     }
 }
-

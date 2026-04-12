@@ -1,0 +1,164 @@
+<?php
+
+namespace App\Http\Controllers\Courier;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Courier\UpdateRouteStopStatusRequest;
+use App\Models\DeliveryRoute;
+use App\Models\RouteStop;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+
+class CourierRouteController extends Controller
+{
+    public function showToday(Request $request): JsonResponse
+    {
+        $this->authorizeCourierAccess($request);
+
+        $deliveryRoute = DeliveryRoute::query()
+            ->with([
+                'routeStops' => fn ($query) => $query->orderBy('seq_no'),
+                'routeStops.order.client:id,name',
+                'routeStops.order.address:id,city,street',
+            ])
+            ->where('organization_id', $request->user()->organization_id)
+            ->where('courier_user_id', $request->user()->id)
+            ->whereDate('date', Carbon::today()->toDateString())
+            ->first();
+
+        if ($deliveryRoute === null) {
+            return response()->json([
+                'deliveryRoute' => null,
+                'stops' => [],
+            ]);
+        }
+
+        return response()->json([
+            'deliveryRoute' => [
+                'id' => $deliveryRoute->id,
+                'organization_id' => $deliveryRoute->organization_id,
+                'courier_user_id' => $deliveryRoute->courier_user_id,
+                'date' => $deliveryRoute->date,
+                'status' => $deliveryRoute->status,
+            ],
+            'stops' => $deliveryRoute->routeStops->map(fn (RouteStop $routeStop) => [
+                'id' => $routeStop->id,
+                'seq_no' => $routeStop->seq_no,
+                'order_id' => $routeStop->order_id,
+                'planned_eta' => $routeStop->planned_eta,
+                'arrived_at' => $routeStop->arrived_at,
+                'completed_at' => $routeStop->completed_at,
+                'status' => $routeStop->status,
+                'fail_reason' => $routeStop->fail_reason,
+                'client_name' => $routeStop->order?->client?->name,
+                'address_label' => collect([
+                    $routeStop->order?->address?->city,
+                    $routeStop->order?->address?->street,
+                ])->filter()->join(', '),
+            ]),
+        ]);
+    }
+
+    public function updateStopStatus(
+        UpdateRouteStopStatusRequest $request,
+        RouteStop $routeStop,
+    ): RedirectResponse {
+        $this->authorizeCourierAccess($request);
+        $routeStop->loadMissing(['route', 'order']);
+        abort_unless(
+            $routeStop->route !== null
+            && (int) $routeStop->route->courier_user_id === (int) $request->user()->id
+            && $routeStop->route->date === Carbon::today()->toDateString(),
+            403,
+        );
+
+        $data = $request->validated();
+
+        DB::transaction(function () use ($routeStop, $data): void {
+            $this->applyStopStatus($routeStop, $data['status'], $data['fail_reason'] ?? null);
+            $this->refreshRouteStatus($routeStop->route);
+        });
+
+        return to_route('courier.route.show');
+    }
+
+    private function applyStopStatus(
+        RouteStop $routeStop,
+        string $status,
+        ?string $failReason,
+    ): void {
+        $now = Carbon::now();
+
+        if ($status === 'ARRIVED') {
+            $routeStop->update([
+                'status' => 'ARRIVED',
+                'arrived_at' => $routeStop->arrived_at ?? $now,
+                'completed_at' => null,
+                'fail_reason' => null,
+            ]);
+
+            return;
+        }
+
+        if ($status === 'COMPLETED') {
+            $routeStop->update([
+                'status' => 'COMPLETED',
+                'arrived_at' => $routeStop->arrived_at ?? $now,
+                'completed_at' => $now,
+                'fail_reason' => null,
+            ]);
+
+            $routeStop->order?->update([
+                'status' => 'COMPLETED',
+            ]);
+
+            return;
+        }
+
+        $routeStop->update([
+            'status' => 'FAILED',
+            'arrived_at' => $routeStop->arrived_at ?? $now,
+            'completed_at' => null,
+            'fail_reason' => $failReason,
+        ]);
+
+        $routeStop->order?->update([
+            'status' => 'FAILED',
+        ]);
+    }
+
+    private function refreshRouteStatus(DeliveryRoute $deliveryRoute): void
+    {
+        $deliveryRoute->loadMissing('routeStops');
+
+        $statuses = $deliveryRoute->routeStops->pluck('status');
+
+        if ($statuses->isNotEmpty() && $statuses->every(fn (string $status) => $status === 'COMPLETED')) {
+            $deliveryRoute->update([
+                'status' => 'DONE',
+            ]);
+
+            return;
+        }
+
+        if ($statuses->contains(fn (string $status) => $status !== 'PENDING')) {
+            $deliveryRoute->update([
+                'status' => 'IN_PROGRESS',
+            ]);
+
+            return;
+        }
+
+        $deliveryRoute->update([
+            'status' => 'PLANNED',
+        ]);
+    }
+
+    private function authorizeCourierAccess(Request $request): void
+    {
+        abort_unless($request->user()?->isCourier(), 403);
+    }
+}

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Courier\CourierRouteController;
 use App\Http\Controllers\Dispatcher\AddressController;
 use App\Http\Controllers\Dispatcher\ClientController;
 use App\Http\Controllers\Dispatcher\DeliveryRouteController;
@@ -57,6 +58,14 @@ Route::middleware(['auth', 'verified'])
         Route::get('routes/{deliveryRoute}', [DeliveryRouteController::class, 'show'])->name('routes.show');
         Route::post('routes/{deliveryRoute}/orders', [DeliveryRouteController::class, 'assignOrders'])->name('routes.orders.store');
         Route::patch('routes/{deliveryRoute}/stops/reorder', [DeliveryRouteController::class, 'reorderStops'])->name('routes.stops.reorder');
+    });
+
+Route::middleware(['auth', 'verified'])
+    ->prefix('courier')
+    ->name('courier.')
+    ->group(function () {
+        Route::get('route', [CourierRouteController::class, 'showToday'])->name('route.show');
+        Route::patch('stops/{routeStop}', [CourierRouteController::class, 'updateStopStatus'])->name('stops.update');
     });
 
 require __DIR__.'/settings.php';

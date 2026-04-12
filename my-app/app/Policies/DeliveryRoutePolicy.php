@@ -17,7 +17,14 @@ class DeliveryRoutePolicy
 
     public function view(User $user, DeliveryRoute $deliveryRoute): bool
     {
-        return $this->canViewOrganizationResource($user, $deliveryRoute);
+        if ($this->canViewOrganizationResource($user, $deliveryRoute) && ! $user->isCourier()) {
+            return true;
+        }
+
+        return $user->isCourier()
+            && $user->organization_id !== null
+            && (int) $user->organization_id === (int) $deliveryRoute->organization_id
+            && (int) $deliveryRoute->courier_user_id === (int) $user->id;
     }
 
     public function create(User $user): bool
@@ -35,4 +42,3 @@ class DeliveryRoutePolicy
         return $this->canManageOrganizationResource($user, $deliveryRoute);
     }
 }
-
