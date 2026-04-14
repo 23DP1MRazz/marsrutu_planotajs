@@ -64,6 +64,7 @@ Route::middleware(['auth', 'verified'])
     ->prefix('courier')
     ->name('courier.')
     ->group(function () {
+        Route::get('today-route', [CourierRouteController::class, 'showPage'])->name('route.page');
         Route::get('route', [CourierRouteController::class, 'showToday'])->name('route.show');
         Route::patch('stops/{routeStop}', [CourierRouteController::class, 'updateStopStatus'])->name('stops.update');
     });

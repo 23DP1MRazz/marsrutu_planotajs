@@ -11,23 +11,27 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CourierRouteController extends Controller
 {
-    public function showToday(Request $request): JsonResponse
+    public function showPage(Request $request): Response
     {
         $this->authorizeCourierAccess($request);
 
-        $deliveryRoute = DeliveryRoute::query()
-            ->with([
-                'routeStops' => fn ($query) => $query->orderBy('seq_no'),
-                'routeStops.order.client:id,name',
-                'routeStops.order.address:id,city,street',
-            ])
-            ->where('organization_id', $request->user()->organization_id)
-            ->where('courier_user_id', $request->user()->id)
-            ->whereDate('date', Carbon::today()->toDateString())
-            ->first();
+        $deliveryRoute = $this->todayRouteForUser($request);
+
+        return Inertia::render('courier/route', [
+            'deliveryRoute' => $deliveryRoute ? $this->formatRoute($deliveryRoute) : null,
+            'stops' => $deliveryRoute ? $this->formatStops($deliveryRoute) : [],
+        ]);
+    }
+
+    public function showToday(Request $request): JsonResponse
+    {
+        $this->authorizeCourierAccess($request);
+        $deliveryRoute = $this->todayRouteForUser($request);
 
         if ($deliveryRoute === null) {
             return response()->json([
@@ -37,28 +41,8 @@ class CourierRouteController extends Controller
         }
 
         return response()->json([
-            'deliveryRoute' => [
-                'id' => $deliveryRoute->id,
-                'organization_id' => $deliveryRoute->organization_id,
-                'courier_user_id' => $deliveryRoute->courier_user_id,
-                'date' => $deliveryRoute->date,
-                'status' => $deliveryRoute->status,
-            ],
-            'stops' => $deliveryRoute->routeStops->map(fn (RouteStop $routeStop) => [
-                'id' => $routeStop->id,
-                'seq_no' => $routeStop->seq_no,
-                'order_id' => $routeStop->order_id,
-                'planned_eta' => $routeStop->planned_eta,
-                'arrived_at' => $routeStop->arrived_at,
-                'completed_at' => $routeStop->completed_at,
-                'status' => $routeStop->status,
-                'fail_reason' => $routeStop->fail_reason,
-                'client_name' => $routeStop->order?->client?->name,
-                'address_label' => collect([
-                    $routeStop->order?->address?->city,
-                    $routeStop->order?->address?->street,
-                ])->filter()->join(', '),
-            ]),
+            'deliveryRoute' => $this->formatRoute($deliveryRoute),
+            'stops' => $this->formatStops($deliveryRoute),
         ]);
     }
 
@@ -82,7 +66,57 @@ class CourierRouteController extends Controller
             $this->refreshRouteStatus($routeStop->route);
         });
 
-        return to_route('courier.route.show');
+        return to_route('courier.route.page');
+    }
+
+    private function todayRouteForUser(Request $request): ?DeliveryRoute
+    {
+        return DeliveryRoute::query()
+            ->with([
+                'routeStops' => fn ($query) => $query->orderBy('seq_no'),
+                'routeStops.order.client:id,name',
+                'routeStops.order.address:id,city,street',
+            ])
+            ->where('organization_id', $request->user()->organization_id)
+            ->where('courier_user_id', $request->user()->id)
+            ->whereDate('date', Carbon::today()->toDateString())
+            ->first();
+    }
+
+    /**
+     * @return array{id: int, organization_id: int, courier_user_id: int, date: string, status: string}
+     */
+    private function formatRoute(DeliveryRoute $deliveryRoute): array
+    {
+        return [
+            'id' => $deliveryRoute->id,
+            'organization_id' => $deliveryRoute->organization_id,
+            'courier_user_id' => $deliveryRoute->courier_user_id,
+            'date' => $deliveryRoute->date,
+            'status' => $deliveryRoute->status,
+        ];
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, array{id: int, seq_no: int, order_id: int, planned_eta: mixed, arrived_at: mixed, completed_at: mixed, status: string, fail_reason: string|null, client_name: string|null, address_label: string}>
+     */
+    private function formatStops(DeliveryRoute $deliveryRoute)
+    {
+        return $deliveryRoute->routeStops->map(fn (RouteStop $routeStop) => [
+            'id' => $routeStop->id,
+            'seq_no' => $routeStop->seq_no,
+            'order_id' => $routeStop->order_id,
+            'planned_eta' => $routeStop->planned_eta,
+            'arrived_at' => $routeStop->arrived_at,
+            'completed_at' => $routeStop->completed_at,
+            'status' => $routeStop->status,
+            'fail_reason' => $routeStop->fail_reason,
+            'client_name' => $routeStop->order?->client?->name,
+            'address_label' => collect([
+                $routeStop->order?->address?->city,
+                $routeStop->order?->address?->street,
+            ])->filter()->join(', '),
+        ]);
     }
 
     private function applyStopStatus(

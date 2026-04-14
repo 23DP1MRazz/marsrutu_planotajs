@@ -89,7 +89,7 @@ class CourierRouteTest extends TestCase
             ->patch(route('courier.stops.update', $firstStop), [
                 'status' => 'ARRIVED',
             ])
-            ->assertRedirect(route('courier.route.show'));
+            ->assertRedirect(route('courier.route.page'));
 
         $this->assertDatabaseHas('route_stops', [
             'id' => $firstStop->id,
@@ -105,13 +105,13 @@ class CourierRouteTest extends TestCase
             ->patch(route('courier.stops.update', $firstStop), [
                 'status' => 'COMPLETED',
             ])
-            ->assertRedirect(route('courier.route.show'));
+            ->assertRedirect(route('courier.route.page'));
 
         $this->actingAs($courier)
             ->patch(route('courier.stops.update', $secondStop), [
                 'status' => 'COMPLETED',
             ])
-            ->assertRedirect(route('courier.route.show'));
+            ->assertRedirect(route('courier.route.page'));
 
         $this->assertDatabaseHas('route_stops', [
             'id' => $firstStop->id,
@@ -166,7 +166,7 @@ class CourierRouteTest extends TestCase
                 'status' => 'FAILED',
                 'fail_reason' => 'Customer not at address',
             ])
-            ->assertRedirect(route('courier.route.show'));
+            ->assertRedirect(route('courier.route.page'));
 
         $this->assertDatabaseHas('route_stops', [
             'id' => $stop->id,
