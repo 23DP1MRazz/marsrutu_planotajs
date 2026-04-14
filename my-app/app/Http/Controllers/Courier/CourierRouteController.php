@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Courier;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Courier\UpdateRouteStopStatusRequest;
+use App\Http\Requests\Courier\UploadProofOfDeliveryRequest;
 use App\Models\DeliveryRoute;
+use App\Models\ProofOfDelivery;
 use App\Models\RouteStop;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -69,11 +72,39 @@ class CourierRouteController extends Controller
         return to_route('courier.route.page');
     }
 
+    public function uploadProof(
+        UploadProofOfDeliveryRequest $request,
+        RouteStop $routeStop,
+    ): RedirectResponse {
+        $this->authorizeCourierAccess($request);
+        $routeStop->loadMissing(['route', 'proofOfDelivery']);
+        abort_unless(
+            $routeStop->route !== null
+            && (int) $routeStop->route->courier_user_id === (int) $request->user()->id
+            && $routeStop->route->date === Carbon::today()->toDateString(),
+            403,
+        );
+
+        $file = $request->file('file');
+        $path = $file->store('proof-of-delivery', 'public');
+
+        ProofOfDelivery::query()->create([
+            'organization_id' => $routeStop->organization_id,
+            'route_stop_id' => $routeStop->id,
+            'type' => 'PHOTO',
+            'file_url' => Storage::disk('public')->url($path),
+            'taken_at' => Carbon::now(),
+        ]);
+
+        return to_route('courier.route.page');
+    }
+
     private function todayRouteForUser(Request $request): ?DeliveryRoute
     {
         return DeliveryRoute::query()
             ->with([
                 'routeStops' => fn ($query) => $query->orderBy('seq_no'),
+                'routeStops.proofOfDelivery',
                 'routeStops.order.client:id,name',
                 'routeStops.order.address:id,city,street',
             ])
@@ -98,7 +129,7 @@ class CourierRouteController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, array{id: int, seq_no: int, order_id: int, planned_eta: mixed, arrived_at: mixed, completed_at: mixed, status: string, fail_reason: string|null, client_name: string|null, address_label: string}>
+     * @return \Illuminate\Support\Collection<int, array{id: int, seq_no: int, order_id: int, planned_eta: mixed, arrived_at: mixed, completed_at: mixed, status: string, fail_reason: string|null, proof_file_url: string|null, client_name: string|null, address_label: string}>
      */
     private function formatStops(DeliveryRoute $deliveryRoute)
     {
@@ -111,6 +142,7 @@ class CourierRouteController extends Controller
             'completed_at' => $routeStop->completed_at,
             'status' => $routeStop->status,
             'fail_reason' => $routeStop->fail_reason,
+            'proof_file_url' => $routeStop->proofOfDelivery?->file_url,
             'client_name' => $routeStop->order?->client?->name,
             'address_label' => collect([
                 $routeStop->order?->address?->city,

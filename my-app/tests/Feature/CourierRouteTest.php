@@ -8,10 +8,13 @@ use App\Models\Courier;
 use App\Models\DeliveryRoute;
 use App\Models\Order;
 use App\Models\Organization;
+use App\Models\ProofOfDelivery;
 use App\Models\RouteStop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CourierRouteTest extends TestCase
@@ -262,6 +265,141 @@ class CourierRouteTest extends TestCase
                 'deliveryRoute' => null,
                 'stops' => [],
             ]);
+    }
+
+    public function test_courier_can_upload_proof_for_own_completed_stop(): void
+    {
+        Storage::fake('public');
+
+        $organization = Organization::factory()->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $stop = $this->createRouteStop($organization, $deliveryRoute, [
+            'status' => 'COMPLETED',
+            'completed_at' => '2026-04-15 09:45:00',
+        ]);
+
+        $this->actingAs($courier)
+            ->post(route('courier.stops.proof.store', $stop), [
+                'file' => UploadedFile::fake()->image('proof.jpg'),
+            ])
+            ->assertRedirect(route('courier.route.page'));
+
+        $proof = ProofOfDelivery::query()->where('route_stop_id', $stop->id)->first();
+
+        $this->assertNotNull($proof);
+        $this->assertStringStartsWith('/storage/proof-of-delivery/', $proof->file_url);
+
+        Storage::disk('public')->assertExists(
+            str_replace('/storage/', '', $proof->file_url),
+        );
+    }
+
+    public function test_courier_cannot_upload_proof_for_another_couriers_stop(): void
+    {
+        Storage::fake('public');
+
+        $organization = Organization::factory()->create();
+        $courierA = $this->createCourier($organization);
+        $courierB = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courierB->id,
+            'date' => '2026-04-15',
+        ]);
+        $stop = $this->createRouteStop($organization, $deliveryRoute, [
+            'status' => 'COMPLETED',
+        ]);
+
+        $this->actingAs($courierA)
+            ->post(route('courier.stops.proof.store', $stop), [
+                'file' => UploadedFile::fake()->image('proof.jpg'),
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_courier_cannot_upload_duplicate_proof_for_same_stop(): void
+    {
+        Storage::fake('public');
+
+        $organization = Organization::factory()->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $stop = $this->createRouteStop($organization, $deliveryRoute, [
+            'status' => 'COMPLETED',
+        ]);
+
+        ProofOfDelivery::query()->create([
+            'organization_id' => $organization->id,
+            'route_stop_id' => $stop->id,
+            'type' => 'PHOTO',
+            'file_url' => '/storage/proof-of-delivery/existing.jpg',
+            'taken_at' => '2026-04-15 10:00:00',
+        ]);
+
+        $this->actingAs($courier)
+            ->from(route('courier.route.page'))
+            ->post(route('courier.stops.proof.store', $stop), [
+                'file' => UploadedFile::fake()->image('proof.jpg'),
+            ])
+            ->assertRedirect(route('courier.route.page'))
+            ->assertSessionHasErrors(['file']);
+    }
+
+    public function test_invalid_proof_file_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $organization = Organization::factory()->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $stop = $this->createRouteStop($organization, $deliveryRoute, [
+            'status' => 'COMPLETED',
+        ]);
+
+        $this->actingAs($courier)
+            ->from(route('courier.route.page'))
+            ->post(route('courier.stops.proof.store', $stop), [
+                'file' => UploadedFile::fake()->create('proof.pdf', 100, 'application/pdf'),
+            ])
+            ->assertRedirect(route('courier.route.page'))
+            ->assertSessionHasErrors(['file']);
+    }
+
+    public function test_proof_upload_requires_completed_or_failed_stop(): void
+    {
+        Storage::fake('public');
+
+        $organization = Organization::factory()->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $stop = $this->createRouteStop($organization, $deliveryRoute, [
+            'status' => 'ARRIVED',
+        ]);
+
+        $this->actingAs($courier)
+            ->from(route('courier.route.page'))
+            ->post(route('courier.stops.proof.store', $stop), [
+                'file' => UploadedFile::fake()->image('proof.jpg'),
+            ])
+            ->assertRedirect(route('courier.route.page'))
+            ->assertSessionHasErrors(['file']);
     }
 
     private function createCourier(Organization $organization): User

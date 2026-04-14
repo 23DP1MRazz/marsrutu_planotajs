@@ -67,6 +67,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('today-route', [CourierRouteController::class, 'showPage'])->name('route.page');
         Route::get('route', [CourierRouteController::class, 'showToday'])->name('route.show');
         Route::patch('stops/{routeStop}', [CourierRouteController::class, 'updateStopStatus'])->name('stops.update');
+        Route::post('stops/{routeStop}/proof', [CourierRouteController::class, 'uploadProof'])->name('stops.proof.store');
     });
 
 require __DIR__.'/settings.php';
