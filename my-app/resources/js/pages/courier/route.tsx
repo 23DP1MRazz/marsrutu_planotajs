@@ -1,4 +1,5 @@
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
@@ -19,6 +20,36 @@ export default function CourierRoutePage({
     deliveryRoute,
     stops,
 }: CourierRoutePageProps) {
+    const [failedStopId, setFailedStopId] = useState<number | null>(null);
+    const [failReasons, setFailReasons] = useState<Record<number, string>>({});
+    const statusForm = useForm({
+        status: '',
+        fail_reason: '',
+    });
+
+    const updateStopStatus = (
+        stopId: number,
+        status: 'ARRIVED' | 'COMPLETED' | 'FAILED',
+        failReason = '',
+    ) => {
+        statusForm.transform(() => ({
+            status,
+            fail_reason: failReason,
+        }));
+
+        statusForm.patch(`/courier/stops/${stopId}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setFailedStopId(null);
+                setFailReasons((currentReasons) => ({
+                    ...currentReasons,
+                    [stopId]: '',
+                }));
+                statusForm.reset();
+            },
+        });
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Today route" />
@@ -71,16 +102,91 @@ export default function CourierRoutePage({
                                     </div>
 
                                     <div className="mt-4 flex flex-wrap gap-2">
-                                        <Button type="button" variant="outline" disabled>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled={
+                                                statusForm.processing || stop.status === 'ARRIVED'
+                                            }
+                                            onClick={() => updateStopStatus(stop.id, 'ARRIVED')}
+                                        >
                                             Arrived
                                         </Button>
-                                        <Button type="button" variant="outline" disabled>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled={
+                                                statusForm.processing || stop.status === 'COMPLETED'
+                                            }
+                                            onClick={() => updateStopStatus(stop.id, 'COMPLETED')}
+                                        >
                                             Completed
                                         </Button>
-                                        <Button type="button" variant="outline" disabled>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled={statusForm.processing}
+                                            onClick={() =>
+                                                setFailedStopId((currentStopId) =>
+                                                    currentStopId === stop.id ? null : stop.id,
+                                                )
+                                            }
+                                        >
                                             Failed
                                         </Button>
                                     </div>
+
+                                    {failedStopId === stop.id && (
+                                        <div className="mt-4 space-y-2">
+                                            <label
+                                                htmlFor={`fail-reason-${stop.id}`}
+                                                className="block text-sm"
+                                            >
+                                                Fail reason
+                                            </label>
+                                            <input
+                                                id={`fail-reason-${stop.id}`}
+                                                type="text"
+                                                value={failReasons[stop.id] ?? ''}
+                                                onChange={(event) =>
+                                                    setFailReasons((currentReasons) => ({
+                                                        ...currentReasons,
+                                                        [stop.id]: event.target.value,
+                                                    }))
+                                                }
+                                                className="w-full border px-3 py-2 text-sm"
+                                                disabled={statusForm.processing}
+                                            />
+                                            {statusForm.errors.fail_reason && (
+                                                <p className="text-sm text-red-600">
+                                                    {statusForm.errors.fail_reason}
+                                                </p>
+                                            )}
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updateStopStatus(
+                                                            stop.id,
+                                                            'FAILED',
+                                                            failReasons[stop.id] ?? '',
+                                                        )
+                                                    }
+                                                    disabled={statusForm.processing}
+                                                >
+                                                    Save failed status
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => setFailedStopId(null)}
+                                                    disabled={statusForm.processing}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
