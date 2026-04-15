@@ -326,6 +326,48 @@ class RoutePlanningTest extends TestCase
                 ->where('stops.0.proof_view_url', route('proof-of-delivery.show', $proof)));
     }
 
+    public function test_dispatcher_route_details_include_stop_coordinates_for_map(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $address = Address::factory()->create([
+            'organization_id' => $organization->id,
+            'city' => 'Riga',
+            'street' => 'Brivibas iela 1',
+            'lat' => 56.9496,
+            'lng' => 24.1052,
+        ]);
+        $client = Client::factory()->create([
+            'organization_id' => $organization->id,
+        ]);
+        $order = Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'address_id' => $address->id,
+        ]);
+        RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $order->id,
+            'seq_no' => 1,
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.routes.show', $deliveryRoute))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/routes/show')
+                ->where('stops.0.lat', 56.9496)
+                ->where('stops.0.lng', 24.1052)
+                ->where('stops.0.address_label', 'Riga, Brivibas iela 1'));
+    }
+
     public function test_dispatcher_cannot_reorder_route_with_missing_or_foreign_stops(): void
     {
         $organizationA = Organization::factory()->create();

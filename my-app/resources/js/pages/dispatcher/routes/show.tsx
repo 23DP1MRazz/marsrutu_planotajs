@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Head, useForm } from '@inertiajs/react';
+import {
+    LeafletMap,
+    type LeafletMapMarker,
+} from '@/components/dispatcher/leaflet-map';
 import { ResourceShell } from '@/components/dispatcher/resource-shell';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
@@ -64,6 +68,22 @@ export default function DispatcherRoutesShow({
         [orderedStops, stops],
     );
 
+    const mapMarkers = useMemo<LeafletMapMarker[]>(
+        () =>
+            orderedStops
+                .map((stop, index) => ({
+                    id: stop.id,
+                    lat: Number(stop.lat),
+                    lng: Number(stop.lng),
+                    label: `Stop ${index + 1}`,
+                    description: [stop.client_name ?? `Order #${stop.order_id}`, stop.address_label]
+                        .filter(Boolean)
+                        .join(' — '),
+                }))
+                .filter((marker) => Number.isFinite(marker.lat) && Number.isFinite(marker.lng)),
+        [orderedStops],
+    );
+
     const moveStop = (index: number, direction: -1 | 1) => {
         const targetIndex = index + direction;
 
@@ -98,6 +118,11 @@ export default function DispatcherRoutesShow({
                 actionHref="/dispatcher/routes"
                 actionLabel="Back to routes"
             >
+                <LeafletMap
+                    markers={mapMarkers}
+                    emptyMessage="No route stop coordinates available yet."
+                />
+
                 <div className="border p-4">
                     <div className="mb-4 flex items-center justify-between gap-4">
                         <h2 className="font-medium">Stops</h2>

@@ -141,3 +141,21 @@
         @apply bg-background text-foreground;
     }
 }
+
+@layer components {
+    .leaflet-host {
+        background: transparent;
+    }
+
+    .leaflet-host .leaflet-container {
+        height: 100%;
+        width: 100%;
+        background: transparent;
+    }
+
+    .leaflet-host .leaflet-tile,
+    .leaflet-host .leaflet-marker-icon,
+    .leaflet-host .leaflet-marker-shadow {
+        max-width: none !important;
+    }
+}

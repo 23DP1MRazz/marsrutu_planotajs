@@ -84,7 +84,7 @@ class DeliveryRouteController extends Controller
             'routeStops' => fn ($query) => $query->orderBy('seq_no'),
             'routeStops.proofOfDelivery',
             'routeStops.order.client:id,name',
-            'routeStops.order.address:id,city,street',
+            'routeStops.order.address:id,city,street,lat,lng',
         ]);
 
         return Inertia::render('dispatcher/routes/show', [
@@ -103,6 +103,8 @@ class DeliveryRouteController extends Controller
                     $routeStop->order?->address?->city,
                     $routeStop->order?->address?->street,
                 ])->filter()->join(', '),
+                'lat' => $routeStop->order?->address?->lat,
+                'lng' => $routeStop->order?->address?->lng,
             ]),
             'availableOrders' => $this->unassignedOrdersForOrganization($deliveryRoute->organization_id),
         ]);

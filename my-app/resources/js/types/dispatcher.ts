@@ -91,4 +91,6 @@ export type RouteStopRecord = {
     proof_view_url: string | null;
     client_name: string | null;
     address_label: string;
+    lat: number | string | null;
+    lng: number | string | null;
 };
