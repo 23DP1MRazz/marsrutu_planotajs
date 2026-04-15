@@ -82,6 +82,7 @@ class DeliveryRouteController extends Controller
         $deliveryRoute->load([
             'courier.user:id,name',
             'routeStops' => fn ($query) => $query->orderBy('seq_no'),
+            'routeStops.proofOfDelivery',
             'routeStops.order.client:id,name',
             'routeStops.order.address:id,city,street',
         ]);
@@ -94,6 +95,9 @@ class DeliveryRouteController extends Controller
                 'order_id' => $routeStop->order_id,
                 'planned_eta' => $routeStop->planned_eta,
                 'status' => $routeStop->status,
+                'proof_view_url' => $routeStop->proofOfDelivery
+                    ? route('proof-of-delivery.show', $routeStop->proofOfDelivery)
+                    : null,
                 'client_name' => $routeStop->order?->client?->name,
                 'address_label' => collect([
                     $routeStop->order?->address?->city,

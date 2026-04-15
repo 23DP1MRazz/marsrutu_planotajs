@@ -129,7 +129,7 @@ class CourierRouteController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, array{id: int, seq_no: int, order_id: int, planned_eta: mixed, arrived_at: mixed, completed_at: mixed, status: string, fail_reason: string|null, proof_file_url: string|null, client_name: string|null, address_label: string}>
+     * @return \Illuminate\Support\Collection<int, array{id: int, seq_no: int, order_id: int, planned_eta: mixed, arrived_at: mixed, completed_at: mixed, status: string, fail_reason: string|null, proof_file_url: string|null, proof_view_url: string|null, client_name: string|null, address_label: string}>
      */
     private function formatStops(DeliveryRoute $deliveryRoute)
     {
@@ -143,6 +143,9 @@ class CourierRouteController extends Controller
             'status' => $routeStop->status,
             'fail_reason' => $routeStop->fail_reason,
             'proof_file_url' => $routeStop->proofOfDelivery?->file_url,
+            'proof_view_url' => $routeStop->proofOfDelivery
+                ? route('proof-of-delivery.show', $routeStop->proofOfDelivery)
+                : null,
             'client_name' => $routeStop->order?->client?->name,
             'address_label' => collect([
                 $routeStop->order?->address?->city,

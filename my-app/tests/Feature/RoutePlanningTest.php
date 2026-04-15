@@ -8,6 +8,7 @@ use App\Models\Courier;
 use App\Models\DeliveryRoute;
 use App\Models\Order;
 use App\Models\Organization;
+use App\Models\ProofOfDelivery;
 use App\Models\RouteStop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -289,6 +290,40 @@ class RoutePlanningTest extends TestCase
             'seq_no' => 2,
             'planned_eta' => '2026-04-15 09:00:00',
         ]);
+    }
+
+    public function test_dispatcher_can_see_proof_of_delivery_link_on_route_details(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $order = $this->createOrder($organization);
+        $routeStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $order->id,
+            'seq_no' => 1,
+        ]);
+
+        $proof = ProofOfDelivery::query()->create([
+            'organization_id' => $organization->id,
+            'route_stop_id' => $routeStop->id,
+            'type' => 'PHOTO',
+            'file_url' => '/storage/proof-of-delivery/proof.jpg',
+            'taken_at' => '2026-04-15 10:00:00',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.routes.show', $deliveryRoute))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/routes/show')
+                ->where('stops.0.proof_view_url', route('proof-of-delivery.show', $proof)));
     }
 
     public function test_dispatcher_cannot_reorder_route_with_missing_or_foreign_stops(): void

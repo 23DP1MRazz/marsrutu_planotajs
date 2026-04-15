@@ -17,7 +17,23 @@ class ProofOfDeliveryPolicy
 
     public function view(User $user, ProofOfDelivery $proofOfDelivery): bool
     {
-        return $this->canViewOrganizationResource($user, $proofOfDelivery);
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if ($user->isDispatcher()) {
+            return $this->canViewOrganizationResource($user, $proofOfDelivery);
+        }
+
+        if (! $user->isCourier()) {
+            return false;
+        }
+
+        $proofOfDelivery->loadMissing('routeStop.route');
+
+        return $this->canViewOrganizationResource($user, $proofOfDelivery)
+            && $proofOfDelivery->routeStop?->route !== null
+            && (int) $proofOfDelivery->routeStop->route->courier_user_id === (int) $user->id;
     }
 
     public function create(User $user): bool
@@ -35,4 +51,3 @@ class ProofOfDeliveryPolicy
         return $this->canManageOrganizationResource($user, $proofOfDelivery);
     }
 }
-

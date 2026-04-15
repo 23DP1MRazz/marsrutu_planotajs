@@ -5,6 +5,7 @@ use App\Http\Controllers\Dispatcher\AddressController;
 use App\Http\Controllers\Dispatcher\ClientController;
 use App\Http\Controllers\Dispatcher\DeliveryRouteController;
 use App\Http\Controllers\Dispatcher\OrderController;
+use App\Http\Controllers\ProofOfDeliveryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -19,6 +20,10 @@ Route::get('/', function () {
 Route::get('dashboard', function () {
     return Inertia::render('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('proof-of-delivery/{proofOfDelivery}', [ProofOfDeliveryController::class, 'show'])
+    ->middleware(['auth', 'verified'])
+    ->name('proof-of-delivery.show');
 
 Route::middleware(['auth', 'verified'])
     ->prefix('dispatcher')

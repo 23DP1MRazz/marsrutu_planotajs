@@ -127,11 +127,11 @@ export default function CourierRoutePage({
                                         {stop.fail_reason && (
                                             <p>Fail reason: {stop.fail_reason}</p>
                                         )}
-                                        {stop.proof_file_url && (
+                                        {stop.proof_view_url && (
                                             <p>
                                                 Proof uploaded:{' '}
                                                 <a
-                                                    href={stop.proof_file_url}
+                                                    href={stop.proof_view_url}
                                                     className="underline"
                                                     target="_blank"
                                                     rel="noreferrer"

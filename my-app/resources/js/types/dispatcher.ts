@@ -88,6 +88,7 @@ export type RouteStopRecord = {
     order_id: number;
     planned_eta: string | null;
     status: string;
+    proof_view_url: string | null;
     client_name: string | null;
     address_label: string;
 };

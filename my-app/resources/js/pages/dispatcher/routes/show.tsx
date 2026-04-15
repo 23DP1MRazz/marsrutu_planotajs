@@ -152,6 +152,19 @@ export default function DispatcherRoutesShow({
                                         <p className="text-muted-foreground">
                                             Status: {stop.status}
                                         </p>
+                                        {stop.proof_view_url && (
+                                            <p>
+                                                Proof of delivery:{' '}
+                                                <a
+                                                    href={stop.proof_view_url}
+                                                    className="underline"
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    Open file
+                                                </a>
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="flex gap-2">

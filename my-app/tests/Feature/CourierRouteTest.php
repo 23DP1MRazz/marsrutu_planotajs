@@ -299,6 +299,98 @@ class CourierRouteTest extends TestCase
         );
     }
 
+    public function test_dispatcher_can_view_proof_for_route_in_same_organization(): void
+    {
+        Storage::fake('public');
+
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $stop = $this->createRouteStop($organization, $deliveryRoute, [
+            'status' => 'COMPLETED',
+        ]);
+
+        $path = UploadedFile::fake()->image('proof.jpg')->store('proof-of-delivery', 'public');
+
+        $proof = ProofOfDelivery::query()->create([
+            'organization_id' => $organization->id,
+            'route_stop_id' => $stop->id,
+            'type' => 'PHOTO',
+            'file_url' => 'http://localhost:8000/'.ltrim(Storage::disk('public')->url($path), '/'),
+            'taken_at' => '2026-04-15 10:00:00',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('proof-of-delivery.show', $proof))
+            ->assertOk();
+    }
+
+    public function test_courier_can_view_own_proof_file(): void
+    {
+        Storage::fake('public');
+
+        $organization = Organization::factory()->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $stop = $this->createRouteStop($organization, $deliveryRoute, [
+            'status' => 'COMPLETED',
+        ]);
+
+        $path = UploadedFile::fake()->image('proof.jpg')->store('proof-of-delivery', 'public');
+
+        $proof = ProofOfDelivery::query()->create([
+            'organization_id' => $organization->id,
+            'route_stop_id' => $stop->id,
+            'type' => 'PHOTO',
+            'file_url' => Storage::disk('public')->url($path),
+            'taken_at' => '2026-04-15 10:00:00',
+        ]);
+
+        $this->actingAs($courier)
+            ->get(route('proof-of-delivery.show', $proof))
+            ->assertOk();
+    }
+
+    public function test_courier_cannot_view_another_couriers_proof_file(): void
+    {
+        Storage::fake('public');
+
+        $organization = Organization::factory()->create();
+        $courierA = $this->createCourier($organization);
+        $courierB = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courierB->id,
+            'date' => '2026-04-15',
+        ]);
+        $stop = $this->createRouteStop($organization, $deliveryRoute, [
+            'status' => 'COMPLETED',
+        ]);
+
+        $path = UploadedFile::fake()->image('proof.jpg')->store('proof-of-delivery', 'public');
+
+        $proof = ProofOfDelivery::query()->create([
+            'organization_id' => $organization->id,
+            'route_stop_id' => $stop->id,
+            'type' => 'PHOTO',
+            'file_url' => Storage::disk('public')->url($path),
+            'taken_at' => '2026-04-15 10:00:00',
+        ]);
+
+        $this->actingAs($courierA)
+            ->get(route('proof-of-delivery.show', $proof))
+            ->assertForbidden();
+    }
+
     public function test_courier_cannot_upload_proof_for_another_couriers_stop(): void
     {
         Storage::fake('public');
