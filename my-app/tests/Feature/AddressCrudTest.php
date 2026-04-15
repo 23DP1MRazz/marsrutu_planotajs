@@ -6,6 +6,7 @@ use App\Models\Address;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -71,6 +72,73 @@ class AddressCrudTest extends TestCase
 
         $this->assertDatabaseMissing('addresses', [
             'id' => $address->id,
+        ]);
+    }
+
+    public function test_address_store_geocodes_coordinates_when_dispatcher_does_not_provide_them(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                [
+                    'lat' => '56.9496',
+                    'lon' => '24.1052',
+                ],
+            ]),
+        ]);
+
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+
+        $this->actingAs($dispatcher)
+            ->post(route('dispatcher.addresses.store'), [
+                'city' => 'Riga',
+                'street' => 'Brivibas iela 1',
+            ])
+            ->assertRedirect(route('dispatcher.addresses.index'));
+
+        $this->assertDatabaseHas('addresses', [
+            'organization_id' => $organization->id,
+            'city' => 'Riga',
+            'street' => 'Brivibas iela 1',
+            'lat' => 56.9496,
+            'lng' => 24.1052,
+        ]);
+    }
+
+    public function test_address_update_geocodes_new_coordinates_when_address_changes_without_manual_values(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                [
+                    'lat' => '56.6510',
+                    'lon' => '23.7210',
+                ],
+            ]),
+        ]);
+
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $address = Address::factory()->create([
+            'organization_id' => $organization->id,
+            'city' => 'Riga',
+            'street' => 'Brivibas iela 1',
+            'lat' => 56.95,
+            'lng' => 24.10,
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->patch(route('dispatcher.addresses.update', $address), [
+                'city' => 'Jelgava',
+                'street' => 'Liela iela 5',
+            ])
+            ->assertRedirect(route('dispatcher.addresses.index'));
+
+        $this->assertDatabaseHas('addresses', [
+            'id' => $address->id,
+            'city' => 'Jelgava',
+            'street' => 'Liela iela 5',
+            'lat' => 56.6510,
+            'lng' => 23.7210,
         ]);
     }
 
@@ -174,5 +242,21 @@ class AddressCrudTest extends TestCase
             ])
             ->assertRedirect(route('dispatcher.addresses.create'))
             ->assertSessionHasErrors(['city', 'street', 'lat', 'lng']);
+    }
+
+    public function test_address_validation_requires_manual_coordinates_in_pairs(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.addresses.create'))
+            ->post(route('dispatcher.addresses.store'), [
+                'city' => 'Riga',
+                'street' => 'Brivibas iela 1',
+                'lat' => 56.95,
+            ])
+            ->assertRedirect(route('dispatcher.addresses.create'))
+            ->assertSessionHasErrors(['lng']);
     }
 }

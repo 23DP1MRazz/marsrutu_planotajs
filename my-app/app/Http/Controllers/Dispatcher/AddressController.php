@@ -7,6 +7,7 @@ use App\Http\Requests\Dispatcher\StoreAddressRequest;
 use App\Http\Requests\Dispatcher\UpdateAddressRequest;
 use App\Models\Address;
 use App\Models\Organization;
+use App\Services\Geocoding\NominatimGeocoder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -39,10 +40,11 @@ class AddressController extends Controller
         ]);
     }
 
-    public function store(StoreAddressRequest $request): RedirectResponse
+    public function store(StoreAddressRequest $request, NominatimGeocoder $geocoder): RedirectResponse
     {
         $this->authorizeDispatcherAccess($request);
         $data = $request->validated();
+        $coordinates = $this->resolveCoordinates($data, $geocoder);
 
         Address::query()->create([
             'organization_id' => $request->user()->isAdmin()
@@ -50,8 +52,8 @@ class AddressController extends Controller
                 : $request->user()->organization_id,
             'city' => $data['city'],
             'street' => $data['street'],
-            'lat' => $data['lat'] ?? null,
-            'lng' => $data['lng'] ?? null,
+            'lat' => $coordinates['lat'],
+            'lng' => $coordinates['lng'],
         ]);
 
         return to_route('dispatcher.addresses.index');
@@ -70,10 +72,14 @@ class AddressController extends Controller
         ]);
     }
 
-    public function update(UpdateAddressRequest $request, Address $address): RedirectResponse
-    {
+    public function update(
+        UpdateAddressRequest $request,
+        Address $address,
+        NominatimGeocoder $geocoder,
+    ): RedirectResponse {
         $this->authorizeDispatcherAccess($request);
         $data = $request->validated();
+        $coordinates = $this->resolveCoordinates($data, $geocoder, $address);
 
         $address->update([
             'organization_id' => $request->user()->isAdmin()
@@ -81,8 +87,8 @@ class AddressController extends Controller
                 : $address->organization_id,
             'city' => $data['city'],
             'street' => $data['street'],
-            'lat' => $data['lat'] ?? null,
-            'lng' => $data['lng'] ?? null,
+            'lat' => $coordinates['lat'],
+            'lng' => $coordinates['lng'],
         ]);
 
         return to_route('dispatcher.addresses.index');
@@ -122,5 +128,40 @@ class AddressController extends Controller
             $request->user()?->isAdmin() || $request->user()?->isDispatcher(),
             403,
         );
+    }
+
+    /**
+     * @param  array{city: string, street: string, lat?: mixed, lng?: mixed}  $data
+     * @return array{lat: float|int|string|null, lng: float|int|string|null}
+     */
+    private function resolveCoordinates(
+        array $data,
+        NominatimGeocoder $geocoder,
+        ?Address $address = null,
+    ): array {
+        if (($data['lat'] ?? null) !== null && ($data['lng'] ?? null) !== null) {
+            return [
+                'lat' => $data['lat'],
+                'lng' => $data['lng'],
+            ];
+        }
+
+        $addressChanged = $address === null
+            || $address->city !== $data['city']
+            || $address->street !== $data['street'];
+
+        if (! $addressChanged && $address !== null) {
+            return [
+                'lat' => $address->lat,
+                'lng' => $address->lng,
+            ];
+        }
+
+        $coordinates = $geocoder->geocode($data['city'], $data['street']);
+
+        return [
+            'lat' => $coordinates['lat'] ?? null,
+            'lng' => $coordinates['lng'] ?? null,
+        ];
     }
 }

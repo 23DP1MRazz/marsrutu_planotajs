@@ -26,8 +26,8 @@ class StoreAddressRequest extends FormRequest
             'organization_id' => $organizationRules,
             'city' => ['required', 'string', 'max:100'],
             'street' => ['required', 'string', 'max:255'],
-            'lat' => ['nullable', 'numeric', 'between:-90,90'],
-            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'lat' => ['nullable', 'numeric', 'between:-90,90', 'required_with:lng'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180', 'required_with:lat'],
         ];
     }
 }
