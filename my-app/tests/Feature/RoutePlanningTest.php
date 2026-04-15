@@ -11,12 +11,20 @@ use App\Models\Organization;
 use App\Models\RouteStop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class RoutePlanningTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Carbon::setTestNow('2026-04-15 09:00:00');
+    }
 
     public function test_dispatcher_can_create_route_and_assign_orders(): void
     {
@@ -214,6 +222,19 @@ class RoutePlanningTest extends TestCase
         $this->actingAs($dispatcher)
             ->get(route('dispatcher.routes.show', $routeB))
             ->assertForbidden();
+    }
+
+    public function test_route_create_page_defaults_date_to_today(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.routes.create'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/routes/create')
+                ->where('todayDate', '2026-04-15'));
     }
 
     public function test_dispatcher_can_reorder_stops_for_own_route(): void

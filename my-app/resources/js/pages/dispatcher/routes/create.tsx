@@ -22,6 +22,7 @@ type DispatcherRoutesCreateProps = {
     couriers: CourierOption[];
     orders: AssignableOrder[];
     canSelectOrganization: boolean;
+    todayDate: string;
 };
 
 export default function DispatcherRoutesCreate({
@@ -29,13 +30,14 @@ export default function DispatcherRoutesCreate({
     couriers,
     orders,
     canSelectOrganization,
+    todayDate,
 }: DispatcherRoutesCreateProps) {
     const form = useForm({
         organization_id: canSelectOrganization && organizations[0]?.id
             ? String(organizations[0].id)
             : '',
         courier_user_id: couriers[0]?.id ? String(couriers[0].id) : '',
-        date: '',
+        date: todayDate,
         order_ids: [] as number[],
     });
 

@@ -22,9 +22,13 @@ export default function CourierRoutePage({
 }: CourierRoutePageProps) {
     const [failedStopId, setFailedStopId] = useState<number | null>(null);
     const [failReasons, setFailReasons] = useState<Record<number, string>>({});
+    const [selectedProofFiles, setSelectedProofFiles] = useState<Record<number, File | null>>({});
     const statusForm = useForm({
         status: '',
         fail_reason: '',
+    });
+    const proofForm = useForm({
+        file: null as File | null,
     });
 
     const updateStopStatus = (
@@ -46,6 +50,30 @@ export default function CourierRoutePage({
                     [stopId]: '',
                 }));
                 statusForm.reset();
+            },
+        });
+    };
+
+    const uploadProof = (stopId: number) => {
+        const selectedFile = selectedProofFiles[stopId];
+
+        if (!selectedFile) {
+            return;
+        }
+
+        proofForm.transform(() => ({
+            file: selectedFile,
+        }));
+
+        proofForm.post(`/courier/stops/${stopId}/proof`, {
+            preserveScroll: true,
+            forceFormData: true,
+            onSuccess: () => {
+                setSelectedProofFiles((currentFiles) => ({
+                    ...currentFiles,
+                    [stopId]: null,
+                }));
+                proofForm.reset();
             },
         });
     };
@@ -98,6 +126,19 @@ export default function CourierRoutePage({
                                         <p>Status: {stop.status}</p>
                                         {stop.fail_reason && (
                                             <p>Fail reason: {stop.fail_reason}</p>
+                                        )}
+                                        {stop.proof_file_url && (
+                                            <p>
+                                                Proof uploaded:{' '}
+                                                <a
+                                                    href={stop.proof_file_url}
+                                                    className="underline"
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    Open file
+                                                </a>
+                                            </p>
                                         )}
                                     </div>
 
@@ -187,6 +228,47 @@ export default function CourierRoutePage({
                                             </div>
                                         </div>
                                     )}
+
+                                    {!stop.proof_file_url
+                                        && ['COMPLETED', 'FAILED'].includes(stop.status) && (
+                                            <div className="mt-4 space-y-2">
+                                                <label
+                                                    htmlFor={`proof-file-${stop.id}`}
+                                                    className="block text-sm"
+                                                >
+                                                    Upload proof photo
+                                                </label>
+                                                <input
+                                                    id={`proof-file-${stop.id}`}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    capture="environment"
+                                                    onChange={(event) =>
+                                                        setSelectedProofFiles((currentFiles) => ({
+                                                            ...currentFiles,
+                                                            [stop.id]: event.target.files?.[0] ?? null,
+                                                        }))
+                                                    }
+                                                    className="block w-full text-sm"
+                                                    disabled={proofForm.processing}
+                                                />
+                                                {proofForm.errors.file && (
+                                                    <p className="text-sm text-red-600">
+                                                        {proofForm.errors.file}
+                                                    </p>
+                                                )}
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => uploadProof(stop.id)}
+                                                    disabled={
+                                                        proofForm.processing
+                                                        || !selectedProofFiles[stop.id]
+                                                    }
+                                                >
+                                                    Upload proof
+                                                </Button>
+                                            </div>
+                                        )}
                                 </div>
                             ))}
                         </div>

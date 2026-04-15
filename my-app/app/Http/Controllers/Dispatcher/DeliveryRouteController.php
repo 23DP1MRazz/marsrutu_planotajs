@@ -46,6 +46,7 @@ class DeliveryRouteController extends Controller
             'couriers' => $this->couriersForUser($request),
             'orders' => $this->unassignedOrdersForUser($request),
             'canSelectOrganization' => $request->user()->isAdmin(),
+            'todayDate' => Carbon::today()->toDateString(),
         ]);
     }
 

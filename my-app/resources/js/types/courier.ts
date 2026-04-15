@@ -15,6 +15,7 @@ export type CourierRouteStopRecord = {
     completed_at: string | null;
     status: string;
     fail_reason: string | null;
+    proof_file_url: string | null;
     client_name: string | null;
     address_label: string;
 };
