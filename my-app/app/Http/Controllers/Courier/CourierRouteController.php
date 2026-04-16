@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -21,14 +22,12 @@ class CourierRouteController extends Controller
 {
     public function showPage(Request $request): Response
     {
-        $this->authorizeCourierAccess($request);
+        return $this->renderRoutePage($request, false);
+    }
 
-        $deliveryRoute = $this->todayRouteForUser($request);
-
-        return Inertia::render('courier/route', [
-            'deliveryRoute' => $deliveryRoute ? $this->formatRoute($deliveryRoute) : null,
-            'stops' => $deliveryRoute ? $this->formatStops($deliveryRoute) : [],
-        ]);
+    public function showDashboard(Request $request): Response
+    {
+        return $this->renderRoutePage($request, true);
     }
 
     public function showToday(Request $request): JsonResponse
@@ -69,7 +68,7 @@ class CourierRouteController extends Controller
             $this->refreshRouteStatus($routeStop->route);
         });
 
-        return to_route('courier.route.page');
+        return to_route('dashboard');
     }
 
     public function uploadProof(
@@ -96,7 +95,20 @@ class CourierRouteController extends Controller
             'taken_at' => Carbon::now(),
         ]);
 
-        return to_route('courier.route.page');
+        return to_route('dashboard');
+    }
+
+    private function renderRoutePage(Request $request, bool $dashboardMode): Response
+    {
+        $this->authorizeCourierAccess($request);
+
+        $deliveryRoute = $this->todayRouteForUser($request);
+
+        return Inertia::render('courier/route', [
+            'deliveryRoute' => $deliveryRoute ? $this->formatRoute($deliveryRoute) : null,
+            'stops' => $deliveryRoute ? $this->formatStops($deliveryRoute) : [],
+            'dashboardMode' => $dashboardMode,
+        ]);
     }
 
     private function todayRouteForUser(Request $request): ?DeliveryRoute
@@ -106,7 +118,7 @@ class CourierRouteController extends Controller
                 'routeStops' => fn ($query) => $query->orderBy('seq_no'),
                 'routeStops.proofOfDelivery',
                 'routeStops.order.client:id,name',
-                'routeStops.order.address:id,city,street',
+                'routeStops.order.address:id,city,street,lat,lng',
             ])
             ->where('organization_id', $request->user()->organization_id)
             ->where('courier_user_id', $request->user()->id)
@@ -129,7 +141,7 @@ class CourierRouteController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, array{id: int, seq_no: int, order_id: int, planned_eta: mixed, arrived_at: mixed, completed_at: mixed, status: string, fail_reason: string|null, proof_file_url: string|null, proof_view_url: string|null, client_name: string|null, address_label: string}>
+     * @return Collection<int, array{id: int, seq_no: int, order_id: int, planned_eta: mixed, arrived_at: mixed, completed_at: mixed, status: string, fail_reason: string|null, proof_file_url: string|null, proof_view_url: string|null, client_name: string|null, address_label: string, lat: float|null, lng: float|null, google_maps_url: string, waze_url: string}>
      */
     private function formatStops(DeliveryRoute $deliveryRoute)
     {
@@ -151,7 +163,52 @@ class CourierRouteController extends Controller
                 $routeStop->order?->address?->city,
                 $routeStop->order?->address?->street,
             ])->filter()->join(', '),
+            'lat' => $routeStop->order?->address?->lat !== null
+                ? (float) $routeStop->order->address->lat
+                : null,
+            'lng' => $routeStop->order?->address?->lng !== null
+                ? (float) $routeStop->order->address->lng
+                : null,
+            'google_maps_url' => $this->googleMapsUrlForStop($routeStop),
+            'waze_url' => $this->wazeUrlForStop($routeStop),
         ]);
+    }
+
+    private function googleMapsUrlForStop(RouteStop $routeStop): string
+    {
+        $address = $routeStop->order?->address;
+
+        if ($address?->lat !== null && $address->lng !== null) {
+            return 'https://www.google.com/maps/search/?api=1&query='
+                .rawurlencode((string) $address->lat.','.(string) $address->lng);
+        }
+
+        return 'https://www.google.com/maps/search/?api=1&query='
+            .rawurlencode($this->addressQueryForStop($routeStop));
+    }
+
+    private function wazeUrlForStop(RouteStop $routeStop): string
+    {
+        $address = $routeStop->order?->address;
+
+        if ($address?->lat !== null && $address->lng !== null) {
+            return 'https://waze.com/ul?ll='
+                .rawurlencode((string) $address->lat.','.(string) $address->lng)
+                .'&navigate=yes';
+        }
+
+        return 'https://waze.com/ul?q='
+            .rawurlencode($this->addressQueryForStop($routeStop))
+            .'&navigate=yes';
+    }
+
+    private function addressQueryForStop(RouteStop $routeStop): string
+    {
+        return collect([
+            $routeStop->order?->address?->street,
+            $routeStop->order?->address?->city,
+            'Latvia',
+        ])->filter()->join(', ');
     }
 
     private function applyStopStatus(

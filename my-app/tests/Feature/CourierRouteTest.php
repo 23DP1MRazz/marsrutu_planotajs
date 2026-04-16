@@ -52,7 +52,42 @@ class CourierRouteTest extends TestCase
             ->assertOk()
             ->assertJsonPath('deliveryRoute.id', $todayRoute->id)
             ->assertJsonPath('stops.0.id', $stop->id)
-            ->assertJsonPath('stops.0.status', 'PENDING');
+            ->assertJsonPath('stops.0.status', 'PENDING')
+            ->assertJsonPath('stops.0.google_maps_url', 'https://www.google.com/maps/search/?api=1&query='.rawurlencode((string) $stop->order->address->lat.','.(string) $stop->order->address->lng))
+            ->assertJsonPath('stops.0.waze_url', 'https://waze.com/ul?ll='.rawurlencode((string) $stop->order->address->lat.','.(string) $stop->order->address->lng).'&navigate=yes');
+    }
+
+    public function test_courier_route_payload_falls_back_to_address_text_for_navigation_links(): void
+    {
+        $organization = Organization::factory()->create();
+        $courier = $this->createCourier($organization);
+        $todayRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $stop = $this->createRouteStop($organization, $todayRoute);
+
+        $stop->order->address->update([
+            'lat' => null,
+            'lng' => null,
+            'city' => 'Riga',
+            'street' => 'Brivibas iela 1',
+        ]);
+
+        $fallbackQuery = rawurlencode('Brivibas iela 1, Riga, Latvia');
+
+        $this->actingAs($courier)
+            ->get(route('courier.route.show'))
+            ->assertOk()
+            ->assertJsonPath(
+                'stops.0.google_maps_url',
+                'https://www.google.com/maps/search/?api=1&query='.$fallbackQuery,
+            )
+            ->assertJsonPath(
+                'stops.0.waze_url',
+                'https://waze.com/ul?q='.$fallbackQuery.'&navigate=yes',
+            );
     }
 
     public function test_courier_gets_empty_payload_when_no_route_exists_for_today(): void
@@ -92,7 +127,7 @@ class CourierRouteTest extends TestCase
             ->patch(route('courier.stops.update', $firstStop), [
                 'status' => 'ARRIVED',
             ])
-            ->assertRedirect(route('courier.route.page'));
+            ->assertRedirect(route('dashboard'));
 
         $this->assertDatabaseHas('route_stops', [
             'id' => $firstStop->id,
@@ -108,13 +143,13 @@ class CourierRouteTest extends TestCase
             ->patch(route('courier.stops.update', $firstStop), [
                 'status' => 'COMPLETED',
             ])
-            ->assertRedirect(route('courier.route.page'));
+            ->assertRedirect(route('dashboard'));
 
         $this->actingAs($courier)
             ->patch(route('courier.stops.update', $secondStop), [
                 'status' => 'COMPLETED',
             ])
-            ->assertRedirect(route('courier.route.page'));
+            ->assertRedirect(route('dashboard'));
 
         $this->assertDatabaseHas('route_stops', [
             'id' => $firstStop->id,
@@ -169,7 +204,7 @@ class CourierRouteTest extends TestCase
                 'status' => 'FAILED',
                 'fail_reason' => 'Customer not at address',
             ])
-            ->assertRedirect(route('courier.route.page'));
+            ->assertRedirect(route('dashboard'));
 
         $this->assertDatabaseHas('route_stops', [
             'id' => $stop->id,
@@ -287,7 +322,7 @@ class CourierRouteTest extends TestCase
             ->post(route('courier.stops.proof.store', $stop), [
                 'file' => UploadedFile::fake()->image('proof.jpg'),
             ])
-            ->assertRedirect(route('courier.route.page'));
+            ->assertRedirect(route('dashboard'));
 
         $proof = ProofOfDelivery::query()->where('route_stop_id', $stop->id)->first();
 
@@ -438,11 +473,11 @@ class CourierRouteTest extends TestCase
         ]);
 
         $this->actingAs($courier)
-            ->from(route('courier.route.page'))
+            ->from(route('dashboard'))
             ->post(route('courier.stops.proof.store', $stop), [
                 'file' => UploadedFile::fake()->image('proof.jpg'),
             ])
-            ->assertRedirect(route('courier.route.page'))
+            ->assertRedirect(route('dashboard'))
             ->assertSessionHasErrors(['file']);
     }
 
@@ -462,11 +497,11 @@ class CourierRouteTest extends TestCase
         ]);
 
         $this->actingAs($courier)
-            ->from(route('courier.route.page'))
+            ->from(route('dashboard'))
             ->post(route('courier.stops.proof.store', $stop), [
                 'file' => UploadedFile::fake()->create('proof.pdf', 100, 'application/pdf'),
             ])
-            ->assertRedirect(route('courier.route.page'))
+            ->assertRedirect(route('dashboard'))
             ->assertSessionHasErrors(['file']);
     }
 
@@ -486,11 +521,11 @@ class CourierRouteTest extends TestCase
         ]);
 
         $this->actingAs($courier)
-            ->from(route('courier.route.page'))
+            ->from(route('dashboard'))
             ->post(route('courier.stops.proof.store', $stop), [
                 'file' => UploadedFile::fake()->image('proof.jpg'),
             ])
-            ->assertRedirect(route('courier.route.page'))
+            ->assertRedirect(route('dashboard'))
             ->assertSessionHasErrors(['file']);
     }
 

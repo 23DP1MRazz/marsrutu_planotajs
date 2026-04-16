@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ClipboardList, Folder, LayoutGrid, MapPinned, Route, Truck, Users } from 'lucide-react';
+import { BookOpen, ClipboardList, Folder, LayoutGrid, MapPinned, Route, Users } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -33,8 +33,6 @@ export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
     const canUseDispatcherPages =
         auth.user.role === 'admin' || auth.user.role === 'dispatcher';
-    const canUseCourierPages = auth.user.role === 'courier';
-
     const mainNavItems: NavItem[] = [
         {
             title: 'Dashboard',
@@ -62,15 +60,6 @@ export function AppSidebar() {
                       title: 'Routes',
                       href: '/dispatcher/routes',
                       icon: Route,
-                  },
-              ]
-            : []),
-        ...(canUseCourierPages
-            ? [
-                  {
-                      title: 'Today route',
-                      href: '/courier/today-route',
-                      icon: Truck,
                   },
               ]
             : []),

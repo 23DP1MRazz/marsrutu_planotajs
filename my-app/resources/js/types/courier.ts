@@ -19,4 +19,8 @@ export type CourierRouteStopRecord = {
     proof_view_url: string | null;
     client_name: string | null;
     address_label: string;
+    lat: number | null;
+    lng: number | null;
+    google_maps_url: string;
+    waze_url: string;
 };

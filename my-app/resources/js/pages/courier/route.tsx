@@ -1,5 +1,10 @@
 import { Head, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { CheckCircle2, MapPinned, Navigation, Upload, XCircle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import {
+    LeafletMap,
+    type LeafletMapMarker,
+} from '@/components/dispatcher/leaflet-map';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
@@ -9,16 +14,13 @@ import type { BreadcrumbItem } from '@/types';
 type CourierRoutePageProps = {
     deliveryRoute: CourierRouteRecord | null;
     stops: CourierRouteStopRecord[];
+    dashboardMode?: boolean;
 };
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Today route', href: '/courier/today-route' },
-];
 
 export default function CourierRoutePage({
     deliveryRoute,
     stops,
+    dashboardMode = false,
 }: CourierRoutePageProps) {
     const [failedStopId, setFailedStopId] = useState<number | null>(null);
     const [failReasons, setFailReasons] = useState<Record<number, string>>({});
@@ -30,6 +32,22 @@ export default function CourierRoutePage({
     const proofForm = useForm({
         file: null as File | null,
     });
+
+    const routeMarkers = useMemo<LeafletMapMarker[]>(
+        () =>
+            stops
+                .filter((stop) => stop.lat !== null && stop.lng !== null)
+                .map((stop) => ({
+                    id: stop.id,
+                    lat: stop.lat ?? 0,
+                    lng: stop.lng ?? 0,
+                    label: `Stop ${stop.seq_no}`,
+                    description: [stop.client_name ?? `Order #${stop.order_id}`, stop.address_label]
+                        .filter(Boolean)
+                        .join(' — '),
+                })),
+        [stops],
+    );
 
     const updateStopStatus = (
         stopId: number,
@@ -78,61 +96,94 @@ export default function CourierRoutePage({
         });
     };
 
+    const breadcrumbs: BreadcrumbItem[] = dashboardMode
+        ? [{ title: 'Dashboard', href: '/dashboard' }]
+        : [
+              { title: 'Dashboard', href: '/dashboard' },
+              { title: 'Today route', href: '/courier/today-route' },
+          ];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Today route" />
+            <Head title={dashboardMode ? 'Dashboard' : 'Today route'} />
 
-            <div className="flex flex-1 flex-col gap-6 p-4">
-                <div className="flex items-start justify-between border p-4">
-                    <div>
-                        <h1 className="text-lg font-semibold">Today route</h1>
-                        <p className="text-sm text-muted-foreground">
-                            View your assigned stops and update delivery progress.
-                        </p>
-                    </div>
+            <div className="flex flex-1 flex-col gap-4 p-3 sm:gap-6 sm:p-4">
+                <div className="rounded-3xl border border-border/80 bg-card/90 p-4 shadow-sm sm:p-6">
+                    <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                        {dashboardMode ? 'Courier dashboard' : 'Today route'}
+                    </h1>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Open directions fast, update delivery progress, and capture proof from
+                        your phone.
+                    </p>
                 </div>
 
                 {deliveryRoute === null ? (
-                    <div className="border p-4">
+                    <div className="rounded-3xl border border-dashed border-border/80 bg-card/60 p-6 text-center">
                         <p className="text-sm text-muted-foreground">
                             No route is assigned to you for today.
                         </p>
                     </div>
                 ) : (
                     <>
-                        <div className="border p-4 text-sm">
-                            <p>
-                                <span className="font-medium">Date:</span>{' '}
-                                {formatShortDate(deliveryRoute.date)}
-                            </p>
-                            <p>
-                                <span className="font-medium">Status:</span>{' '}
-                                {deliveryRoute.status}
-                            </p>
-                            <p>
-                                <span className="font-medium">Stops:</span> {stops.length}
-                            </p>
+                        <div className="grid gap-3 sm:grid-cols-3">
+                            <SummaryCard
+                                label="Date"
+                                value={formatShortDate(deliveryRoute.date)}
+                            />
+                            <SummaryCard
+                                label="Route status"
+                                value={deliveryRoute.status}
+                            />
+                            <SummaryCard
+                                label="Total stops"
+                                value={String(stops.length)}
+                            />
                         </div>
 
-                        <div className="space-y-3">
+                        <LeafletMap
+                            markers={routeMarkers}
+                            heightClassName="h-64 sm:h-80"
+                            emptyMessage="No saved coordinates for today’s stops yet."
+                        />
+
+                        <div className="space-y-4">
                             {stops.map((stop) => (
-                                <div key={stop.id} className="border p-4">
-                                    <div className="space-y-1 text-sm">
-                                        <p className="font-medium">
-                                            Stop {stop.seq_no} — Order #{stop.order_id}
+                                <section
+                                    key={stop.id}
+                                    className="rounded-3xl border border-border/80 bg-card/90 p-4 shadow-sm sm:p-5"
+                                >
+                                    <div className="space-y-2">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                                                    Stop {stop.seq_no}
+                                                </p>
+                                                <p className="mt-1 text-base font-semibold">
+                                                    {stop.client_name ?? `Order #${stop.order_id}`}
+                                                </p>
+                                            </div>
+                                            <span className="rounded-full border border-border/80 px-3 py-1 text-xs font-medium">
+                                                {stop.status}
+                                            </span>
+                                        </div>
+
+                                        <p className="text-sm text-muted-foreground">
+                                            {stop.address_label || '-'}
                                         </p>
-                                        <p>{stop.client_name ?? '-'}</p>
-                                        <p>{stop.address_label || '-'}</p>
-                                        <p>Status: {stop.status}</p>
+
                                         {stop.fail_reason && (
-                                            <p>Fail reason: {stop.fail_reason}</p>
+                                            <p className="text-sm text-red-600">
+                                                Fail reason: {stop.fail_reason}
+                                            </p>
                                         )}
+
                                         {stop.proof_view_url && (
-                                            <p>
+                                            <p className="text-sm">
                                                 Proof uploaded:{' '}
                                                 <a
                                                     href={stop.proof_view_url}
-                                                    className="underline"
+                                                    className="underline underline-offset-4"
                                                     target="_blank"
                                                     rel="noreferrer"
                                                 >
@@ -142,30 +193,64 @@ export default function CourierRoutePage({
                                         )}
                                     </div>
 
-                                    <div className="mt-4 flex flex-wrap gap-2">
+                                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                                        <Button
+                                            asChild
+                                            type="button"
+                                            variant="outline"
+                                            className="h-11 justify-start rounded-2xl"
+                                        >
+                                            <a
+                                                href={stop.google_maps_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                <MapPinned className="size-4" />
+                                                Open in Google Maps
+                                            </a>
+                                        </Button>
+                                        <Button
+                                            asChild
+                                            type="button"
+                                            variant="outline"
+                                            className="h-11 justify-start rounded-2xl"
+                                        >
+                                            <a
+                                                href={stop.waze_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                <Navigation className="size-4" />
+                                                Open in Waze
+                                            </a>
+                                        </Button>
+                                    </div>
+
+                                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            disabled={
-                                                statusForm.processing || stop.status === 'ARRIVED'
-                                            }
+                                            className="h-11 justify-start rounded-2xl"
+                                            disabled={statusForm.processing || stop.status === 'ARRIVED'}
                                             onClick={() => updateStopStatus(stop.id, 'ARRIVED')}
                                         >
+                                            <Navigation className="size-4" />
                                             Arrived
                                         </Button>
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            disabled={
-                                                statusForm.processing || stop.status === 'COMPLETED'
-                                            }
+                                            className="h-11 justify-start rounded-2xl"
+                                            disabled={statusForm.processing || stop.status === 'COMPLETED'}
                                             onClick={() => updateStopStatus(stop.id, 'COMPLETED')}
                                         >
+                                            <CheckCircle2 className="size-4" />
                                             Completed
                                         </Button>
                                         <Button
                                             type="button"
                                             variant="outline"
+                                            className="h-11 justify-start rounded-2xl"
                                             disabled={statusForm.processing}
                                             onClick={() =>
                                                 setFailedStopId((currentStopId) =>
@@ -173,15 +258,16 @@ export default function CourierRoutePage({
                                                 )
                                             }
                                         >
+                                            <XCircle className="size-4" />
                                             Failed
                                         </Button>
                                     </div>
 
                                     {failedStopId === stop.id && (
-                                        <div className="mt-4 space-y-2">
+                                        <div className="mt-4 space-y-2 rounded-2xl border border-border/80 bg-background/40 p-3">
                                             <label
                                                 htmlFor={`fail-reason-${stop.id}`}
-                                                className="block text-sm"
+                                                className="block text-sm font-medium"
                                             >
                                                 Fail reason
                                             </label>
@@ -195,7 +281,7 @@ export default function CourierRoutePage({
                                                         [stop.id]: event.target.value,
                                                     }))
                                                 }
-                                                className="w-full border px-3 py-2 text-sm"
+                                                className="w-full rounded-2xl border px-3 py-3 text-sm"
                                                 disabled={statusForm.processing}
                                             />
                                             {statusForm.errors.fail_reason && (
@@ -203,9 +289,10 @@ export default function CourierRoutePage({
                                                     {statusForm.errors.fail_reason}
                                                 </p>
                                             )}
-                                            <div className="flex gap-2">
+                                            <div className="grid gap-2 sm:grid-cols-2">
                                                 <Button
                                                     type="button"
+                                                    className="h-11 rounded-2xl"
                                                     onClick={() =>
                                                         updateStopStatus(
                                                             stop.id,
@@ -220,6 +307,7 @@ export default function CourierRoutePage({
                                                 <Button
                                                     type="button"
                                                     variant="outline"
+                                                    className="h-11 rounded-2xl"
                                                     onClick={() => setFailedStopId(null)}
                                                     disabled={statusForm.processing}
                                                 >
@@ -231,10 +319,10 @@ export default function CourierRoutePage({
 
                                     {!stop.proof_file_url
                                         && ['COMPLETED', 'FAILED'].includes(stop.status) && (
-                                            <div className="mt-4 space-y-2">
+                                            <div className="mt-4 space-y-2 rounded-2xl border border-border/80 bg-background/40 p-3">
                                                 <label
                                                     htmlFor={`proof-file-${stop.id}`}
-                                                    className="block text-sm"
+                                                    className="block text-sm font-medium"
                                                 >
                                                     Upload proof photo
                                                 </label>
@@ -246,10 +334,11 @@ export default function CourierRoutePage({
                                                     onChange={(event) =>
                                                         setSelectedProofFiles((currentFiles) => ({
                                                             ...currentFiles,
-                                                            [stop.id]: event.target.files?.[0] ?? null,
+                                                            [stop.id]:
+                                                                event.target.files?.[0] ?? null,
                                                         }))
                                                     }
-                                                    className="block w-full text-sm"
+                                                    className="block w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground"
                                                     disabled={proofForm.processing}
                                                 />
                                                 {proofForm.errors.file && (
@@ -259,22 +348,41 @@ export default function CourierRoutePage({
                                                 )}
                                                 <Button
                                                     type="button"
+                                                    className="h-11 rounded-2xl"
                                                     onClick={() => uploadProof(stop.id)}
                                                     disabled={
                                                         proofForm.processing
                                                         || !selectedProofFiles[stop.id]
                                                     }
                                                 >
+                                                    <Upload className="size-4" />
                                                     Upload proof
                                                 </Button>
                                             </div>
                                         )}
-                                </div>
+                                </section>
                             ))}
                         </div>
                     </>
                 )}
             </div>
         </AppLayout>
+    );
+}
+
+function SummaryCard({
+    label,
+    value,
+}: {
+    label: string;
+    value: string;
+}) {
+    return (
+        <div className="rounded-2xl border border-border/80 bg-card/90 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                {label}
+            </p>
+            <p className="mt-2 text-base font-semibold">{value}</p>
+        </div>
     );
 }

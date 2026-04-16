@@ -17,7 +17,11 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('dashboard', function () {
+Route::get('dashboard', function (Request $request) {
+    if ($request->user()?->isCourier()) {
+        return app(CourierRouteController::class)->showDashboard($request);
+    }
+
     return Inertia::render('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -69,7 +73,11 @@ Route::middleware(['auth', 'verified'])
     ->prefix('courier')
     ->name('courier.')
     ->group(function () {
-        Route::get('today-route', [CourierRouteController::class, 'showPage'])->name('route.page');
+        Route::get('today-route', function (Request $request) {
+            abort_unless($request->user()?->isCourier(), 403);
+
+            return to_route('dashboard');
+        })->name('route.page');
         Route::get('route', [CourierRouteController::class, 'showToday'])->name('route.show');
         Route::patch('stops/{routeStop}', [CourierRouteController::class, 'updateStopStatus'])->name('stops.update');
         Route::post('stops/{routeStop}/proof', [CourierRouteController::class, 'uploadProof'])->name('stops.proof.store');

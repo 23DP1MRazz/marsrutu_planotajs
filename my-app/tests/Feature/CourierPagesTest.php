@@ -18,7 +18,26 @@ class CourierPagesTest extends TestCase
         $this->get('/courier/today-route')->assertRedirect(route('login'));
     }
 
-    public function test_courier_can_open_today_route_page(): void
+    public function test_courier_dashboard_shows_today_route_page(): void
+    {
+        $organization = Organization::factory()->create();
+        $courier = User::factory()->courier($organization->id)->create();
+
+        Courier::query()->create([
+            'user_id' => $courier->id,
+            'on_duty' => false,
+        ]);
+
+        $this->actingAs($courier)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('courier/route')
+                ->has('stops')
+                ->where('dashboardMode', true));
+    }
+
+    public function test_courier_today_route_url_redirects_to_dashboard(): void
     {
         $organization = Organization::factory()->create();
         $courier = User::factory()->courier($organization->id)->create();
@@ -30,10 +49,7 @@ class CourierPagesTest extends TestCase
 
         $this->actingAs($courier)
             ->get('/courier/today-route')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('courier/route')
-                ->has('stops'));
+            ->assertRedirect(route('dashboard'));
     }
 
     public function test_dispatcher_cannot_open_courier_page(): void
