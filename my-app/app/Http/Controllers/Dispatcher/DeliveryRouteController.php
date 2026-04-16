@@ -15,11 +15,17 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DeliveryRouteController extends Controller
 {
+    /**
+     * @var list<string>
+     */
+    private const ASSIGNABLE_ORDER_STATUSES = ['NEW', 'PENDING'];
+
     public function index(Request $request): Response
     {
         $this->authorizeDispatcherAccess($request);
@@ -95,6 +101,7 @@ class DeliveryRouteController extends Controller
                 'order_id' => $routeStop->order_id,
                 'planned_eta' => $routeStop->planned_eta,
                 'status' => $routeStop->status,
+                'can_remove' => $routeStop->status === 'PENDING',
                 'proof_view_url' => $routeStop->proofOfDelivery
                     ? route('proof-of-delivery.show', $routeStop->proofOfDelivery)
                     : null,
@@ -131,6 +138,39 @@ class DeliveryRouteController extends Controller
 
         DB::transaction(function () use ($deliveryRoute, $data): void {
             $this->reorderRouteStops($deliveryRoute, $data['stop_ids']);
+        });
+
+        return to_route('dispatcher.routes.show', $deliveryRoute);
+    }
+
+    public function destroyStop(
+        Request $request,
+        DeliveryRoute $deliveryRoute,
+        RouteStop $routeStop,
+    ): RedirectResponse {
+        $this->authorizeDispatcherAccess($request);
+        $this->authorize('view', $deliveryRoute);
+        $this->authorize('delete', $routeStop);
+
+        abort_unless((int) $routeStop->route_id === (int) $deliveryRoute->id, 404);
+
+        if ($routeStop->status !== 'PENDING') {
+            throw ValidationException::withMessages([
+                'route_stop' => 'Only pending stops can be removed from a route.',
+            ]);
+        }
+
+        DB::transaction(function () use ($deliveryRoute, $routeStop): void {
+            $routeStop->loadMissing('order');
+
+            $routeStop->order?->update([
+                'status' => 'PENDING',
+            ]);
+
+            $routeStop->delete();
+
+            $this->resequenceRouteStops($deliveryRoute);
+            $this->refreshRouteStatus($deliveryRoute);
         });
 
         return to_route('dispatcher.routes.show', $deliveryRoute);
@@ -200,6 +240,22 @@ class DeliveryRouteController extends Controller
         }
     }
 
+    private function resequenceRouteStops(DeliveryRoute $deliveryRoute): void
+    {
+        $routeStops = RouteStop::query()
+            ->with('order:id,date,time_from')
+            ->where('route_id', $deliveryRoute->id)
+            ->orderBy('seq_no')
+            ->get();
+
+        foreach ($routeStops as $index => $routeStop) {
+            $routeStop->update([
+                'seq_no' => $index + 1,
+                'planned_eta' => $this->plannedEtaForStop($routeStop),
+            ]);
+        }
+    }
+
     private function plannedEtaForStop(RouteStop $routeStop): ?Carbon
     {
         if (! $routeStop->order?->date || ! $routeStop->order?->time_from) {
@@ -207,6 +263,33 @@ class DeliveryRouteController extends Controller
         }
 
         return Carbon::parse($routeStop->order->date.' '.$routeStop->order->time_from);
+    }
+
+    private function refreshRouteStatus(DeliveryRoute $deliveryRoute): void
+    {
+        $deliveryRoute->load('routeStops');
+
+        $statuses = $deliveryRoute->routeStops->pluck('status');
+
+        if ($statuses->isNotEmpty() && $statuses->every(fn (string $status) => $status === 'COMPLETED')) {
+            $deliveryRoute->update([
+                'status' => 'DONE',
+            ]);
+
+            return;
+        }
+
+        if ($statuses->contains(fn (string $status) => $status !== 'PENDING')) {
+            $deliveryRoute->update([
+                'status' => 'IN_PROGRESS',
+            ]);
+
+            return;
+        }
+
+        $deliveryRoute->update([
+            'status' => 'PLANNED',
+        ]);
     }
 
     /**
@@ -273,7 +356,7 @@ class DeliveryRouteController extends Controller
         return Order::query()
             ->with(['client:id,name', 'address:id,city,street'])
             ->visibleTo($request->user())
-            ->where('status', 'NEW')
+            ->whereIn('status', self::ASSIGNABLE_ORDER_STATUSES)
             ->whereDoesntHave('routeStops')
             ->orderBy('date')
             ->orderBy('time_from')
@@ -289,7 +372,7 @@ class DeliveryRouteController extends Controller
         return Order::query()
             ->with(['client:id,name', 'address:id,city,street'])
             ->where('organization_id', $organizationId)
-            ->where('status', 'NEW')
+            ->whereIn('status', self::ASSIGNABLE_ORDER_STATUSES)
             ->whereDoesntHave('routeStops')
             ->orderBy('date')
             ->orderBy('time_from')

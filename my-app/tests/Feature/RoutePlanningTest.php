@@ -122,6 +122,36 @@ class RoutePlanningTest extends TestCase
         ]);
     }
 
+    public function test_dispatcher_can_assign_pending_order_to_existing_route(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $pendingOrder = $this->createOrder($organization, ['status' => 'PENDING']);
+
+        $this->actingAs($dispatcher)
+            ->post(route('dispatcher.routes.orders.store', $deliveryRoute), [
+                'order_ids' => [$pendingOrder->id],
+            ])
+            ->assertRedirect(route('dispatcher.routes.show', $deliveryRoute));
+
+        $this->assertDatabaseHas('route_stops', [
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $pendingOrder->id,
+            'seq_no' => 1,
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $pendingOrder->id,
+            'status' => 'ASSIGNED',
+        ]);
+    }
+
     public function test_dispatcher_cannot_create_duplicate_route_for_same_courier_and_date(): void
     {
         $organization = Organization::factory()->create();
@@ -142,6 +172,36 @@ class RoutePlanningTest extends TestCase
             ])
             ->assertRedirect(route('dispatcher.routes.create'))
             ->assertSessionHasErrors(['courier_user_id']);
+    }
+
+    public function test_dispatcher_can_create_route_with_pending_order(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $pendingOrder = $this->createOrder($organization, ['status' => 'PENDING']);
+
+        $this->actingAs($dispatcher)
+            ->post(route('dispatcher.routes.store'), [
+                'courier_user_id' => $courier->id,
+                'date' => '2026-04-15',
+                'order_ids' => [$pendingOrder->id],
+            ])
+            ->assertRedirect();
+
+        $deliveryRoute = DeliveryRoute::query()->firstOrFail();
+
+        $this->assertDatabaseHas('route_stops', [
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $pendingOrder->id,
+            'seq_no' => 1,
+            'status' => 'PENDING',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $pendingOrder->id,
+            'status' => 'ASSIGNED',
+        ]);
     }
 
     public function test_dispatcher_cannot_use_foreign_courier_or_foreign_order(): void
@@ -326,6 +386,64 @@ class RoutePlanningTest extends TestCase
                 ->where('stops.0.proof_view_url', route('proof-of-delivery.show', $proof)));
     }
 
+    public function test_dispatcher_can_remove_pending_stop_and_recompute_route(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+            'status' => 'IN_PROGRESS',
+        ]);
+        $completedOrder = $this->createOrder($organization, ['status' => 'COMPLETED']);
+        $pendingOrder = $this->createOrder($organization, ['status' => 'ASSIGNED']);
+
+        $completedStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $completedOrder->id,
+            'seq_no' => 1,
+            'status' => 'COMPLETED',
+            'planned_eta' => '2026-04-15 09:00:00',
+            'completed_at' => '2026-04-15 09:30:00',
+        ]);
+
+        $pendingStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $pendingOrder->id,
+            'seq_no' => 2,
+            'status' => 'PENDING',
+            'planned_eta' => '2026-04-15 10:00:00',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->delete(route('dispatcher.routes.stops.destroy', [$deliveryRoute, $pendingStop]))
+            ->assertRedirect(route('dispatcher.routes.show', $deliveryRoute));
+
+        $this->assertDatabaseMissing('route_stops', [
+            'id' => $pendingStop->id,
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $pendingOrder->id,
+            'status' => 'PENDING',
+        ]);
+
+        $this->assertDatabaseHas('route_stops', [
+            'id' => $completedStop->id,
+            'seq_no' => 1,
+            'status' => 'COMPLETED',
+        ]);
+
+        $this->assertDatabaseHas('routes', [
+            'id' => $deliveryRoute->id,
+            'status' => 'DONE',
+        ]);
+    }
+
     public function test_dispatcher_route_details_include_stop_coordinates_for_map(): void
     {
         $organization = Organization::factory()->create();
@@ -366,6 +484,44 @@ class RoutePlanningTest extends TestCase
                 ->where('stops.0.lat', 56.9496)
                 ->where('stops.0.lng', 24.1052)
                 ->where('stops.0.address_label', 'Riga, Brivibas iela 1'));
+    }
+
+    public function test_dispatcher_cannot_remove_progressed_stop_from_route(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+            'status' => 'IN_PROGRESS',
+        ]);
+        $order = $this->createOrder($organization, ['status' => 'ASSIGNED']);
+
+        $routeStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $order->id,
+            'seq_no' => 1,
+            'status' => 'ARRIVED',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.routes.show', $deliveryRoute))
+            ->delete(route('dispatcher.routes.stops.destroy', [$deliveryRoute, $routeStop]))
+            ->assertRedirect(route('dispatcher.routes.show', $deliveryRoute))
+            ->assertSessionHasErrors(['route_stop']);
+
+        $this->assertDatabaseHas('route_stops', [
+            'id' => $routeStop->id,
+            'status' => 'ARRIVED',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'ASSIGNED',
+        ]);
     }
 
     public function test_dispatcher_cannot_reorder_route_with_missing_or_foreign_stops(): void

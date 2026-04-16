@@ -30,6 +30,9 @@ export default function DispatcherRoutesShow({
     const reorderForm = useForm({
         stop_ids: stops.map((stop) => stop.id),
     });
+    const removeStopForm = useForm({
+        route_stop: '',
+    });
 
     useEffect(() => {
         setOrderedStops(stops);
@@ -105,6 +108,24 @@ export default function DispatcherRoutesShow({
 
     const saveStopOrder = () => {
         reorderForm.patch(`/dispatcher/routes/${deliveryRoute.id}/stops/reorder`, {
+            preserveScroll: true,
+        });
+    };
+
+    const removeStop = (stop: RouteStopRecord) => {
+        if (!stop.can_remove) {
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Remove stop ${stop.seq_no} from this route? The linked order will return to PENDING.`,
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        removeStopForm.delete(`/dispatcher/routes/${deliveryRoute.id}/stops/${stop.id}`, {
             preserveScroll: true,
         });
     };
@@ -192,13 +213,17 @@ export default function DispatcherRoutesShow({
                                         )}
                                     </div>
 
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap gap-2">
                                         <Button
                                             type="button"
                                             variant="outline"
                                             size="sm"
                                             onClick={() => moveStop(index, -1)}
-                                            disabled={index === 0 || reorderForm.processing}
+                                            disabled={
+                                                index === 0
+                                                || reorderForm.processing
+                                                || removeStopForm.processing
+                                            }
                                         >
                                             Up
                                         </Button>
@@ -210,9 +235,23 @@ export default function DispatcherRoutesShow({
                                             disabled={
                                                 index === orderedStops.length - 1
                                                 || reorderForm.processing
+                                                || removeStopForm.processing
                                             }
                                         >
                                             Down
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => removeStop(stop)}
+                                            disabled={
+                                                !stop.can_remove
+                                                || reorderForm.processing
+                                                || removeStopForm.processing
+                                            }
+                                        >
+                                            Remove
                                         </Button>
                                     </div>
                                 </div>
@@ -230,6 +269,12 @@ export default function DispatcherRoutesShow({
                     {reorderForm.errors.stop_ids && (
                         <p className="mt-4 text-sm text-red-600">
                             {reorderForm.errors.stop_ids}
+                        </p>
+                    )}
+
+                    {removeStopForm.errors.route_stop && (
+                        <p className="mt-4 text-sm text-red-600">
+                            {removeStopForm.errors.route_stop}
                         </p>
                     )}
                 </div>

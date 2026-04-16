@@ -21,6 +21,7 @@ class OrderController extends Controller
      */
     private const STATUSES = [
         'NEW',
+        'PENDING',
         'ASSIGNED',
         'IN_PROGRESS',
         'COMPLETED',

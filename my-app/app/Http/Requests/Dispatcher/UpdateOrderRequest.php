@@ -13,6 +13,7 @@ class UpdateOrderRequest extends FormRequest
      */
     private const STATUSES = [
         'NEW',
+        'PENDING',
         'ASSIGNED',
         'IN_PROGRESS',
         'COMPLETED',

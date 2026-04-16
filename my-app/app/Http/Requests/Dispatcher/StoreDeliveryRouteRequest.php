@@ -8,6 +8,11 @@ use Illuminate\Validation\Rule;
 
 class StoreDeliveryRouteRequest extends FormRequest
 {
+    /**
+     * @var list<string>
+     */
+    private const ASSIGNABLE_ORDER_STATUSES = ['NEW', 'PENDING'];
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', DeliveryRoute::class) ?? false;
@@ -42,7 +47,7 @@ class StoreDeliveryRouteRequest extends FormRequest
                 'distinct',
                 Rule::exists('orders', 'id')
                     ->where('organization_id', $organizationId)
-                    ->where('status', 'NEW'),
+                    ->where(fn ($query) => $query->whereIn('status', self::ASSIGNABLE_ORDER_STATUSES)),
                 Rule::unique('route_stops', 'order_id'),
             ],
         ];

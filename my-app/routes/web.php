@@ -67,6 +67,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('routes/{deliveryRoute}', [DeliveryRouteController::class, 'show'])->name('routes.show');
         Route::post('routes/{deliveryRoute}/orders', [DeliveryRouteController::class, 'assignOrders'])->name('routes.orders.store');
         Route::patch('routes/{deliveryRoute}/stops/reorder', [DeliveryRouteController::class, 'reorderStops'])->name('routes.stops.reorder');
+        Route::delete('routes/{deliveryRoute}/stops/{routeStop}', [DeliveryRouteController::class, 'destroyStop'])->name('routes.stops.destroy');
     });
 
 Route::middleware(['auth', 'verified'])
