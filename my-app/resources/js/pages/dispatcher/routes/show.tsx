@@ -139,6 +139,18 @@ export default function DispatcherRoutesShow({
                 actionHref="/dispatcher/routes"
                 actionLabel="Back to routes"
             >
+                <div className="flex justify-end">
+                    <Button asChild type="button" variant="outline">
+                        <a
+                            href={`/dispatcher/routes/${deliveryRoute.id}/print`}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Print route sheet
+                        </a>
+                    </Button>
+                </div>
+
                 <LeafletMap
                     markers={mapMarkers}
                     emptyMessage="No route stop coordinates available yet."

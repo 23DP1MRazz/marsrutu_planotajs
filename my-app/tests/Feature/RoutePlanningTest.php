@@ -285,6 +285,46 @@ class RoutePlanningTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_dispatcher_can_filter_and_sort_routes(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $annaCourier = $this->createCourier($organization);
+        $annaCourier->update(['name' => 'Anna Courier']);
+        $borisCourier = $this->createCourier($organization);
+        $borisCourier->update(['name' => 'Boris Courier']);
+
+        $annaRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $annaCourier->id,
+            'date' => '2026-04-15',
+            'status' => 'PLANNED',
+        ]);
+
+        $borisRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $borisCourier->id,
+            'date' => '2026-04-15',
+            'status' => 'PLANNED',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.routes.index', [
+                'date' => '2026-04-15',
+                'status' => 'PLANNED',
+                'courier' => 'Courier',
+                'sort' => 'courier_desc',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/routes/index')
+                ->has('deliveryRoutes', 2)
+                ->where('deliveryRoutes.0.id', $borisRoute->id)
+                ->where('deliveryRoutes.1.id', $annaRoute->id)
+                ->where('filters.sort', 'courier_desc')
+                ->where('filters.status', 'PLANNED'));
+    }
+
     public function test_route_create_page_defaults_date_to_today(): void
     {
         $organization = Organization::factory()->create();
@@ -384,6 +424,97 @@ class RoutePlanningTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('dispatcher/routes/show')
                 ->where('stops.0.proof_view_url', route('proof-of-delivery.show', $proof)));
+    }
+
+    public function test_dispatcher_can_export_filtered_routes_to_csv(): void
+    {
+        $organizationA = Organization::factory()->create(['name' => 'Alpha Org']);
+        $organizationB = Organization::factory()->create(['name' => 'Beta Org']);
+        $dispatcher = User::factory()->dispatcher($organizationA->id)->create();
+        $courierA = $this->createCourier($organizationA);
+        $courierA->update(['name' => 'Alpha Courier']);
+        $courierB = $this->createCourier($organizationB);
+        $courierB->update(['name' => 'Beta Courier']);
+
+        $routeA = DeliveryRoute::factory()->create([
+            'organization_id' => $organizationA->id,
+            'courier_user_id' => $courierA->id,
+            'date' => '2026-04-15',
+            'status' => 'PLANNED',
+        ]);
+
+        $routeB = DeliveryRoute::factory()->create([
+            'organization_id' => $organizationB->id,
+            'courier_user_id' => $courierB->id,
+            'date' => '2026-04-15',
+            'status' => 'PLANNED',
+        ]);
+
+        $orderA = $this->createOrder($organizationA);
+        $orderB = $this->createOrder($organizationB);
+
+        RouteStop::factory()->create([
+            'organization_id' => $organizationA->id,
+            'route_id' => $routeA->id,
+            'order_id' => $orderA->id,
+            'seq_no' => 1,
+            'status' => 'PENDING',
+        ]);
+
+        RouteStop::factory()->create([
+            'organization_id' => $organizationB->id,
+            'route_id' => $routeB->id,
+            'order_id' => $orderB->id,
+            'seq_no' => 1,
+            'status' => 'PENDING',
+        ]);
+
+        $response = $this->actingAs($dispatcher)
+            ->get(route('dispatcher.routes.export', [
+                'status' => 'PLANNED',
+                'date' => '2026-04-15',
+            ]));
+
+        $response
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('Alpha Courier', $content);
+        $this->assertStringContainsString('Alpha Org', $content);
+        $this->assertStringNotContainsString('Beta Courier', $content);
+        $this->assertStringNotContainsString('Beta Org', $content);
+    }
+
+    public function test_dispatcher_can_open_printable_route_sheet(): void
+    {
+        $organization = Organization::factory()->create(['name' => 'Route Org']);
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $courier->update(['name' => 'Print Courier']);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+            'status' => 'PLANNED',
+        ]);
+        $order = $this->createOrder($organization);
+
+        RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $order->id,
+            'seq_no' => 1,
+            'status' => 'PENDING',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.routes.print', $deliveryRoute))
+            ->assertOk()
+            ->assertSee('Route sheet #'.$deliveryRoute->id)
+            ->assertSee('Route Org')
+            ->assertSee('Print Courier');
     }
 
     public function test_dispatcher_can_remove_pending_stop_and_recompute_route(): void

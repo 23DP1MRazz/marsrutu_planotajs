@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified'])
         Route::delete('addresses/{address}', [AddressController::class, 'destroy'])->name('addresses.destroy');
 
         Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
         Route::get('orders/create', [OrderController::class, 'create'])->name('orders.create');
         Route::post('orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
@@ -62,8 +63,10 @@ Route::middleware(['auth', 'verified'])
         Route::delete('orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
 
         Route::get('routes', [DeliveryRouteController::class, 'index'])->name('routes.index');
+        Route::get('routes/export', [DeliveryRouteController::class, 'export'])->name('routes.export');
         Route::get('routes/create', [DeliveryRouteController::class, 'create'])->name('routes.create');
         Route::post('routes', [DeliveryRouteController::class, 'store'])->name('routes.store');
+        Route::get('routes/{deliveryRoute}/print', [DeliveryRouteController::class, 'print'])->name('routes.print');
         Route::get('routes/{deliveryRoute}', [DeliveryRouteController::class, 'show'])->name('routes.show');
         Route::post('routes/{deliveryRoute}/orders', [DeliveryRouteController::class, 'assignOrders'])->name('routes.orders.store');
         Route::patch('routes/{deliveryRoute}/stops/reorder', [DeliveryRouteController::class, 'reorderStops'])->name('routes.stops.reorder');

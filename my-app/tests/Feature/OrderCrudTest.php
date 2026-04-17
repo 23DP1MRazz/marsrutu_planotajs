@@ -83,6 +83,8 @@ class OrderCrudTest extends TestCase
                 'date' => '2026-04-10',
                 'status' => 'ASSIGNED',
                 'client' => $clientA->name,
+                'address' => $addressA->city,
+                'sort' => 'updated_desc',
             ]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
@@ -91,7 +93,50 @@ class OrderCrudTest extends TestCase
                 ->where('orders.0.id', $matchingOrder->id)
                 ->where('filters.date', '2026-04-10')
                 ->where('filters.status', 'ASSIGNED')
-                ->where('filters.client', $clientA->name));
+                ->where('filters.client', $clientA->name)
+                ->where('filters.address', $addressA->city)
+                ->where('filters.sort', 'updated_desc'));
+    }
+
+    public function test_dispatcher_can_export_filtered_orders_to_csv(): void
+    {
+        $organizationA = Organization::factory()->create();
+        $organizationB = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organizationA->id)->create();
+        [$clientA, $addressA] = $this->createClientAndAddress($organizationA);
+        [$clientB, $addressB] = $this->createClientAndAddress($organizationB);
+
+        $matchingOrder = Order::factory()->create([
+            'organization_id' => $organizationA->id,
+            'client_id' => $clientA->id,
+            'address_id' => $addressA->id,
+            'status' => 'PENDING',
+            'notes' => 'Export me',
+        ]);
+
+        Order::factory()->create([
+            'organization_id' => $organizationB->id,
+            'client_id' => $clientB->id,
+            'address_id' => $addressB->id,
+            'status' => 'PENDING',
+            'notes' => 'Do not export me',
+        ]);
+
+        $response = $this->actingAs($dispatcher)
+            ->get(route('dispatcher.orders.export', [
+                'status' => 'PENDING',
+                'client' => $clientA->name,
+            ]));
+
+        $response
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString((string) $matchingOrder->id, $content);
+        $this->assertStringContainsString('Export me', $content);
+        $this->assertStringNotContainsString('Do not export me', $content);
     }
 
     public function test_dispatcher_can_create_update_and_delete_own_organization_order(): void

@@ -32,6 +32,39 @@ class AddressCrudTest extends TestCase
                 ->where('addresses.0.organization_id', $organizationA->id));
     }
 
+    public function test_dispatcher_can_filter_and_sort_addresses(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+
+        Address::factory()->create([
+            'organization_id' => $organization->id,
+            'city' => 'Riga',
+            'street' => 'Brivibas iela 1',
+            'updated_at' => now()->subDay(),
+        ]);
+
+        $matchingAddress = Address::factory()->create([
+            'organization_id' => $organization->id,
+            'city' => 'Jelgava',
+            'street' => 'Liela iela 5',
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.addresses.index', [
+                'search' => 'Liela',
+                'sort' => 'updated_desc',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/addresses/index')
+                ->has('addresses', 1)
+                ->where('addresses.0.id', $matchingAddress->id)
+                ->where('filters.search', 'Liela')
+                ->where('filters.sort', 'updated_desc'));
+    }
+
     public function test_dispatcher_can_create_update_and_delete_own_organization_address(): void
     {
         $organization = Organization::factory()->create();

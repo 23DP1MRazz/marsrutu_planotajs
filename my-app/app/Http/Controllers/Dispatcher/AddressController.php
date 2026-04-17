@@ -8,6 +8,7 @@ use App\Http\Requests\Dispatcher\UpdateAddressRequest;
 use App\Models\Address;
 use App\Models\Organization;
 use App\Services\Geocoding\NominatimGeocoder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,12 +21,15 @@ class AddressController extends Controller
         $this->authorizeDispatcherAccess($request);
         $this->authorize('viewAny', Address::class);
 
+        $filters = [
+            'search' => $request->string('search')->toString(),
+            'sort' => $this->normalizeSort($request->string('sort')->toString()),
+        ];
+
         return Inertia::render('dispatcher/addresses/index', [
-            'addresses' => Address::query()
-                ->visibleTo($request->user())
-                ->orderBy('city')
-                ->orderBy('street')
+            'addresses' => $this->filteredAddressesQuery($request, $filters)
                 ->get(['id', 'organization_id', 'city', 'street', 'lat', 'lng', 'updated_at']),
+            'filters' => $filters,
         ]);
     }
 
@@ -163,5 +167,45 @@ class AddressController extends Controller
             'lat' => $coordinates['lat'] ?? null,
             'lng' => $coordinates['lng'] ?? null,
         ];
+    }
+
+    /**
+     * @param  array{search: string, sort: string}  $filters
+     */
+    private function filteredAddressesQuery(Request $request, array $filters): Builder
+    {
+        $query = Address::query()
+            ->visibleTo($request->user())
+            ->when(
+                $filters['search'] !== '',
+                fn (Builder $builder) => $builder->where(function (Builder $searchQuery) use ($filters): void {
+                    $searchQuery
+                        ->where('city', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('street', 'like', '%'.$filters['search'].'%');
+                }),
+            );
+
+        return $this->applySort($query, $filters['sort']);
+    }
+
+    private function normalizeSort(string $sort): string
+    {
+        return in_array(
+            $sort,
+            ['city_asc', 'city_desc', 'street_asc', 'street_desc', 'updated_desc', 'updated_asc'],
+            true,
+        ) ? $sort : 'city_asc';
+    }
+
+    private function applySort(Builder $query, string $sort): Builder
+    {
+        return match ($sort) {
+            'city_desc' => $query->orderByDesc('city')->orderBy('street'),
+            'street_asc' => $query->orderBy('street')->orderBy('city'),
+            'street_desc' => $query->orderByDesc('street')->orderBy('city'),
+            'updated_desc' => $query->orderByDesc('updated_at'),
+            'updated_asc' => $query->orderBy('updated_at'),
+            default => $query->orderBy('city')->orderBy('street'),
+        };
     }
 }

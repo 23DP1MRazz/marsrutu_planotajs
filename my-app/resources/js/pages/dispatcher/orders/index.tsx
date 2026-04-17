@@ -1,10 +1,10 @@
-import type { FormEvent } from 'react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ResourceShell } from '@/components/dispatcher/resource-shell';
+import { useLiveFiltering } from '@/hooks/use-live-filtering';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
-import type { OrderFilters, OrderRecord } from '@/types/dispatcher';
+import type { OrderFilters, OrderRecord, OrganizationOption } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -16,29 +16,33 @@ type DispatcherOrdersIndexProps = {
     orders: OrderRecord[];
     filters: OrderFilters;
     statuses: string[];
+    organizations: OrganizationOption[];
+    canFilterByOrganization: boolean;
 };
 
 export default function DispatcherOrdersIndex({
     orders,
     filters,
     statuses,
+    organizations,
+    canFilterByOrganization,
 }: DispatcherOrdersIndexProps) {
     const filterForm = useForm({
-        date: filters.date,
-        status: filters.status,
-        client: filters.client,
+        date: filters.date ?? '',
+        status: filters.status ?? '',
+        client: filters.client ?? '',
+        address: filters.address ?? '',
+        organization_id: filters.organization_id ?? '',
+        sort: filters.sort ?? 'date_desc',
+    });
+
+    useLiveFiltering({
+        data: filterForm.data,
+        url: '/dispatcher/orders',
     });
 
     const deleteOrder = (orderId: number) => {
         router.delete(`/dispatcher/orders/${orderId}`);
-    };
-
-    const submitFilters = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        router.get('/dispatcher/orders', filterForm.data, {
-            preserveState: true,
-            replace: true,
-        });
     };
 
     const clearFilters = () => {
@@ -46,21 +50,15 @@ export default function DispatcherOrdersIndex({
             date: '',
             status: '',
             client: '',
+            address: '',
+            organization_id: '',
+            sort: 'date_desc',
         });
-
-        router.get(
-            '/dispatcher/orders',
-            {
-                date: '',
-                status: '',
-                client: '',
-            },
-            {
-                preserveState: true,
-                replace: true,
-            },
-        );
     };
+
+    const exportQuery = new URLSearchParams(
+        Object.entries(filterForm.data).filter(([, value]) => value !== ''),
+    ).toString();
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -72,7 +70,7 @@ export default function DispatcherOrdersIndex({
                 actionLabel="Create order"
             >
                 <div className="border p-4">
-                    <form className="space-y-4" onSubmit={submitFilters}>
+                    <div className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-3">
                             <div className="space-y-1">
                                 <label htmlFor="client" className="block text-sm">
@@ -85,6 +83,22 @@ export default function DispatcherOrdersIndex({
                                     value={filterForm.data.client}
                                     onChange={(event) =>
                                         filterForm.setData('client', event.target.value)
+                                    }
+                                    className="w-full border px-3 py-2"
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label htmlFor="address" className="block text-sm">
+                                    Address
+                                </label>
+                                <input
+                                    id="address"
+                                    name="address"
+                                    type="text"
+                                    value={filterForm.data.address}
+                                    onChange={(event) =>
+                                        filterForm.setData('address', event.target.value)
                                     }
                                     className="w-full border px-3 py-2"
                                 />
@@ -129,8 +143,57 @@ export default function DispatcherOrdersIndex({
                             </div>
                         </div>
 
+                        <div className="grid gap-4 md:grid-cols-2">
+                            {canFilterByOrganization && (
+                                <div className="space-y-1">
+                                    <label htmlFor="organization_id" className="block text-sm">
+                                        Organization
+                                    </label>
+                                    <select
+                                        id="organization_id"
+                                        name="organization_id"
+                                        value={filterForm.data.organization_id}
+                                        onChange={(event) =>
+                                            filterForm.setData('organization_id', event.target.value)
+                                        }
+                                        className="w-full border px-3 py-2"
+                                    >
+                                        <option value="">All organizations</option>
+                                        {organizations.map((organization) => (
+                                            <option key={organization.id} value={String(organization.id)}>
+                                                {organization.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            <div className="space-y-1">
+                                <label htmlFor="sort" className="block text-sm">
+                                    Sort by
+                                </label>
+                                <select
+                                    id="sort"
+                                    name="sort"
+                                    value={filterForm.data.sort}
+                                    onChange={(event) =>
+                                        filterForm.setData('sort', event.target.value)
+                                    }
+                                    className="w-full border px-3 py-2"
+                                >
+                                    <option value="date_desc">Date (newest)</option>
+                                    <option value="date_asc">Date (oldest)</option>
+                                    <option value="time_asc">Time (earliest)</option>
+                                    <option value="time_desc">Time (latest)</option>
+                                    <option value="status_asc">Status (A-Z)</option>
+                                    <option value="status_desc">Status (Z-A)</option>
+                                    <option value="updated_desc">Updated (newest)</option>
+                                    <option value="updated_asc">Updated (oldest)</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div className="flex gap-2">
-                            <Button type="submit">Apply filters</Button>
                             <Button
                                 type="button"
                                 variant="outline"
@@ -138,8 +201,13 @@ export default function DispatcherOrdersIndex({
                             >
                                 Clear
                             </Button>
+                            <Button asChild type="button" variant="outline">
+                                <a href={`/dispatcher/orders/export${exportQuery ? `?${exportQuery}` : ''}`}>
+                                    Export CSV
+                                </a>
+                            </Button>
                         </div>
-                    </form>
+                    </div>
                 </div>
 
                 <div className="border p-4">

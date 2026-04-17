@@ -31,6 +31,41 @@ class ClientCrudTest extends TestCase
                 ->where('clients.0.organization_id', $organizationA->id));
     }
 
+    public function test_dispatcher_can_filter_and_sort_clients(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+
+        $olderClient = Client::factory()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Alpha Client',
+            'phone' => '20000001',
+            'updated_at' => now()->subDay(),
+        ]);
+
+        $newerClient = Client::factory()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Beta Client',
+            'phone' => '29990000',
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.clients.index', [
+                'search' => '2999',
+                'sort' => 'updated_desc',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/clients/index')
+                ->has('clients', 1)
+                ->where('clients.0.id', $newerClient->id)
+                ->where('filters.search', '2999')
+                ->where('filters.sort', 'updated_desc'));
+
+        $this->assertNotSame($olderClient->id, $newerClient->id);
+    }
+
     public function test_dispatcher_can_create_update_and_delete_own_organization_client(): void
     {
         $organization = Organization::factory()->create();

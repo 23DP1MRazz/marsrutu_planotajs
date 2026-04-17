@@ -11,6 +11,8 @@ use App\Models\Order;
 use App\Models\Organization;
 use App\Models\RouteStop;
 use App\Models\User;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DeliveryRouteController extends Controller
 {
@@ -26,19 +29,41 @@ class DeliveryRouteController extends Controller
      */
     private const ASSIGNABLE_ORDER_STATUSES = ['NEW', 'PENDING'];
 
+    /**
+     * @var list<string>
+     */
+    private const ROUTE_STATUSES = ['PLANNED', 'IN_PROGRESS', 'DONE'];
+
     public function index(Request $request): Response
     {
         $this->authorizeDispatcherAccess($request);
         $this->authorize('viewAny', DeliveryRoute::class);
 
+        $filters = [
+            'date' => $request->string('date')->toString(),
+            'status' => $request->string('status')->toString(),
+            'courier' => $request->string('courier')->toString(),
+            'organization_id' => $request->user()->isAdmin()
+                ? $request->string('organization_id')->toString()
+                : '',
+            'sort' => $this->normalizeRouteSort($request->string('sort')->toString()),
+        ];
+
         return Inertia::render('dispatcher/routes/index', [
-            'deliveryRoutes' => DeliveryRoute::query()
-                ->with(['courier.user:id,name', 'routeStops:id,route_id'])
-                ->visibleTo($request->user())
-                ->orderByDesc('date')
-                ->orderBy('id')
-                ->get(['id', 'organization_id', 'courier_user_id', 'date', 'status', 'updated_at'])
+            'deliveryRoutes' => $this->filteredRoutesQuery($request, $filters)
+                ->get([
+                    'routes.id',
+                    'routes.organization_id',
+                    'routes.courier_user_id',
+                    'routes.date',
+                    'routes.status',
+                    'routes.updated_at',
+                ])
                 ->map(fn (DeliveryRoute $deliveryRoute) => $this->formatRoute($deliveryRoute)),
+            'filters' => $filters,
+            'statuses' => self::ROUTE_STATUSES,
+            'organizations' => $request->user()->isAdmin() ? $this->organizationsForUser($request) : [],
+            'canFilterByOrganization' => $request->user()->isAdmin(),
         ]);
     }
 
@@ -53,6 +78,89 @@ class DeliveryRouteController extends Controller
             'orders' => $this->unassignedOrdersForUser($request),
             'canSelectOrganization' => $request->user()->isAdmin(),
             'todayDate' => Carbon::today()->toDateString(),
+        ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $this->authorizeDispatcherAccess($request);
+        $this->authorize('viewAny', DeliveryRoute::class);
+
+        $filters = [
+            'date' => $request->string('date')->toString(),
+            'status' => $request->string('status')->toString(),
+            'courier' => $request->string('courier')->toString(),
+            'organization_id' => $request->user()->isAdmin()
+                ? $request->string('organization_id')->toString()
+                : '',
+            'sort' => $this->normalizeRouteSort($request->string('sort')->toString()),
+        ];
+
+        $deliveryRoutes = $this->filteredRoutesQuery($request, $filters)
+            ->with([
+                'organization:id,name',
+                'routeStops' => fn ($query) => $query->orderBy('seq_no'),
+                'routeStops.order.client:id,name',
+                'routeStops.order.address:id,city,street',
+            ])
+            ->get();
+
+        return response()->streamDownload(function () use ($deliveryRoutes): void {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'Route ID',
+                'Organization',
+                'Courier',
+                'Date',
+                'Route Status',
+                'Stop Seq',
+                'Order ID',
+                'Client',
+                'Address',
+                'Stop Status',
+                'Planned ETA',
+            ]);
+
+            foreach ($deliveryRoutes as $deliveryRoute) {
+                if ($deliveryRoute->routeStops->isEmpty()) {
+                    fputcsv($handle, [
+                        $deliveryRoute->id,
+                        $deliveryRoute->organization?->name,
+                        $deliveryRoute->courier?->user?->name,
+                        $deliveryRoute->date,
+                        $deliveryRoute->status,
+                        '',
+                        '',
+                        '',
+                        '',
+                        '',
+                        '',
+                    ]);
+
+                    continue;
+                }
+
+                foreach ($deliveryRoute->routeStops as $routeStop) {
+                    fputcsv($handle, [
+                        $deliveryRoute->id,
+                        $deliveryRoute->organization?->name,
+                        $deliveryRoute->courier?->user?->name,
+                        $deliveryRoute->date,
+                        $deliveryRoute->status,
+                        $routeStop->seq_no,
+                        $routeStop->order_id,
+                        $routeStop->order?->client?->name,
+                        collect([$routeStop->order?->address?->city, $routeStop->order?->address?->street])->filter()->join(', '),
+                        $routeStop->status,
+                        $routeStop->planned_eta,
+                    ]);
+                }
+            }
+
+            fclose($handle);
+        }, 'routes-report.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
@@ -114,6 +222,24 @@ class DeliveryRouteController extends Controller
                 'lng' => $routeStop->order?->address?->lng,
             ]),
             'availableOrders' => $this->unassignedOrdersForOrganization($deliveryRoute->organization_id),
+        ]);
+    }
+
+    public function print(Request $request, DeliveryRoute $deliveryRoute): View
+    {
+        $this->authorizeDispatcherAccess($request);
+        $this->authorize('view', $deliveryRoute);
+
+        $deliveryRoute->load([
+            'organization:id,name',
+            'courier.user:id,name',
+            'routeStops' => fn ($query) => $query->orderBy('seq_no'),
+            'routeStops.order.client:id,name',
+            'routeStops.order.address:id,city,street',
+        ]);
+
+        return view('dispatcher.routes.print', [
+            'deliveryRoute' => $deliveryRoute,
         ]);
     }
 
@@ -304,7 +430,7 @@ class DeliveryRouteController extends Controller
             'courier_name' => $deliveryRoute->courier?->user?->name,
             'date' => $deliveryRoute->date,
             'status' => $deliveryRoute->status,
-            'stops_count' => $deliveryRoute->routeStops->count(),
+            'stops_count' => (int) ($deliveryRoute->route_stops_count ?? $deliveryRoute->routeStops->count()),
             'updated_at' => $deliveryRoute->updated_at,
         ];
     }
@@ -396,6 +522,54 @@ class DeliveryRouteController extends Controller
             'time_from' => $order->time_from,
             'time_to' => $order->time_to,
         ];
+    }
+
+    /**
+     * @param  array{date: string, status: string, courier: string, organization_id: string, sort: string}  $filters
+     */
+    private function filteredRoutesQuery(Request $request, array $filters): Builder
+    {
+        $query = DeliveryRoute::query()
+            ->with(['courier.user:id,name'])
+            ->withCount('routeStops')
+            ->visibleTo($request->user())
+            ->leftJoin('users as courier_users', 'courier_users.id', '=', 'routes.courier_user_id')
+            ->select('routes.*')
+            ->when($filters['date'] !== '', fn (Builder $builder) => $builder->whereDate('routes.date', $filters['date']))
+            ->when($filters['status'] !== '', fn (Builder $builder) => $builder->where('routes.status', $filters['status']))
+            ->when(
+                $filters['courier'] !== '',
+                fn (Builder $builder) => $builder->where('courier_users.name', 'like', '%'.$filters['courier'].'%'),
+            )
+            ->when(
+                $request->user()->isAdmin() && $filters['organization_id'] !== '',
+                fn (Builder $builder) => $builder->where('routes.organization_id', (int) $filters['organization_id']),
+            );
+
+        return $this->applyRouteSort($query, $filters['sort']);
+    }
+
+    private function normalizeRouteSort(string $sort): string
+    {
+        return in_array(
+            $sort,
+            ['date_desc', 'date_asc', 'courier_asc', 'courier_desc', 'status_asc', 'status_desc', 'updated_desc', 'updated_asc'],
+            true,
+        ) ? $sort : 'date_desc';
+    }
+
+    private function applyRouteSort(Builder $query, string $sort): Builder
+    {
+        return match ($sort) {
+            'date_asc' => $query->orderBy('routes.date')->orderBy('routes.id'),
+            'courier_asc' => $query->orderBy('courier_users.name')->orderBy('routes.date'),
+            'courier_desc' => $query->orderByDesc('courier_users.name')->orderByDesc('routes.date'),
+            'status_asc' => $query->orderBy('routes.status')->orderByDesc('routes.date'),
+            'status_desc' => $query->orderByDesc('routes.status')->orderByDesc('routes.date'),
+            'updated_desc' => $query->orderByDesc('routes.updated_at'),
+            'updated_asc' => $query->orderBy('routes.updated_at'),
+            default => $query->orderByDesc('routes.date')->orderBy('routes.id'),
+        };
     }
 
     private function authorizeDispatcherAccess(Request $request): void

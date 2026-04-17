@@ -17,6 +17,11 @@ export type ClientRecord = {
     updated_at: string;
 };
 
+export type ClientFilters = {
+    search: string;
+    sort: string;
+};
+
 export type AddressOption = {
     id: number;
     organization_id: number;
@@ -32,6 +37,11 @@ export type AddressRecord = {
     lat: number | string | null;
     lng: number | string | null;
     updated_at: string;
+};
+
+export type AddressFilters = {
+    search: string;
+    sort: string;
 };
 
 export type OrderRecord = {
@@ -53,6 +63,9 @@ export type OrderFilters = {
     date: string;
     status: string;
     client: string;
+    address: string;
+    organization_id: string;
+    sort: string;
 };
 
 export type CourierOption = {
@@ -80,6 +93,14 @@ export type DeliveryRouteRecord = {
     status: string;
     stops_count: number;
     updated_at: string;
+};
+
+export type RouteFilters = {
+    date: string;
+    status: string;
+    courier: string;
+    organization_id: string;
+    sort: string;
 };
 
 export type RouteStopRecord = {

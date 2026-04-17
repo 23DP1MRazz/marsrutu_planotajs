@@ -7,8 +7,9 @@ use App\Http\Requests\Dispatcher\StoreClientRequest;
 use App\Http\Requests\Dispatcher\UpdateClientRequest;
 use App\Models\Client;
 use App\Models\Organization;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,11 +20,15 @@ class ClientController extends Controller
         $this->authorizeDispatcherAccess($request);
         $this->authorize('viewAny', Client::class);
 
+        $filters = [
+            'search' => $request->string('search')->toString(),
+            'sort' => $this->normalizeSort($request->string('sort')->toString()),
+        ];
+
         return Inertia::render('dispatcher/clients/index', [
-            'clients' => Client::query()
-                ->visibleTo($request->user())
-                ->orderBy('name')
+            'clients' => $this->filteredClientsQuery($request, $filters)
                 ->get(['id', 'organization_id', 'name', 'phone', 'updated_at']),
+            'filters' => $filters,
         ]);
     }
 
@@ -117,5 +122,41 @@ class ClientController extends Controller
             $request->user()?->isAdmin() || $request->user()?->isDispatcher(),
             403,
         );
+    }
+
+    /**
+     * @param  array{search: string, sort: string}  $filters
+     */
+    private function filteredClientsQuery(Request $request, array $filters): Builder
+    {
+        $query = Client::query()
+            ->visibleTo($request->user())
+            ->when(
+                $filters['search'] !== '',
+                fn (Builder $builder) => $builder->where(function (Builder $searchQuery) use ($filters): void {
+                    $searchQuery
+                        ->where('name', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('phone', 'like', '%'.$filters['search'].'%');
+                }),
+            );
+
+        return $this->applySort($query, $filters['sort']);
+    }
+
+    private function normalizeSort(string $sort): string
+    {
+        return in_array($sort, ['name_asc', 'name_desc', 'updated_desc', 'updated_asc'], true)
+            ? $sort
+            : 'name_asc';
+    }
+
+    private function applySort(Builder $query, string $sort): Builder
+    {
+        return match ($sort) {
+            'name_desc' => $query->orderByDesc('name'),
+            'updated_desc' => $query->orderByDesc('updated_at'),
+            'updated_asc' => $query->orderBy('updated_at'),
+            default => $query->orderBy('name'),
+        };
     }
 }

@@ -9,10 +9,12 @@ use App\Models\Address;
 use App\Models\Client;
 use App\Models\Order;
 use App\Models\Organization;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OrderController extends Controller
 {
@@ -38,22 +40,14 @@ class OrderController extends Controller
             'date' => $request->string('date')->toString(),
             'status' => $request->string('status')->toString(),
             'client' => $request->string('client')->toString(),
+            'address' => $request->string('address')->toString(),
+            'organization_id' => $request->user()->isAdmin()
+                ? $request->string('organization_id')->toString()
+                : '',
+            'sort' => $this->normalizeSort($request->string('sort')->toString()),
         ];
 
-        $orders = Order::query()
-            ->with(['client:id,name', 'address:id,city,street'])
-            ->visibleTo($request->user())
-            ->when($filters['date'] !== '', fn ($query) => $query->whereDate('date', $filters['date']))
-            ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
-            ->when(
-                $filters['client'] !== '',
-                fn ($query) => $query->whereHas(
-                    'client',
-                    fn ($clientQuery) => $clientQuery->where('name', 'like', '%'.$filters['client'].'%'),
-                ),
-            )
-            ->orderByDesc('date')
-            ->orderBy('time_from')
+        $orders = $this->filteredOrdersQuery($request, $filters)
             ->get([
                 'id',
                 'organization_id',
@@ -87,6 +81,63 @@ class OrderController extends Controller
                 ]),
             'filters' => $filters,
             'statuses' => self::STATUSES,
+            'organizations' => $request->user()->isAdmin() ? $this->organizationsForUser($request) : [],
+            'canFilterByOrganization' => $request->user()->isAdmin(),
+        ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $this->authorizeDispatcherAccess($request);
+        $this->authorize('viewAny', Order::class);
+
+        $filters = [
+            'date' => $request->string('date')->toString(),
+            'status' => $request->string('status')->toString(),
+            'client' => $request->string('client')->toString(),
+            'address' => $request->string('address')->toString(),
+            'organization_id' => $request->user()->isAdmin()
+                ? $request->string('organization_id')->toString()
+                : '',
+            'sort' => $this->normalizeSort($request->string('sort')->toString()),
+        ];
+
+        $orders = $this->filteredOrdersQuery($request, $filters)
+            ->with(['organization:id,name'])
+            ->get();
+
+        return response()->streamDownload(function () use ($orders): void {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'Order ID',
+                'Organization',
+                'Client',
+                'Address',
+                'Date',
+                'Time From',
+                'Time To',
+                'Status',
+                'Notes',
+            ]);
+
+            foreach ($orders as $order) {
+                fputcsv($handle, [
+                    $order->id,
+                    $order->organization?->name,
+                    $order->client?->name,
+                    collect([$order->address?->city, $order->address?->street])->filter()->join(', '),
+                    $order->date,
+                    $order->time_from,
+                    $order->time_to,
+                    $order->status,
+                    $order->notes,
+                ]);
+            }
+
+            fclose($handle);
+        }, 'orders-report.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
@@ -231,5 +282,62 @@ class OrderController extends Controller
             $request->user()?->isAdmin() || $request->user()?->isDispatcher(),
             403,
         );
+    }
+
+    /**
+     * @param  array{date: string, status: string, client: string, address: string, organization_id: string, sort: string}  $filters
+     */
+    private function filteredOrdersQuery(Request $request, array $filters): Builder
+    {
+        $query = Order::query()
+            ->with(['client:id,name', 'address:id,city,street'])
+            ->visibleTo($request->user())
+            ->when($filters['date'] !== '', fn (Builder $builder) => $builder->whereDate('date', $filters['date']))
+            ->when($filters['status'] !== '', fn (Builder $builder) => $builder->where('status', $filters['status']))
+            ->when(
+                $filters['client'] !== '',
+                fn (Builder $builder) => $builder->whereHas(
+                    'client',
+                    fn (Builder $clientQuery) => $clientQuery->where('name', 'like', '%'.$filters['client'].'%'),
+                ),
+            )
+            ->when(
+                $filters['address'] !== '',
+                fn (Builder $builder) => $builder->whereHas(
+                    'address',
+                    fn (Builder $addressQuery) => $addressQuery
+                        ->where('city', 'like', '%'.$filters['address'].'%')
+                        ->orWhere('street', 'like', '%'.$filters['address'].'%'),
+                ),
+            )
+            ->when(
+                $request->user()->isAdmin() && $filters['organization_id'] !== '',
+                fn (Builder $builder) => $builder->where('organization_id', (int) $filters['organization_id']),
+            );
+
+        return $this->applySort($query, $filters['sort']);
+    }
+
+    private function normalizeSort(string $sort): string
+    {
+        return in_array(
+            $sort,
+            ['date_desc', 'date_asc', 'time_asc', 'time_desc', 'status_asc', 'status_desc', 'updated_desc', 'updated_asc'],
+            true,
+        ) ? $sort : 'date_desc';
+    }
+
+    private function applySort(Builder $query, string $sort): Builder
+    {
+        return match ($sort) {
+            'date_asc' => $query->orderBy('date')->orderBy('time_from'),
+            'time_asc' => $query->orderBy('time_from')->orderBy('date'),
+            'time_desc' => $query->orderByDesc('time_from')->orderByDesc('date'),
+            'status_asc' => $query->orderBy('status')->orderByDesc('date'),
+            'status_desc' => $query->orderByDesc('status')->orderByDesc('date'),
+            'updated_desc' => $query->orderByDesc('updated_at'),
+            'updated_asc' => $query->orderBy('updated_at'),
+            default => $query->orderByDesc('date')->orderBy('time_from'),
+        };
     }
 }
