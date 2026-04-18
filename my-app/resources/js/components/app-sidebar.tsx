@@ -70,6 +70,11 @@ export function AppSidebar() {
                       href: '/admin/users',
                       icon: Shield,
                   },
+                  {
+                      title: 'Admin organizations',
+                      href: '/admin/organizations',
+                      icon: Users,
+                  },
               ]
             : []),
     ];

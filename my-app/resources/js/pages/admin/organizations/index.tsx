@@ -19,6 +19,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function AdminOrganizationsIndex({ organizations }: AdminOrganizationsIndexProps) {
+    const totalUsers = organizations.reduce((sum, organization) => sum + organization.users_count, 0);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Admin organizations" />
@@ -27,38 +29,59 @@ export default function AdminOrganizationsIndex({ organizations }: AdminOrganiza
                 <div className="border p-4">
                     <h1 className="text-xl font-semibold">Admin organizations</h1>
                     <p className="text-sm text-muted-foreground">
-                        Backend organization management is ready. Full UI polish comes next.
+                        Review active organizations, join codes, and user counts.
                     </p>
                 </div>
 
+                <div className="grid gap-4 md:grid-cols-3">
+                    <div className="border p-4">
+                        <p className="text-sm text-muted-foreground">Organizations</p>
+                        <p className="text-2xl font-semibold">{organizations.length}</p>
+                    </div>
+                    <div className="border p-4">
+                        <p className="text-sm text-muted-foreground">Assigned users</p>
+                        <p className="text-2xl font-semibold">{totalUsers}</p>
+                    </div>
+                    <div className="border p-4">
+                        <p className="text-sm text-muted-foreground">Average users per org</p>
+                        <p className="text-2xl font-semibold">
+                            {organizations.length === 0 ? 0 : Math.round(totalUsers / organizations.length)}
+                        </p>
+                    </div>
+                </div>
+
                 <div className="border p-4">
-                    <table className="w-full border-collapse text-sm">
-                        <thead>
-                            <tr className="border-b text-left">
-                                <th className="p-2">Name</th>
-                                <th className="p-2">Join code</th>
-                                <th className="p-2">Users</th>
-                                <th className="p-2">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {organizations.map((organization) => (
-                                <tr key={organization.id} className="border-b">
-                                    <td className="p-2">{organization.name}</td>
-                                    <td className="p-2">{organization.join_code}</td>
-                                    <td className="p-2">{organization.users_count}</td>
-                                    <td className="p-2">
-                                        <Link
-                                            href={`/admin/organizations/${organization.id}/edit`}
-                                            className="underline"
-                                        >
-                                            Edit
-                                        </Link>
-                                    </td>
+                    {organizations.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No organizations found.</p>
+                    ) : (
+                        <table className="w-full border-collapse text-sm">
+                            <thead>
+                                <tr className="border-b text-left">
+                                    <th className="p-2">Name</th>
+                                    <th className="p-2">Join code</th>
+                                    <th className="p-2">Users</th>
+                                    <th className="p-2">Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {organizations.map((organization) => (
+                                    <tr key={organization.id} className="border-b">
+                                        <td className="p-2 font-medium">{organization.name}</td>
+                                        <td className="p-2 font-mono">{organization.join_code}</td>
+                                        <td className="p-2">{organization.users_count}</td>
+                                        <td className="p-2">
+                                            <Link
+                                                href={`/admin/organizations/${organization.id}/edit`}
+                                                className="text-sm underline underline-offset-4"
+                                            >
+                                                Edit
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
         </AppLayout>
