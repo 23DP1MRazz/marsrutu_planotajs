@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Courier\CourierRouteController;
 use App\Http\Controllers\Dispatcher\AddressController;
 use App\Http\Controllers\Dispatcher\ClientController;
@@ -28,6 +29,15 @@ Route::get('dashboard', function (Request $request) {
 Route::get('proof-of-delivery/{proofOfDelivery}', [ProofOfDeliveryController::class, 'show'])
     ->middleware(['auth', 'verified'])
     ->name('proof-of-delivery.show');
+
+Route::middleware(['auth', 'verified'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+        Route::get('users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
+        Route::patch('users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+    });
 
 Route::middleware(['auth', 'verified'])
     ->prefix('dispatcher')
