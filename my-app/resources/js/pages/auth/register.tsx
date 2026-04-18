@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -9,10 +9,15 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
+import type { SharedData } from '@/types';
 
 export default function Register() {
-    // Toggle create/join fields in the form.
-    const [organizationAction, setOrganizationAction] = useState<'create' | 'join'>('create');
+    const {
+        registerPrefill: { join_code: joinCode },
+    } = usePage<SharedData>().props;
+    const [organizationAction, setOrganizationAction] = useState<'create' | 'join'>(
+        joinCode ? 'join' : 'create',
+    );
 
     return (
         <AuthLayout
@@ -80,7 +85,7 @@ export default function Register() {
                                         <Input
                                             id="organization_name"
                                             type="text"
-                                            required
+                                            required={organizationAction === 'create'}
                                             tabIndex={1}
                                             name="organization_name"
                                             placeholder="Organization name"
@@ -93,10 +98,11 @@ export default function Register() {
                                         <Input
                                             id="organization_join_code"
                                             type="text"
-                                            required
+                                            required={organizationAction === 'join'}
                                             tabIndex={1}
                                             name="organization_join_code"
                                             placeholder="ABC12345"
+                                            defaultValue={joinCode ?? ''}
                                         />
                                         <InputError message={errors.organization_join_code} />
                                     </div>

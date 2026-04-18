@@ -14,7 +14,17 @@ class RegistrationTest extends TestCase
     {
         $response = $this->get(route('register'));
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->where('registerPrefill.join_code', null));
+    }
+
+    public function test_registration_screen_prefills_join_code_from_query(): void
+    {
+        $this->get(route('register', ['join_code' => 'JOIN2026']))
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->where('registerPrefill.join_code', 'JOIN2026'));
     }
 
     public function test_new_users_can_register()
