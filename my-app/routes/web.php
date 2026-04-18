@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\OrganizationController as AdminOrganizationController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Courier\CourierRouteController;
 use App\Http\Controllers\Dispatcher\AddressController;
@@ -37,6 +38,11 @@ Route::middleware(['auth', 'verified'])
         Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
         Route::get('users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
         Route::patch('users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+
+        Route::get('organizations', [AdminOrganizationController::class, 'index'])->name('organizations.index');
+        Route::get('organizations/{organization}/edit', [AdminOrganizationController::class, 'edit'])->name('organizations.edit');
+        Route::patch('organizations/{organization}', [AdminOrganizationController::class, 'update'])->name('organizations.update');
+        Route::post('organizations/{organization}/regenerate-join-code', [AdminOrganizationController::class, 'regenerateJoinCode'])->name('organizations.regenerate-join-code');
     });
 
 Route::middleware(['auth', 'verified'])
