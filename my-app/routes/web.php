@@ -8,6 +8,7 @@ use App\Http\Controllers\Dispatcher\ClientController;
 use App\Http\Controllers\Dispatcher\DeliveryRouteController;
 use App\Http\Controllers\Dispatcher\OrderController;
 use App\Http\Controllers\ProofOfDeliveryController;
+use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,7 +25,24 @@ Route::get('dashboard', function (Request $request) {
         return app(CourierRouteController::class)->showDashboard($request);
     }
 
-    return Inertia::render('dashboard');
+    $dispatcherOrganization = $request->user()?->isDispatcher()
+        ? Organization::query()
+            ->whereKey($request->user()->organization_id)
+            ->first(['id', 'name', 'join_code'])
+        : null;
+
+    return Inertia::render('dashboard', [
+        'organizationInvitation' => $dispatcherOrganization === null
+            ? null
+            : [
+                'organization_id' => $dispatcherOrganization->id,
+                'organization_name' => $dispatcherOrganization->name,
+                'join_code' => $dispatcherOrganization->join_code,
+                'registration_url' => route('register', [
+                    'join_code' => $dispatcherOrganization->join_code,
+                ], false),
+            ],
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('proof-of-delivery/{proofOfDelivery}', [ProofOfDeliveryController::class, 'show'])
