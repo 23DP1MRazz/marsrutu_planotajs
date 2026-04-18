@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ClipboardList, Folder, LayoutGrid, MapPinned, Route, Users } from 'lucide-react';
+import { BookOpen, ClipboardList, Folder, LayoutGrid, MapPinned, Route, Shield, Users } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -60,6 +60,15 @@ export function AppSidebar() {
                       title: 'Routes',
                       href: '/dispatcher/routes',
                       icon: Route,
+                  },
+              ]
+            : []),
+        ...(auth.user.role === 'admin'
+            ? [
+                  {
+                      title: 'Admin users',
+                      href: '/admin/users',
+                      icon: Shield,
                   },
               ]
             : []),
