@@ -198,7 +198,12 @@ export default function DispatcherRoutesIndex({
                                 {deliveryRoutes.map((deliveryRoute) => (
                                     <tr key={deliveryRoute.id} className="border-b">
                                         <td className="p-2">
-                                            {deliveryRoute.courier_name ?? '-'}
+                                            <Link
+                                                href={`/dispatcher/routes/${deliveryRoute.id}`}
+                                                className="block underline-offset-4 hover:underline"
+                                            >
+                                                {deliveryRoute.courier_name ?? 'Unassigned courier'}
+                                            </Link>
                                         </td>
                                         <td className="p-2">
                                             {formatShortDate(deliveryRoute.date)}
@@ -206,22 +211,15 @@ export default function DispatcherRoutesIndex({
                                         <td className="p-2">{deliveryRoute.status}</td>
                                         <td className="p-2">{deliveryRoute.stops_count}</td>
                                         <td className="p-2">
-                                            <div className="flex gap-2">
-                                                <Button asChild type="button" variant="outline">
-                                                    <Link href={`/dispatcher/routes/${deliveryRoute.id}`}>
-                                                        Open
-                                                    </Link>
-                                                </Button>
-                                                <Button asChild type="button" variant="outline">
-                                                    <a
-                                                        href={`/dispatcher/routes/${deliveryRoute.id}/print`}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                    >
-                                                        Print
-                                                    </a>
-                                                </Button>
-                                            </div>
+                                            <Button asChild type="button" variant="outline">
+                                                <a
+                                                    href={`/dispatcher/routes/${deliveryRoute.id}/print`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    Print
+                                                </a>
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}

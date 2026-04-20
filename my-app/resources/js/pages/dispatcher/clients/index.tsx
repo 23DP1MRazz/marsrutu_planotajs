@@ -111,23 +111,23 @@ export default function DispatcherClientsIndex({
                             <tbody>
                                 {clients.map((client) => (
                                     <tr key={client.id} className="border-b">
-                                        <td className="p-2">{client.name}</td>
+                                        <td className="p-2">
+                                            <Link
+                                                href={`/dispatcher/clients/${client.id}/edit`}
+                                                className="block underline-offset-4 hover:underline"
+                                            >
+                                                {client.name}
+                                            </Link>
+                                        </td>
                                         <td className="p-2">{client.phone}</td>
                                         <td className="p-2">
-                                            <div className="flex gap-2">
-                                                <Button asChild type="button" variant="outline">
-                                                    <Link href={`/dispatcher/clients/${client.id}/edit`}>
-                                                        Edit
-                                                    </Link>
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() => deleteClient(client.id)}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => deleteClient(client.id)}
+                                            >
+                                                Delete
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}

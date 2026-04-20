@@ -6,6 +6,32 @@ export type CourierRouteRecord = {
     status: string;
 };
 
+export type CourierDashboardSummary = {
+    done_routes: number;
+    completed_orders: number;
+    upcoming_routes_count: number;
+    upcoming_routes: CourierRouteListRecord[];
+};
+
+export type CourierRouteListRecord = {
+    id: number;
+    date: string;
+    status: string;
+    stops_count: number;
+};
+
+export type CourierCompletedOrderRecord = {
+    route_stop_id: number;
+    route_id: number;
+    order_id: number;
+    route_date: string | null;
+    client_name: string | null;
+    address_label: string;
+    status: string;
+    completed_at: string | null;
+    proof_view_url: string | null;
+};
+
 export type CourierRouteStopRecord = {
     id: number;
     seq_no: number;

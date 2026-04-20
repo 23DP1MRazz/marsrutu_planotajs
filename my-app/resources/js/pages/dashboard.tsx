@@ -83,7 +83,10 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                 {dashboardSummary?.role === 'admin' ? (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                            <Link
+                                href="/admin/users"
+                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
+                            >
                                 <p className="text-sm text-muted-foreground">Users</p>
                                 <p className="mt-2 text-3xl font-semibold">
                                     {dashboardSummary.counts.users}
@@ -91,8 +94,11 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                 <p className="mt-1 text-sm text-muted-foreground">
                                     Total registered accounts across all organizations.
                                 </p>
-                            </div>
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                            </Link>
+                            <Link
+                                href="/admin/organizations"
+                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
+                            >
                                 <p className="text-sm text-muted-foreground">Organizations</p>
                                 <p className="mt-2 text-3xl font-semibold">
                                     {dashboardSummary.counts.organizations}
@@ -100,7 +106,7 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                 <p className="mt-1 text-sm text-muted-foreground">
                                     Active organizations managed by the platform.
                                 </p>
-                            </div>
+                            </Link>
                         </div>
 
                         <div className="grid gap-4 xl:grid-cols-2">
@@ -127,7 +133,11 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                         </p>
                                     ) : (
                                         dashboardSummary.recent_users.map((user) => (
-                                            <div key={user.id} className="rounded-lg border p-3">
+                                            <Link
+                                                key={user.id}
+                                                href={`/admin/users/${user.id}/edit`}
+                                                className="block rounded-lg border p-3 transition-colors hover:border-primary/50"
+                                            >
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div>
                                                         <p className="font-medium">{user.name}</p>
@@ -144,7 +154,7 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                                         ? formatShortDate(user.created_at)
                                                         : '-'}
                                                 </p>
-                                            </div>
+                                            </Link>
                                         ))
                                     )}
                                 </div>
@@ -173,7 +183,11 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                         </p>
                                     ) : (
                                         dashboardSummary.recent_organizations.map((organization) => (
-                                            <div key={organization.id} className="rounded-lg border p-3">
+                                            <Link
+                                                key={organization.id}
+                                                href={`/admin/organizations/${organization.id}/edit`}
+                                                className="block rounded-lg border p-3 transition-colors hover:border-primary/50"
+                                            >
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div>
                                                         <p className="font-medium">{organization.name}</p>
@@ -184,10 +198,10 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                                     <p className="text-xs text-muted-foreground">
                                                         {organization.created_at
                                                             ? formatShortDate(organization.created_at)
-                                                            : '-'}
+                                                        : '-'}
                                                     </p>
                                                 </div>
-                                            </div>
+                                            </Link>
                                         ))
                                     )}
                                 </div>
@@ -197,36 +211,51 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                 ) : dashboardSummary?.role === 'dispatcher' && organizationInvitation ? (
                     <>
                         <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                            <Link
+                                href="/dispatcher/clients"
+                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
+                            >
                                 <p className="text-sm text-muted-foreground">Clients</p>
                                 <p className="mt-2 text-3xl font-semibold">
                                     {dashboardSummary.counts.clients}
                                 </p>
-                            </div>
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                            </Link>
+                            <Link
+                                href="/dispatcher/addresses"
+                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
+                            >
                                 <p className="text-sm text-muted-foreground">Addresses</p>
                                 <p className="mt-2 text-3xl font-semibold">
                                     {dashboardSummary.counts.addresses}
                                 </p>
-                            </div>
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                            </Link>
+                            <Link
+                                href="/dispatcher/orders"
+                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
+                            >
                                 <p className="text-sm text-muted-foreground">Orders</p>
                                 <p className="mt-2 text-3xl font-semibold">
                                     {dashboardSummary.counts.orders}
                                 </p>
-                            </div>
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                            </Link>
+                            <Link
+                                href="/dispatcher/orders"
+                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
+                            >
                                 <p className="text-sm text-muted-foreground">Pending orders</p>
                                 <p className="mt-2 text-3xl font-semibold">
                                     {dashboardSummary.counts.pending_orders}
                                 </p>
-                            </div>
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                            </Link>
+                            <Link
+                                href="/dispatcher/routes"
+                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
+                            >
                                 <p className="text-sm text-muted-foreground">Routes</p>
                                 <p className="mt-2 text-3xl font-semibold">
                                     {dashboardSummary.counts.routes}
                                 </p>
-                            </div>
+                            </Link>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-3">
@@ -302,7 +331,11 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                         </p>
                                     ) : (
                                         dashboardSummary.upcoming_routes.map((route) => (
-                                            <div key={route.id} className="rounded-lg border p-3">
+                                            <Link
+                                                key={route.id}
+                                                href={`/dispatcher/routes/${route.id}`}
+                                                className="block rounded-lg border p-3 transition-colors hover:border-primary/50"
+                                            >
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div>
                                                         <p className="font-medium">
@@ -319,7 +352,7 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                                 <p className="mt-2 text-xs text-muted-foreground">
                                                     {route.stops_count} stops
                                                 </p>
-                                            </div>
+                                            </Link>
                                         ))
                                     )}
                                 </div>
@@ -348,7 +381,11 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                         </p>
                                     ) : (
                                         dashboardSummary.pending_orders.map((order) => (
-                                            <div key={order.id} className="rounded-lg border p-3">
+                                            <Link
+                                                key={order.id}
+                                                href={`/dispatcher/orders/${order.id}/edit`}
+                                                className="block rounded-lg border p-3 transition-colors hover:border-primary/50"
+                                            >
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div>
                                                         <p className="font-medium">
@@ -365,7 +402,7 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                                 <p className="mt-2 text-xs text-muted-foreground">
                                                     {formatShortDate(order.date)}
                                                 </p>
-                                            </div>
+                                            </Link>
                                         ))
                                     )}
                                 </div>

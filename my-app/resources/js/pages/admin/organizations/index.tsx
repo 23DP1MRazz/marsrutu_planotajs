@@ -60,23 +60,21 @@ export default function AdminOrganizationsIndex({ organizations }: AdminOrganiza
                                     <th className="p-2">Name</th>
                                     <th className="p-2">Join code</th>
                                     <th className="p-2">Users</th>
-                                    <th className="p-2">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {organizations.map((organization) => (
                                     <tr key={organization.id} className="border-b">
-                                        <td className="p-2 font-medium">{organization.name}</td>
-                                        <td className="p-2 font-mono">{organization.join_code}</td>
-                                        <td className="p-2">{organization.users_count}</td>
-                                        <td className="p-2">
+                                        <td className="p-2 font-medium">
                                             <Link
                                                 href={`/admin/organizations/${organization.id}/edit`}
-                                                className="text-sm underline underline-offset-4"
+                                                className="block underline-offset-4 hover:underline"
                                             >
-                                                Edit
+                                                {organization.name}
                                             </Link>
                                         </td>
+                                        <td className="p-2 font-mono">{organization.join_code}</td>
+                                        <td className="p-2">{organization.users_count}</td>
                                     </tr>
                                 ))}
                             </tbody>

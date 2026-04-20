@@ -230,7 +230,14 @@ export default function DispatcherOrdersIndex({
                             <tbody>
                                 {orders.map((order) => (
                                     <tr key={order.id} className="border-b">
-                                        <td className="p-2">{order.client_name ?? '-'}</td>
+                                        <td className="p-2">
+                                            <Link
+                                                href={`/dispatcher/orders/${order.id}/edit`}
+                                                className="block underline-offset-4 hover:underline"
+                                            >
+                                                {order.client_name ?? `Order #${order.id}`}
+                                            </Link>
+                                        </td>
                                         <td className="p-2">{order.address_label || '-'}</td>
                                         <td className="p-2">{formatShortDate(order.date)}</td>
                                         <td className="p-2">
@@ -238,20 +245,13 @@ export default function DispatcherOrdersIndex({
                                         </td>
                                         <td className="p-2">{order.status}</td>
                                         <td className="p-2">
-                                            <div className="flex gap-2">
-                                                <Button asChild type="button" variant="outline">
-                                                    <Link href={`/dispatcher/orders/${order.id}/edit`}>
-                                                        Edit
-                                                    </Link>
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() => deleteOrder(order.id)}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => deleteOrder(order.id)}
+                                            >
+                                                Delete
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}

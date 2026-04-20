@@ -114,26 +114,26 @@ export default function DispatcherAddressesIndex({
                             <tbody>
                                 {addresses.map((address) => (
                                     <tr key={address.id} className="border-b">
-                                        <td className="p-2">{address.city}</td>
+                                        <td className="p-2">
+                                            <Link
+                                                href={`/dispatcher/addresses/${address.id}/edit`}
+                                                className="block underline-offset-4 hover:underline"
+                                            >
+                                                {address.city}
+                                            </Link>
+                                        </td>
                                         <td className="p-2">{address.street}</td>
                                         <td className="p-2">
                                             {address.lat ?? '-'}, {address.lng ?? '-'}
                                         </td>
                                         <td className="p-2">
-                                            <div className="flex gap-2">
-                                                <Button asChild type="button" variant="outline">
-                                                    <Link href={`/dispatcher/addresses/${address.id}/edit`}>
-                                                        Edit
-                                                    </Link>
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() => deleteAddress(address.id)}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => deleteAddress(address.id)}
+                                            >
+                                                Delete
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}

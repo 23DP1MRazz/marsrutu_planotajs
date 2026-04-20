@@ -66,24 +66,22 @@ export default function AdminUsersIndex({ users }: AdminUsersIndexProps) {
                                     <th className="p-2">Email</th>
                                     <th className="p-2">Role</th>
                                     <th className="p-2">Organization</th>
-                                    <th className="p-2">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {users.map((user) => (
                                     <tr key={user.id} className="border-b">
-                                        <td className="p-2 font-medium">{user.name}</td>
+                                        <td className="p-2 font-medium">
+                                            <Link
+                                                href={`/admin/users/${user.id}/edit`}
+                                                className="block underline-offset-4 hover:underline"
+                                            >
+                                                {user.name}
+                                            </Link>
+                                        </td>
                                         <td className="p-2">{user.email}</td>
                                         <td className="p-2 uppercase">{user.role}</td>
                                         <td className="p-2">{user.organization_name ?? '-'}</td>
-                                        <td className="p-2">
-                                            <Link
-                                                href={`/admin/users/${user.id}/edit`}
-                                                className="text-sm underline underline-offset-4"
-                                            >
-                                                Edit
-                                            </Link>
-                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

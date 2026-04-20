@@ -30,6 +30,39 @@ class CourierRouteController extends Controller
         return $this->renderRoutePage($request, true);
     }
 
+    public function showCompletedRoutesPage(Request $request): Response
+    {
+        $this->authorizeCourierAccess($request);
+
+        return Inertia::render('courier/routes', [
+            'title' => 'Done routes',
+            'description' => 'Review routes you already finished.',
+            'emptyMessage' => 'You have no completed routes yet.',
+            'routes' => $this->completedRoutesForUser($request),
+        ]);
+    }
+
+    public function showUpcomingRoutesPage(Request $request): Response
+    {
+        $this->authorizeCourierAccess($request);
+
+        return Inertia::render('courier/routes', [
+            'title' => 'Upcoming routes',
+            'description' => 'See routes assigned to you after today.',
+            'emptyMessage' => 'No upcoming routes assigned yet.',
+            'routes' => $this->upcomingRoutesForUser($request),
+        ]);
+    }
+
+    public function showCompletedOrdersPage(Request $request): Response
+    {
+        $this->authorizeCourierAccess($request);
+
+        return Inertia::render('courier/completed-orders', [
+            'orders' => $this->completedOrdersForUser($request),
+        ]);
+    }
+
     public function showToday(Request $request): JsonResponse
     {
         $this->authorizeCourierAccess($request);
@@ -108,7 +141,125 @@ class CourierRouteController extends Controller
             'deliveryRoute' => $deliveryRoute ? $this->formatRoute($deliveryRoute) : null,
             'stops' => $deliveryRoute ? $this->formatStops($deliveryRoute) : [],
             'dashboardMode' => $dashboardMode,
+            'dashboardSummary' => $dashboardMode
+                ? $this->dashboardSummaryForUser($request)
+                : null,
         ]);
+    }
+
+    /**
+     * @return array{
+     *     done_routes: int,
+     *     completed_orders: int,
+     *     upcoming_routes_count: int,
+     *     upcoming_routes: Collection<int, array{id: int, date: string, status: string, stops_count: int}>
+     * }
+     */
+    private function dashboardSummaryForUser(Request $request): array
+    {
+        $upcomingRoutes = $this->upcomingRoutesQuery($request)
+            ->limit(3)
+            ->get();
+
+        return [
+            'done_routes' => $this->completedRoutesQuery($request)->count(),
+            'completed_orders' => $this->completedOrdersQuery($request)->count(),
+            'upcoming_routes_count' => $this->upcomingRoutesQuery($request)->count(),
+            'upcoming_routes' => $this->formatRouteList($upcomingRoutes),
+        ];
+    }
+
+    private function completedRoutesForUser(Request $request): array
+    {
+        return $this->formatRouteList(
+            $this->completedRoutesQuery($request)->get(),
+        );
+    }
+
+    private function upcomingRoutesForUser(Request $request): array
+    {
+        return $this->formatRouteList(
+            $this->upcomingRoutesQuery($request)->get(),
+        );
+    }
+
+    private function completedOrdersForUser(Request $request): array
+    {
+        return $this->completedOrdersQuery($request)
+            ->get()
+            ->map(fn (RouteStop $routeStop) => [
+                'route_stop_id' => $routeStop->id,
+                'route_id' => $routeStop->route_id,
+                'order_id' => $routeStop->order_id,
+                'route_date' => $routeStop->route?->date,
+                'client_name' => $routeStop->order?->client?->name,
+                'address_label' => collect([
+                    $routeStop->order?->address?->city,
+                    $routeStop->order?->address?->street,
+                ])->filter()->join(', '),
+                'status' => $routeStop->status,
+                'completed_at' => $routeStop->completed_at,
+                'proof_view_url' => $routeStop->proofOfDelivery
+                    ? route('proof-of-delivery.show', $routeStop->proofOfDelivery)
+                    : null,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function completedRoutesQuery(Request $request)
+    {
+        return DeliveryRoute::query()
+            ->where('organization_id', $request->user()->organization_id)
+            ->where('courier_user_id', $request->user()->id)
+            ->where('status', 'DONE')
+            ->withCount('routeStops')
+            ->orderByDesc('date');
+    }
+
+    private function upcomingRoutesQuery(Request $request)
+    {
+        return DeliveryRoute::query()
+            ->where('organization_id', $request->user()->organization_id)
+            ->where('courier_user_id', $request->user()->id)
+            ->where('date', '>', Carbon::today()->toDateString())
+            ->withCount('routeStops')
+            ->orderBy('date');
+    }
+
+    private function completedOrdersQuery(Request $request)
+    {
+        return RouteStop::query()
+            ->with([
+                'route:id,date',
+                'proofOfDelivery:id,route_stop_id,file_url',
+                'order.client:id,name',
+                'order.address:id,city,street',
+            ])
+            ->where('organization_id', $request->user()->organization_id)
+            ->where('status', 'COMPLETED')
+            ->whereHas('route', fn ($query) => $query
+                ->where('organization_id', $request->user()->organization_id)
+                ->where('courier_user_id', $request->user()->id))
+            ->orderByDesc('completed_at')
+            ->orderByDesc('id');
+    }
+
+    /**
+     * @param  Collection<int, DeliveryRoute>  $deliveryRoutes
+     * @return array<int, array{id: int, date: string, status: string, stops_count: int}>
+     */
+    private function formatRouteList(Collection $deliveryRoutes): array
+    {
+        return $deliveryRoutes
+            ->map(fn (DeliveryRoute $deliveryRoute) => [
+                'id' => $deliveryRoute->id,
+                'date' => $deliveryRoute->date,
+                'status' => $deliveryRoute->status,
+                'stops_count' => $deliveryRoute->route_stops_count,
+            ])
+            ->values()
+            ->all();
     }
 
     private function todayRouteForUser(Request $request): ?DeliveryRoute

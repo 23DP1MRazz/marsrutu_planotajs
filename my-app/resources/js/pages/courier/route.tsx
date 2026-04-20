@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { CheckCircle2, MapPinned, Navigation, Upload, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
@@ -8,19 +8,25 @@ import {
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
-import type { CourierRouteRecord, CourierRouteStopRecord } from '@/types/courier';
+import type {
+    CourierDashboardSummary,
+    CourierRouteRecord,
+    CourierRouteStopRecord,
+} from '@/types/courier';
 import type { BreadcrumbItem } from '@/types';
 
 type CourierRoutePageProps = {
     deliveryRoute: CourierRouteRecord | null;
     stops: CourierRouteStopRecord[];
     dashboardMode?: boolean;
+    dashboardSummary?: CourierDashboardSummary | null;
 };
 
 export default function CourierRoutePage({
     deliveryRoute,
     stops,
     dashboardMode = false,
+    dashboardSummary = null,
 }: CourierRoutePageProps) {
     const [failedStopId, setFailedStopId] = useState<number | null>(null);
     const [failReasons, setFailReasons] = useState<Record<number, string>>({});
@@ -117,6 +123,76 @@ export default function CourierRoutePage({
                         your phone.
                     </p>
                 </div>
+
+                {dashboardMode && dashboardSummary && (
+                    <>
+                        <div className="grid gap-3 sm:grid-cols-3">
+                            <SummaryCard
+                                label="Done routes"
+                                value={String(dashboardSummary.done_routes)}
+                                href="/courier/routes/completed"
+                            />
+                            <SummaryCard
+                                label="Completed orders"
+                                value={String(dashboardSummary.completed_orders)}
+                                href="/courier/orders/completed"
+                            />
+                            <SummaryCard
+                                label="Upcoming routes"
+                                value={String(dashboardSummary.upcoming_routes_count)}
+                                href="/courier/routes/upcoming"
+                            />
+                        </div>
+
+                        <div className="rounded-3xl border border-border/80 bg-card/90 p-4 shadow-sm sm:p-5">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <h2 className="text-base font-semibold sm:text-lg">
+                                        Upcoming routes
+                                    </h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Your next assigned routes after today.
+                                    </p>
+                                </div>
+                                <Link
+                                    href="/courier/routes/upcoming"
+                                    className="text-sm underline underline-offset-4"
+                                >
+                                    View all
+                                </Link>
+                            </div>
+
+                            <div className="mt-4 space-y-3">
+                                {dashboardSummary.upcoming_routes.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        No upcoming routes assigned yet.
+                                    </p>
+                                ) : (
+                                    dashboardSummary.upcoming_routes.map((route) => (
+                                        <div
+                                            key={route.id}
+                                            className="rounded-2xl border border-border/80 p-3"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {formatShortDate(route.date)}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {route.stops_count} planned stops
+                                                    </p>
+                                                </div>
+                                                <span className="rounded-full border border-border/80 px-3 py-1 text-xs font-medium">
+                                                    {route.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
 
                 {deliveryRoute === null ? (
                     <div className="rounded-3xl border border-dashed border-border/80 bg-card/60 p-6 text-center">
@@ -373,16 +449,24 @@ export default function CourierRoutePage({
 function SummaryCard({
     label,
     value,
+    href,
 }: {
     label: string;
     value: string;
+    href?: string;
 }) {
-    return (
-        <div className="rounded-2xl border border-border/80 bg-card/90 p-4">
+    const content = (
+        <div className="rounded-2xl border border-border/80 bg-card/90 p-4 transition-colors hover:border-primary/50">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 {label}
             </p>
             <p className="mt-2 text-base font-semibold">{value}</p>
         </div>
     );
+
+    if (href) {
+        return <Link href={href}>{content}</Link>;
+    }
+
+    return content;
 }
