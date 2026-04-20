@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Check, Copy, Link2, Users } from 'lucide-react';
 import { useClipboard } from '@/hooks/use-clipboard';
 import AppLayout from '@/layouts/app-layout';
+import { formatShortDate } from '@/lib/date';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 
@@ -13,6 +14,40 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 type DashboardProps = {
+    dashboardSummary:
+        | {
+              role: 'admin';
+              counts: {
+                  users: number;
+                  organizations: number;
+              };
+              recent_users: Array<{
+                  id: number;
+                  name: string;
+                  email: string;
+                  role: string;
+                  created_at: string | null;
+              }>;
+              recent_organizations: Array<{
+                  id: number;
+                  name: string;
+                  join_code: string;
+                  created_at: string | null;
+              }>;
+          }
+        | {
+              role: 'dispatcher';
+              counts: {
+                  clients: number;
+                  addresses: number;
+                  orders: number;
+                  pending_orders: number;
+                  routes: number;
+              };
+              upcoming_routes: Array<unknown>;
+              pending_orders: Array<unknown>;
+          }
+        | null;
     organizationInvitation: {
         organization_id: number;
         organization_name: string;
@@ -21,7 +56,7 @@ type DashboardProps = {
     } | null;
 };
 
-export default function Dashboard({ organizationInvitation }: DashboardProps) {
+export default function Dashboard({ dashboardSummary, organizationInvitation }: DashboardProps) {
     const [copiedText, copyToClipboard] = useClipboard();
     const registrationLink = organizationInvitation === null
         ? null
@@ -33,7 +68,121 @@ export default function Dashboard({ organizationInvitation }: DashboardProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                {organizationInvitation ? (
+                {dashboardSummary?.role === 'admin' ? (
+                    <>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <p className="text-sm text-muted-foreground">Users</p>
+                                <p className="mt-2 text-3xl font-semibold">
+                                    {dashboardSummary.counts.users}
+                                </p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Total registered accounts across all organizations.
+                                </p>
+                            </div>
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <p className="text-sm text-muted-foreground">Organizations</p>
+                                <p className="mt-2 text-3xl font-semibold">
+                                    {dashboardSummary.counts.organizations}
+                                </p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Active organizations managed by the platform.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4 xl:grid-cols-2">
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <h2 className="text-lg font-semibold">Recent users</h2>
+                                        <p className="text-sm text-muted-foreground">
+                                            Latest created accounts across all roles.
+                                        </p>
+                                    </div>
+                                    <Link
+                                        href="/admin/users"
+                                        className="text-sm underline underline-offset-4"
+                                    >
+                                        Open users
+                                    </Link>
+                                </div>
+
+                                <div className="mt-4 space-y-3">
+                                    {dashboardSummary.recent_users.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">
+                                            No users created yet.
+                                        </p>
+                                    ) : (
+                                        dashboardSummary.recent_users.map((user) => (
+                                            <div key={user.id} className="rounded-lg border p-3">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <p className="font-medium">{user.name}</p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {user.email}
+                                                        </p>
+                                                    </div>
+                                                    <p className="text-sm uppercase text-muted-foreground">
+                                                        {user.role}
+                                                    </p>
+                                                </div>
+                                                <p className="mt-2 text-xs text-muted-foreground">
+                                                    {user.created_at
+                                                        ? formatShortDate(user.created_at)
+                                                        : '-'}
+                                                </p>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <h2 className="text-lg font-semibold">Recent organizations</h2>
+                                        <p className="text-sm text-muted-foreground">
+                                            Latest organizations and their join codes.
+                                        </p>
+                                    </div>
+                                    <Link
+                                        href="/admin/organizations"
+                                        className="text-sm underline underline-offset-4"
+                                    >
+                                        Open organizations
+                                    </Link>
+                                </div>
+
+                                <div className="mt-4 space-y-3">
+                                    {dashboardSummary.recent_organizations.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">
+                                            No organizations created yet.
+                                        </p>
+                                    ) : (
+                                        dashboardSummary.recent_organizations.map((organization) => (
+                                            <div key={organization.id} className="rounded-lg border p-3">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <p className="font-medium">{organization.name}</p>
+                                                        <p className="mt-1 font-mono text-sm text-muted-foreground">
+                                                            {organization.join_code}
+                                                        </p>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {organization.created_at
+                                                            ? formatShortDate(organization.created_at)
+                                                            : '-'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                ) : organizationInvitation ? (
                     <>
                         <div className="grid gap-4 md:grid-cols-3">
                             <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
