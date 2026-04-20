@@ -44,8 +44,20 @@ type DashboardProps = {
                   pending_orders: number;
                   routes: number;
               };
-              upcoming_routes: Array<unknown>;
-              pending_orders: Array<unknown>;
+              upcoming_routes: Array<{
+                  id: number;
+                  date: string;
+                  status: string;
+                  stops_count: number;
+                  courier_name: string | null;
+              }>;
+              pending_orders: Array<{
+                  id: number;
+                  date: string;
+                  status: string;
+                  client_name: string | null;
+                  address_label: string;
+              }>;
           }
         | null;
     organizationInvitation: {
@@ -182,8 +194,41 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                             </div>
                         </div>
                     </>
-                ) : organizationInvitation ? (
+                ) : dashboardSummary?.role === 'dispatcher' && organizationInvitation ? (
                     <>
+                        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <p className="text-sm text-muted-foreground">Clients</p>
+                                <p className="mt-2 text-3xl font-semibold">
+                                    {dashboardSummary.counts.clients}
+                                </p>
+                            </div>
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <p className="text-sm text-muted-foreground">Addresses</p>
+                                <p className="mt-2 text-3xl font-semibold">
+                                    {dashboardSummary.counts.addresses}
+                                </p>
+                            </div>
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <p className="text-sm text-muted-foreground">Orders</p>
+                                <p className="mt-2 text-3xl font-semibold">
+                                    {dashboardSummary.counts.orders}
+                                </p>
+                            </div>
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <p className="text-sm text-muted-foreground">Pending orders</p>
+                                <p className="mt-2 text-3xl font-semibold">
+                                    {dashboardSummary.counts.pending_orders}
+                                </p>
+                            </div>
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <p className="text-sm text-muted-foreground">Routes</p>
+                                <p className="mt-2 text-3xl font-semibold">
+                                    {dashboardSummary.counts.routes}
+                                </p>
+                            </div>
+                        </div>
+
                         <div className="grid gap-4 md:grid-cols-3">
                             <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
                                 <p className="text-sm text-muted-foreground">Organization</p>
@@ -229,6 +274,100 @@ export default function Dashboard({ dashboardSummary, organizationInvitation }: 
                                         <Link2 className="size-4" />
                                         Create route
                                     </Link>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4 xl:grid-cols-2">
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <h2 className="text-lg font-semibold">Upcoming routes</h2>
+                                        <p className="text-sm text-muted-foreground">
+                                            Next planned routes for your organization.
+                                        </p>
+                                    </div>
+                                    <Link
+                                        href="/dispatcher/routes"
+                                        className="text-sm underline underline-offset-4"
+                                    >
+                                        Open routes
+                                    </Link>
+                                </div>
+
+                                <div className="mt-4 space-y-3">
+                                    {dashboardSummary.upcoming_routes.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">
+                                            No routes planned yet.
+                                        </p>
+                                    ) : (
+                                        dashboardSummary.upcoming_routes.map((route) => (
+                                            <div key={route.id} className="rounded-lg border p-3">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <p className="font-medium">
+                                                            {route.courier_name ?? 'Unassigned courier'}
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {formatShortDate(route.date)}
+                                                        </p>
+                                                    </div>
+                                                    <p className="text-sm uppercase text-muted-foreground">
+                                                        {route.status}
+                                                    </p>
+                                                </div>
+                                                <p className="mt-2 text-xs text-muted-foreground">
+                                                    {route.stops_count} stops
+                                                </p>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <h2 className="text-lg font-semibold">Pending orders</h2>
+                                        <p className="text-sm text-muted-foreground">
+                                            Orders that still need attention or assignment.
+                                        </p>
+                                    </div>
+                                    <Link
+                                        href="/dispatcher/orders"
+                                        className="text-sm underline underline-offset-4"
+                                    >
+                                        Open orders
+                                    </Link>
+                                </div>
+
+                                <div className="mt-4 space-y-3">
+                                    {dashboardSummary.pending_orders.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">
+                                            No pending orders right now.
+                                        </p>
+                                    ) : (
+                                        dashboardSummary.pending_orders.map((order) => (
+                                            <div key={order.id} className="rounded-lg border p-3">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <p className="font-medium">
+                                                            {order.client_name ?? 'Unknown client'}
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {order.address_label || '-'}
+                                                        </p>
+                                                    </div>
+                                                    <p className="text-sm uppercase text-muted-foreground">
+                                                        {order.status}
+                                                    </p>
+                                                </div>
+                                                <p className="mt-2 text-xs text-muted-foreground">
+                                                    {formatShortDate(order.date)}
+                                                </p>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         </div>
