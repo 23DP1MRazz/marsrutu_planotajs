@@ -1,8 +1,4 @@
 import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { update } from '@/routes/password';
@@ -11,6 +7,12 @@ type Props = {
     token: string;
     email: string;
 };
+
+const spinnerStyle = {
+    display: 'inline-block',
+    marginRight: '8px',
+    verticalAlign: 'middle',
+} as const;
 
 export default function ResetPassword({ token, email }: Props) {
     return (
@@ -24,68 +26,64 @@ export default function ResetPassword({ token, email }: Props) {
                 {...update.form()}
                 transform={(data) => ({ ...data, token, email })}
                 resetOnSuccess={['password', 'password_confirmation']}
+                className="auth-form"
             >
                 {({ processing, errors }) => (
-                    <div className="grid gap-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
+                    <>
+                        <div className="auth-field">
+                            <label htmlFor="email">Email</label>
+                            <input
                                 id="email"
                                 type="email"
                                 name="email"
                                 autoComplete="email"
                                 value={email}
-                                className="mt-1 block w-full"
                                 readOnly
                             />
-                            <InputError
-                                message={errors.email}
-                                className="mt-2"
-                            />
+                            {errors.email && <span className="auth-error">{errors.email}</span>}
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
+                        <div className="auth-field">
+                            <label htmlFor="password">Password</label>
+                            <input
                                 id="password"
                                 type="password"
                                 name="password"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
                                 autoFocus
-                                placeholder="Password"
+                                placeholder="••••••••"
                             />
-                            <InputError message={errors.password} />
+                            {errors.password && <span className="auth-error">{errors.password}</span>}
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">
+                        <div className="auth-field">
+                            <label htmlFor="password_confirmation">
                                 Confirm password
-                            </Label>
-                            <Input
+                            </label>
+                            <input
                                 id="password_confirmation"
                                 type="password"
                                 name="password_confirmation"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
-                                placeholder="Confirm password"
+                                placeholder="••••••••"
                             />
-                            <InputError
-                                message={errors.password_confirmation}
-                                className="mt-2"
-                            />
+                            {errors.password_confirmation && (
+                                <span className="auth-error">
+                                    {errors.password_confirmation}
+                                </span>
+                            )}
                         </div>
 
-                        <Button
+                        <button
                             type="submit"
-                            className="mt-4 w-full"
+                            className="auth-submit-btn"
                             disabled={processing}
                             data-test="reset-password-button"
                         >
-                            {processing && <Spinner />}
+                            {processing ? <Spinner style={spinnerStyle} /> : null}
                             Reset password
-                        </Button>
-                    </div>
+                        </button>
+                    </>
                 )}
             </Form>
         </AuthLayout>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AnchorHTMLAttributes, MouseEventHandler } from 'react';
 import { HEADER_SCROLL_OFFSET_PX } from './data';
-import { SignUpButton } from './SignUpButton';
+import { AuthButton } from './AuthButton';
 
 const HEADER_HIDE_SCROLL_THRESHOLD_PX = 100;
 
@@ -206,7 +206,7 @@ export function Header() {
                             </LandingLink>
                         </li>
                         <li>
-                            <SignUpButton />
+                            <AuthButton />
                         </li>
                     </ul>
                 </nav>

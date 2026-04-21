@@ -1,48 +1,74 @@
 import { Link } from '@inertiajs/react';
-import type { PropsWithChildren } from 'react';
-import AppLogoIcon from '@/components/app-logo-icon';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import type { AuthLayoutProps } from '@/types';
 import { home } from '@/routes';
+import '../../../css/landing.css';
+import '../../../css/auth-landing.css';
 
 export default function AuthCardLayout({
     children,
     title,
     description,
-}: PropsWithChildren<{
-    name?: string;
-    title?: string;
-    description?: string;
-}>) {
+}: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
-            <div className="flex w-full max-w-md flex-col gap-6">
-                <Link
-                    href={home()}
-                    className="flex items-center gap-2 self-center font-medium"
-                >
-                    <div className="flex h-9 w-9 items-center justify-center">
-                        <AppLogoIcon className="size-9 fill-current text-black dark:text-white" />
-                    </div>
-                </Link>
-
-                <div className="flex flex-col gap-6">
-                    <Card className="rounded-xl">
-                        <CardHeader className="px-10 pt-8 pb-0 text-center">
-                            <CardTitle className="text-xl">{title}</CardTitle>
-                            <CardDescription>{description}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="px-10 py-8">
-                            {children}
-                        </CardContent>
-                    </Card>
+        <div className="landing-root auth-shell">
+            <header className="header" id="header">
+                <div className="header-container">
+                    <Link href={home()} className="logo">
+                        MARŠRUTU PLĀNOTĀJS
+                    </Link>
+                    <nav className="nav">
+                        <Link href={home()} className="auth-back-link">
+                            <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M19 12H5M12 5l-7 7 7 7" />
+                            </svg>
+                            <span>Back to home</span>
+                        </Link>
+                    </nav>
                 </div>
-            </div>
+            </header>
+
+            <main className="auth-shell__main">
+                <div className="auth-shell__blob auth-shell__blob--top" />
+                <div className="auth-shell__blob auth-shell__blob--bottom" />
+
+                <div className="auth-shell__content">
+                    <div className="auth-shell__intro">
+                        <div className="auth-shell__brand-mark" aria-hidden="true">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                                <path
+                                    d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                                    stroke="white"
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+                        </div>
+
+                        {title ? <h1 className="auth-shell__title">{title}</h1> : null}
+                        {description ? (
+                            <p className="auth-shell__description">{description}</p>
+                        ) : null}
+                    </div>
+
+                    <div className="auth-shell__card">{children}</div>
+                </div>
+            </main>
+
+            <footer className="auth-shell__footer">
+                <p className="auth-shell__footer-text">
+                    © 2026 Maršrutu plānotājs · Iekšējā loģistikas pārvaldības sistēma
+                </p>
+            </footer>
         </div>
     );
 }

@@ -1,15 +1,21 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 import type { SharedData } from '@/types';
+
+const joinCodeInputStyle = {
+    fontFamily: 'monospace',
+    letterSpacing: '0.05em',
+} as const;
+
+const spinnerStyle = {
+    display: 'inline-block',
+    marginRight: '8px',
+    verticalAlign: 'middle',
+} as const;
 
 export default function Register() {
     const {
@@ -22,174 +28,172 @@ export default function Register() {
     return (
         <AuthLayout
             title="Create an account"
-            description="Enter your details below to create your account"
+            description="Join your organization and start managing deliveries"
         >
             <Head title="Register" />
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
-                className="flex flex-col gap-6"
+                className="auth-form"
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="role">Role</Label>
-                                <select
-                                    id="role"
-                                    name="role"
-                                    required
-                                    defaultValue="dispatcher"
-                                    className="border-input bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
-                                >
-                                    <option value="dispatcher">Dispatcher</option>
-                                    <option value="courier">Courier</option>
-                                </select>
-                                <InputError message={errors.role} />
-                            </div>
+                        <div className="auth-field">
+                            <label htmlFor="role">Your role</label>
+                            <select id="role" name="role" required defaultValue="dispatcher">
+                                <option value="dispatcher">Dispatcher</option>
+                                <option value="courier">Courier</option>
+                            </select>
+                            {errors.role && <span className="auth-error">{errors.role}</span>}
+                        </div>
 
-                            <div className="grid gap-3">
-                                <div className="grid gap-2">
-                                    <Label>Organization</Label>
-                                    <label className="flex items-center gap-2 text-sm">
-                                        <input
-                                            type="radio"
-                                            name="org_action"
-                                            value="create"
-                                            checked={organizationAction === 'create'}
-                                            onChange={() => {
-                                                setOrganizationAction('create');
-                                            }}
-                                        />
-                                        Create organization
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm">
-                                        <input
-                                            type="radio"
-                                            name="org_action"
-                                            value="join"
-                                            checked={organizationAction === 'join'}
-                                            onChange={() => {
-                                                setOrganizationAction('join');
-                                            }}
-                                        />
-                                        Join organization
-                                    </label>
-                                    <InputError message={errors.org_action} />
-                                </div>
-
-                                {organizationAction === 'create' ? (
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="organization_name">Organization name</Label>
-                                        <Input
-                                            id="organization_name"
-                                            type="text"
-                                            required={organizationAction === 'create'}
-                                            tabIndex={1}
-                                            name="organization_name"
-                                            placeholder="Organization name"
-                                        />
-                                        <InputError message={errors.organization_name} />
+                        <div className="auth-field">
+                            <span className="auth-section-label">Organization</span>
+                            <div className="auth-radio-group">
+                                <label className="auth-radio-label">
+                                    <input
+                                        type="radio"
+                                        name="org_action"
+                                        value="create"
+                                        checked={organizationAction === 'create'}
+                                        onChange={() => setOrganizationAction('create')}
+                                    />
+                                    <div>
+                                        <div style={{ fontWeight: 500, fontSize: '0.9375rem' }}>
+                                            Create a new organization
+                                        </div>
+                                        <div
+                                            className="auth-footer-text"
+                                            style={{ marginTop: 0 }}
+                                        >
+                                            Start fresh with a new team
+                                        </div>
                                     </div>
-                                ) : (
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="organization_join_code">Join code</Label>
-                                        <Input
-                                            id="organization_join_code"
-                                            type="text"
-                                            required={organizationAction === 'join'}
-                                            tabIndex={1}
-                                            name="organization_join_code"
-                                            placeholder="ABC12345"
-                                            defaultValue={joinCode ?? ''}
-                                        />
-                                        <InputError message={errors.organization_join_code} />
+                                </label>
+                                <label className="auth-radio-label">
+                                    <input
+                                        type="radio"
+                                        name="org_action"
+                                        value="join"
+                                        checked={organizationAction === 'join'}
+                                        onChange={() => setOrganizationAction('join')}
+                                    />
+                                    <div>
+                                        <div style={{ fontWeight: 500, fontSize: '0.9375rem' }}>
+                                            Join an existing organization
+                                        </div>
+                                        <div
+                                            className="auth-footer-text"
+                                            style={{ marginTop: 0 }}
+                                        >
+                                            Use an invite code to join
+                                        </div>
                                     </div>
-                                )}
+                                </label>
                             </div>
+                            {errors.org_action && <span className="auth-error">{errors.org_action}</span>}
+                        </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
-                                <Input
-                                    id="name"
+                        {organizationAction === 'create' ? (
+                            <div className="auth-field">
+                                <label htmlFor="organization_name">Organization name</label>
+                                <input
+                                    id="organization_name"
                                     type="text"
+                                    name="organization_name"
                                     required
-                                    autoFocus
-                                    tabIndex={2}
-                                    autoComplete="name"
-                                    name="name"
-                                    placeholder="Full name"
+                                    placeholder="e.g. Riga Fast Delivery"
                                 />
-                                <InputError
-                                    message={errors.name}
-                                    className="mt-2"
-                                />
+                                {errors.organization_name && <span className="auth-error">{errors.organization_name}</span>}
                             </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
+                        ) : (
+                            <div className="auth-field">
+                                <label htmlFor="organization_join_code">Join code</label>
+                                <input
+                                    id="organization_join_code"
+                                    type="text"
+                                    name="organization_join_code"
                                     required
-                                    tabIndex={3}
-                                    autoComplete="email"
-                                    name="email"
-                                    placeholder="email@example.com"
+                                    placeholder="e.g. ABC12345"
+                                    defaultValue={joinCode ?? ''}
+                                    style={joinCodeInputStyle}
                                 />
-                                <InputError message={errors.email} />
+                                {errors.organization_join_code && <span className="auth-error">{errors.organization_join_code}</span>}
                             </div>
+                        )}
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    required
-                                    tabIndex={4}
-                                    autoComplete="new-password"
-                                    name="password"
-                                    placeholder="Password"
-                                />
-                                <InputError message={errors.password} />
-                            </div>
+                        <div className="auth-divider">Personal details</div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
-                                <Input
-                                    id="password_confirmation"
-                                    type="password"
-                                    required
-                                    tabIndex={5}
-                                    autoComplete="new-password"
-                                    name="password_confirmation"
-                                    placeholder="Confirm password"
-                                />
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="mt-2 w-full"
-                                tabIndex={6}
-                                data-test="register-user-button"
-                            >
-                                {processing && <Spinner />}
-                                Create account
-                            </Button>
+                        <div className="auth-field">
+                            <label htmlFor="name">Full name</label>
+                            <input
+                                id="name"
+                                type="text"
+                                name="name"
+                                required
+                                autoFocus
+                                autoComplete="name"
+                                placeholder="Your full name"
+                            />
+                            {errors.name && <span className="auth-error">{errors.name}</span>}
                         </div>
 
-                        <div className="text-center text-sm text-muted-foreground">
+                        <div className="auth-field">
+                            <label htmlFor="email">Email address</label>
+                            <input
+                                id="email"
+                                type="email"
+                                name="email"
+                                required
+                                autoComplete="email"
+                                placeholder="you@example.com"
+                            />
+                            {errors.email && <span className="auth-error">{errors.email}</span>}
+                        </div>
+
+                        <div className="auth-field">
+                            <label htmlFor="password">Password</label>
+                            <input
+                                id="password"
+                                type="password"
+                                name="password"
+                                required
+                                autoComplete="new-password"
+                                placeholder="••••••••"
+                            />
+                            {errors.password && <span className="auth-error">{errors.password}</span>}
+                        </div>
+
+                        <div className="auth-field">
+                            <label htmlFor="password_confirmation">Confirm password</label>
+                            <input
+                                id="password_confirmation"
+                                type="password"
+                                name="password_confirmation"
+                                required
+                                autoComplete="new-password"
+                                placeholder="••••••••"
+                            />
+                            {errors.password_confirmation && <span className="auth-error">{errors.password_confirmation}</span>}
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="auth-submit-btn"
+                            disabled={processing}
+                            data-test="register-user-button"
+                        >
+                            {processing ? <Spinner style={spinnerStyle} /> : null}
+                            Create account
+                        </button>
+
+                        <p className="auth-footer-text">
                             Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6}>
+                            <Link href={login()} className="auth-link">
                                 Log in
-                            </TextLink>
-                        </div>
+                            </Link>
+                        </p>
                     </>
                 )}
             </Form>

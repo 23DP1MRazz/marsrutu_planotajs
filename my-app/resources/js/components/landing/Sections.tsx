@@ -1,5 +1,5 @@
 import { featureCards, howItWorksSteps, targetUsers } from './data';
-import { SignUpButton } from './SignUpButton';
+import { AuthButton } from './AuthButton';
 import { LandingLink } from './Header';
 
 function HeroSection() {
@@ -18,7 +18,7 @@ function HeroSection() {
                             profesionālu maršrutu plānošanas rīku.
                         </p>
                         <div className="hero-actions">
-                            <SignUpButton />
+                            <AuthButton />
                             <LandingLink
                                 href="#about"
                                 className="btn btn-secondary"
@@ -154,7 +154,7 @@ function CTASection() {
                     Pieprasiet piekļuvi maršrutu plānotājam un pārvaldiet
                     piegādes efektīvāk
                 </p>
-                <SignUpButton />
+                <AuthButton />
             </div>
         </section>
     );
