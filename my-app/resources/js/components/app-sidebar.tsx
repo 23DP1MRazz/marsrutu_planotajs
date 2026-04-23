@@ -66,7 +66,7 @@ export function AppSidebar() {
         ...(auth.user.role === 'admin'
             ? [
                   {
-                      title: 'Admin users',
+                      title: 'Users',
                       href: '/admin/users',
                       icon: Shield,
                   },

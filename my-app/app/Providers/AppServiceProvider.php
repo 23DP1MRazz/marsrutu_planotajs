@@ -8,14 +8,12 @@ use App\Models\DeliveryRoute;
 use App\Models\Order;
 use App\Models\ProofOfDelivery;
 use App\Models\RouteStop;
-use App\Models\TransportVehicle;
 use App\Policies\AddressPolicy;
 use App\Policies\ClientPolicy;
 use App\Policies\DeliveryRoutePolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\ProofOfDeliveryPolicy;
 use App\Policies\RouteStopPolicy;
-use App\Policies\TransportVehiclePolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -69,6 +67,5 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(DeliveryRoute::class, DeliveryRoutePolicy::class);
         Gate::policy(RouteStop::class, RouteStopPolicy::class);
         Gate::policy(ProofOfDelivery::class, ProofOfDeliveryPolicy::class);
-        Gate::policy(TransportVehicle::class, TransportVehiclePolicy::class);
     }
 }

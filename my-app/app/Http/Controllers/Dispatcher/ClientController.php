@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dispatcher;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Dispatcher\Concerns\ParsesSearchFilters;
 use App\Http\Requests\Dispatcher\StoreClientRequest;
 use App\Http\Requests\Dispatcher\UpdateClientRequest;
 use App\Models\Client;
@@ -15,6 +16,8 @@ use Inertia\Response;
 
 class ClientController extends Controller
 {
+    use ParsesSearchFilters;
+
     public function index(Request $request): Response
     {
         $this->authorizeDispatcherAccess($request);
@@ -130,15 +133,16 @@ class ClientController extends Controller
     private function filteredClientsQuery(Request $request, array $filters): Builder
     {
         $query = Client::query()
-            ->visibleTo($request->user())
-            ->when(
-                $filters['search'] !== '',
-                fn (Builder $builder) => $builder->where(function (Builder $searchQuery) use ($filters): void {
-                    $searchQuery
-                        ->where('name', 'like', '%'.$filters['search'].'%')
-                        ->orWhere('phone', 'like', '%'.$filters['search'].'%');
-                }),
-            );
+            ->visibleTo($request->user());
+
+        foreach ($this->searchTerms($filters['search']) as $searchTerm) {
+            $query->where(function (Builder $searchQuery) use ($searchTerm): void {
+                $searchQuery
+                    ->where('id', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('name', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('phone', 'like', '%'.$searchTerm.'%');
+            });
+        }
 
         return $this->applySort($query, $filters['sort']);
     }

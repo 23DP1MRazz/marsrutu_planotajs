@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Models\Courier;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -69,16 +68,10 @@ class UpdateUserRequest extends FormRequest
                 return;
             }
 
-            $courier = Courier::query()->whereKey($managedUser->id)->first();
-
-            if ($courier === null) {
-                return;
-            }
-
-            if ($courier->transportVehicle()->exists() || $courier->routes()->exists()) {
+            if ($managedUser->courierProfile?->routes()->exists()) {
                 $validator->errors()->add(
                     'role',
-                    'This courier cannot change role or organization while assigned routes or vehicle data exist.',
+                    'This courier cannot change role or organization while assigned routes exist.',
                 );
             }
         });

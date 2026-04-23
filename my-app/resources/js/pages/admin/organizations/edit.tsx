@@ -1,5 +1,17 @@
 import type { FormEvent } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
+import {
+    BackofficeActionLink,
+    BackofficeCard,
+    BackofficeCardBody,
+    BackofficeField,
+    BackofficeInfoNote,
+    BackofficePage,
+    BackofficePageHeader,
+    BackofficeStatCard,
+    backofficeButtonClassName,
+    backofficeInputClassName,
+} from '@/components/backoffice/ui';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -18,7 +30,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Edit organization', href: '#' },
 ];
 
-export default function AdminOrganizationsEdit({ organization }: AdminOrganizationEditProps) {
+export default function AdminOrganizationsEdit({
+    organization,
+}: AdminOrganizationEditProps) {
     const form = useForm({
         name: organization.name,
     });
@@ -31,82 +45,106 @@ export default function AdminOrganizationsEdit({ organization }: AdminOrganizati
     };
 
     const regenerateJoinCode = () => {
-        regenerateForm.post(`/admin/organizations/${organization.id}/regenerate-join-code`);
+        regenerateForm.post(
+            `/admin/organizations/${organization.id}/regenerate-join-code`,
+        );
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit organization" />
 
-            <div className="space-y-4 p-4">
-                <div className="border p-4">
-                    <h1 className="text-xl font-semibold">Edit organization</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Update the organization name or generate a fresh join code.
-                    </p>
+            <BackofficePage>
+                <BackofficePageHeader
+                    title="Edit Organization"
+                    description="Update the organization name or generate a fresh join code."
+                    actions={
+                        <BackofficeActionLink
+                            href="/admin/organizations"
+                            variant="outline"
+                        >
+                            Back to organizations
+                        </BackofficeActionLink>
+                    }
+                />
+
+                <div className="grid gap-3 md:grid-cols-3">
+                    <BackofficeStatCard
+                        label="Join code"
+                        value={
+                            <span className="font-mono">
+                                {organization.join_code}
+                            </span>
+                        }
+                        meta="Current invite code"
+                    />
+                    <BackofficeStatCard
+                        label="Assigned users"
+                        value={organization.users_count}
+                        meta="Users in this organization"
+                    />
+                    <BackofficeStatCard
+                        label="Organization ID"
+                        value={organization.id}
+                        meta="Internal platform identifier"
+                    />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
-                    <div className="border p-4">
-                        <p className="text-sm text-muted-foreground">Join code</p>
-                        <p className="text-2xl font-semibold font-mono">{organization.join_code}</p>
-                    </div>
-                    <div className="border p-4">
-                        <p className="text-sm text-muted-foreground">Assigned users</p>
-                        <p className="text-2xl font-semibold">{organization.users_count}</p>
-                    </div>
-                    <div className="border p-4">
-                        <p className="text-sm text-muted-foreground">Organization ID</p>
-                        <p className="text-2xl font-semibold">{organization.id}</p>
-                    </div>
-                </div>
-
-                <div className="border p-4">
-                    <form className="space-y-4" onSubmit={submit}>
-                        <div className="space-y-1">
-                            <label htmlFor="name" className="block text-sm">
-                                Organization name
-                            </label>
-                            <input
-                                id="name"
-                                type="text"
-                                value={form.data.name}
-                                onChange={(event) => form.setData('name', event.target.value)}
-                                className="w-full border px-3 py-2"
-                            />
-                            {form.errors.name && (
-                                <p className="text-sm text-red-600">{form.errors.name}</p>
-                            )}
-                        </div>
-
-                        <div className="border p-3 text-sm text-muted-foreground">
-                            Regenerating the join code keeps the organization the same, but old
-                            invite codes stop working.
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                            <button
-                                type="submit"
-                                disabled={form.processing}
-                                className="border px-4 py-2"
+                <BackofficeCard>
+                    <BackofficeCardBody>
+                        <form className="space-y-5" onSubmit={submit}>
+                            <BackofficeField
+                                label="Organization name"
+                                error={form.errors.name}
                             >
-                                Save
-                            </button>
-                            <button
-                                type="button"
-                                disabled={regenerateForm.processing}
-                                onClick={regenerateJoinCode}
-                                className="border px-4 py-2"
-                            >
-                                Regenerate join code
-                            </button>
-                            <Link href="/admin/organizations" className="border px-4 py-2">
-                                Back
-                            </Link>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                                <input
+                                    id="name"
+                                    type="text"
+                                    value={form.data.name}
+                                    onChange={(event) =>
+                                        form.setData('name', event.target.value)
+                                    }
+                                    className={backofficeInputClassName}
+                                />
+                            </BackofficeField>
+
+                            <BackofficeInfoNote>
+                                Regenerating the join code keeps the
+                                organization the same, but old invite codes stop
+                                working.
+                            </BackofficeInfoNote>
+
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="submit"
+                                    disabled={form.processing}
+                                    className={backofficeButtonClassName(
+                                        'primary',
+                                    )}
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={regenerateForm.processing}
+                                    onClick={regenerateJoinCode}
+                                    className={backofficeButtonClassName(
+                                        'outline',
+                                    )}
+                                >
+                                    Regenerate join code
+                                </button>
+                                <BackofficeActionLink
+                                    href="/admin/organizations"
+                                    variant="outline"
+                                >
+                                    Back
+                                </BackofficeActionLink>
+                            </div>
+                        </form>
+                    </BackofficeCardBody>
+                </BackofficeCard>
+            </BackofficePage>
         </AppLayout>
     );
 }

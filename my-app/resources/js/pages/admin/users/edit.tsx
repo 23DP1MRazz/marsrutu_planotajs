@@ -1,6 +1,19 @@
 import type { FormEvent } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
+import {
+    BackofficeActionLink,
+    BackofficeCard,
+    BackofficeCardBody,
+    BackofficeField,
+    BackofficeInfoNote,
+    BackofficePage,
+    BackofficePageHeader,
+    backofficeButtonClassName,
+    backofficeInputClassName,
+    backofficeSelectClassName,
+} from '@/components/backoffice/ui';
 import AppLayout from '@/layouts/app-layout';
+import { useForm } from '@inertiajs/react';
 import type { BreadcrumbItem } from '@/types';
 
 type AdminUserEditProps = {
@@ -21,23 +34,28 @@ type AdminUserEditProps = {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Admin users', href: '/admin/users' },
+    { title: 'Users', href: '/admin/users' },
     { title: 'Edit user', href: '#' },
 ];
 
-export default function AdminUsersEdit({ user, roles, organizations }: AdminUserEditProps) {
+export default function AdminUsersEdit({
+    user,
+    roles,
+    organizations,
+}: AdminUserEditProps) {
     const form = useForm({
         name: user.name,
         email: user.email,
         role: user.role,
-        organization_id: user.organization_id ? String(user.organization_id) : '',
+        organization_id: user.organization_id
+            ? String(user.organization_id)
+            : '',
     });
 
     const selectedRoleNeedsOrganization = form.data.role !== 'admin';
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
         form.patch(`/admin/users/${user.id}`);
     };
 
@@ -45,137 +63,159 @@ export default function AdminUsersEdit({ user, roles, organizations }: AdminUser
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit user" />
 
-            <div className="space-y-4 p-4">
-                <div className="border p-4">
-                    <h1 className="text-xl font-semibold">Edit user</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Update role and organization carefully. Admin users stay global.
-                    </p>
-                </div>
+            <BackofficePage>
+                <BackofficePageHeader
+                    title="Edit User"
+                    description="Update role and organization carefully. Users with the admin role stay global."
+                    actions={
+                        <BackofficeActionLink
+                            href="/admin/users"
+                            variant="outline"
+                        >
+                            Back to users
+                        </BackofficeActionLink>
+                    }
+                />
 
-                <div className="border p-4">
-                    <form className="space-y-4" onSubmit={submit}>
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-1">
-                                <label htmlFor="name" className="block text-sm">
-                                    Name
-                                </label>
-                                <input
-                                    id="name"
-                                    type="text"
-                                    value={form.data.name}
-                                    onChange={(event) => form.setData('name', event.target.value)}
-                                    className="w-full border px-3 py-2"
-                                />
-                                {form.errors.name && (
-                                    <p className="text-sm text-red-600">{form.errors.name}</p>
-                                )}
-                            </div>
-
-                            <div className="space-y-1">
-                                <label htmlFor="email" className="block text-sm">
-                                    Email
-                                </label>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    value={form.data.email}
-                                    onChange={(event) => form.setData('email', event.target.value)}
-                                    className="w-full border px-3 py-2"
-                                />
-                                {form.errors.email && (
-                                    <p className="text-sm text-red-600">{form.errors.email}</p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-1">
-                                <label htmlFor="role" className="block text-sm">
-                                    Role
-                                </label>
-                                <select
-                                    id="role"
-                                    value={form.data.role}
-                                    onChange={(event) => {
-                                        const nextRole = event.target.value;
-
-                                        form.setData((data) => ({
-                                            ...data,
-                                            role: nextRole,
-                                            organization_id: nextRole === 'admin'
-                                                ? ''
-                                                : data.organization_id,
-                                        }));
-                                    }}
-                                    className="w-full border px-3 py-2"
+                <BackofficeCard>
+                    <BackofficeCardBody>
+                        <form className="space-y-5" onSubmit={submit}>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <BackofficeField
+                                    label="Name"
+                                    error={form.errors.name}
                                 >
-                                    {roles.map((role) => (
-                                        <option key={role} value={role}>
-                                            {role}
-                                        </option>
-                                    ))}
-                                </select>
-                                {form.errors.role && (
-                                    <p className="text-sm text-red-600">{form.errors.role}</p>
-                                )}
-                            </div>
+                                    <input
+                                        id="name"
+                                        type="text"
+                                        value={form.data.name}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'name',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className={backofficeInputClassName}
+                                    />
+                                </BackofficeField>
 
-                            <div className="space-y-1">
-                                <label htmlFor="organization_id" className="block text-sm">
-                                    Organization
-                                </label>
-                                <select
-                                    id="organization_id"
-                                    value={form.data.organization_id}
-                                    onChange={(event) =>
-                                        form.setData('organization_id', event.target.value)
-                                    }
-                                    disabled={!selectedRoleNeedsOrganization}
-                                    className="w-full border px-3 py-2 disabled:opacity-60"
+                                <BackofficeField
+                                    label="Email"
+                                    error={form.errors.email}
                                 >
-                                    <option value="">
-                                        {selectedRoleNeedsOrganization
-                                            ? 'Select organization'
-                                            : 'Not needed for admin'}
-                                    </option>
-                                    {organizations.map((organization) => (
-                                        <option key={organization.id} value={organization.id}>
-                                            {organization.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {form.errors.organization_id && (
-                                    <p className="text-sm text-red-600">
-                                        {form.errors.organization_id}
-                                    </p>
-                                )}
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        value={form.data.email}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'email',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className={backofficeInputClassName}
+                                    />
+                                </BackofficeField>
                             </div>
-                        </div>
 
-                        <div className="border p-3 text-sm text-muted-foreground">
-                            <p>Current organization: {user.organization_name ?? '-'}</p>
-                            <p>
-                                Changing a courier with existing route or vehicle records is blocked
-                                by backend safety checks.
-                            </p>
-                        </div>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <BackofficeField
+                                    label="Role"
+                                    error={form.errors.role}
+                                >
+                                    <select
+                                        id="role"
+                                        value={form.data.role}
+                                        onChange={(event) => {
+                                            const nextRole = event.target.value;
 
-                        <div className="flex gap-2">
-                            <button
-                                type="submit"
-                                disabled={form.processing}
-                                className="border px-4 py-2"
-                            >
-                                Save
-                            </button>
-                            <Link href="/admin/users" className="border px-4 py-2">
-                                Cancel
-                            </Link>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                                            form.setData((data) => ({
+                                                ...data,
+                                                role: nextRole,
+                                                organization_id:
+                                                    nextRole === 'admin'
+                                                        ? ''
+                                                        : data.organization_id,
+                                            }));
+                                        }}
+                                        className={backofficeSelectClassName}
+                                    >
+                                        {roles.map((role) => (
+                                            <option key={role} value={role}>
+                                                {role}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </BackofficeField>
+
+                                <BackofficeField
+                                    label="Organization"
+                                    error={form.errors.organization_id}
+                                >
+                                    <select
+                                        id="organization_id"
+                                        value={form.data.organization_id}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'organization_id',
+                                                event.target.value,
+                                            )
+                                        }
+                                        disabled={
+                                            !selectedRoleNeedsOrganization
+                                        }
+                                        className={backofficeSelectClassName}
+                                    >
+                                        <option value="">
+                                            {selectedRoleNeedsOrganization
+                                                ? 'Select organization'
+                                                : 'Not needed for admin'}
+                                        </option>
+                                        {organizations.map((organization) => (
+                                            <option
+                                                key={organization.id}
+                                                value={organization.id}
+                                            >
+                                                {organization.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </BackofficeField>
+                            </div>
+
+                            <BackofficeInfoNote>
+                                <p>
+                                    Current organization:{' '}
+                                    {user.organization_name ?? '-'}
+                                </p>
+                                <p className="mt-1">
+                                    Changing a courier with existing route or
+                                    route records is blocked by backend safety
+                                    checks.
+                                </p>
+                            </BackofficeInfoNote>
+
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="submit"
+                                    disabled={form.processing}
+                                    className={backofficeButtonClassName(
+                                        'primary',
+                                    )}
+                                >
+                                    Save
+                                </button>
+                                <BackofficeActionLink
+                                    href="/admin/users"
+                                    variant="outline"
+                                >
+                                    Cancel
+                                </BackofficeActionLink>
+                            </div>
+                        </form>
+                    </BackofficeCardBody>
+                </BackofficeCard>
+            </BackofficePage>
         </AppLayout>
     );
 }

@@ -1,7 +1,17 @@
 import type { FormEvent } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ResourceShell } from '@/components/dispatcher/resource-shell';
-import { Button } from '@/components/ui/button';
+import { Head, useForm } from '@inertiajs/react';
+import {
+    BackofficeActionLink,
+    BackofficeCard,
+    BackofficeCardBody,
+    BackofficeField,
+    BackofficeInfoNote,
+    BackofficePage,
+    BackofficePageHeader,
+    backofficeButtonClassName,
+    backofficeInputClassName,
+    backofficeSelectClassName,
+} from '@/components/backoffice/ui';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
 import type {
@@ -33,9 +43,10 @@ export default function DispatcherRoutesCreate({
     todayDate,
 }: DispatcherRoutesCreateProps) {
     const form = useForm({
-        organization_id: canSelectOrganization && organizations[0]?.id
-            ? String(organizations[0].id)
-            : '',
+        organization_id:
+            canSelectOrganization && organizations[0]?.id
+                ? String(organizations[0].id)
+                : '',
         courier_user_id: couriers[0]?.id ? String(couriers[0].id) : '',
         date: todayDate,
         order_ids: [] as number[],
@@ -45,7 +56,9 @@ export default function DispatcherRoutesCreate({
         form.setData(
             'order_ids',
             form.data.order_ids.includes(orderId)
-                ? form.data.order_ids.filter((selectedOrderId) => selectedOrderId !== orderId)
+                ? form.data.order_ids.filter(
+                      (selectedOrderId) => selectedOrderId !== orderId,
+                  )
                 : [...form.data.order_ids, orderId],
         );
     };
@@ -66,126 +79,189 @@ export default function DispatcherRoutesCreate({
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Route" />
-            <ResourceShell
-                title="Create route"
-                description="Create a daily route and assign available orders."
-                actionHref="/dispatcher/routes"
-                actionLabel="Back to routes"
-            >
-                <div className="border p-4">
-                    <form className="space-y-4" onSubmit={submit}>
-                        {canSelectOrganization && organizations.length > 0 && (
-                            <div className="space-y-1">
-                                <label htmlFor="organization_id" className="block text-sm">
-                                    Organization
-                                </label>
-                                <select
-                                    id="organization_id"
-                                    value={form.data.organization_id}
-                                    onChange={(event) =>
-                                        form.setData('organization_id', event.target.value)
-                                    }
-                                    className="w-full border px-3 py-2"
+
+            <BackofficePage>
+                <BackofficePageHeader
+                    title="Create Route"
+                    description="Create a daily route and assign available orders."
+                    actions={
+                        <BackofficeActionLink
+                            href="/dispatcher/routes"
+                            variant="outline"
+                        >
+                            Back to routes
+                        </BackofficeActionLink>
+                    }
+                />
+
+                <BackofficeCard>
+                    <BackofficeCardBody>
+                        <form className="space-y-5" onSubmit={submit}>
+                            {canSelectOrganization &&
+                            organizations.length > 0 ? (
+                                <BackofficeField
+                                    label="Organization"
+                                    error={form.errors.organization_id}
                                 >
-                                    {organizations.map((organization) => (
-                                        <option key={organization.id} value={organization.id}>
-                                            {organization.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {form.errors.organization_id && (
-                                    <p className="text-sm text-red-600">
-                                        {form.errors.organization_id}
-                                    </p>
-                                )}
+                                    <select
+                                        id="organization_id"
+                                        value={form.data.organization_id}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'organization_id',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className={backofficeSelectClassName}
+                                    >
+                                        {organizations.map((organization) => (
+                                            <option
+                                                key={organization.id}
+                                                value={organization.id}
+                                            >
+                                                {organization.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </BackofficeField>
+                            ) : null}
+
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <BackofficeField
+                                    label="Courier"
+                                    error={form.errors.courier_user_id}
+                                >
+                                    <select
+                                        id="courier_user_id"
+                                        value={form.data.courier_user_id}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'courier_user_id',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className={backofficeSelectClassName}
+                                    >
+                                        <option value="">Select courier</option>
+                                        {couriers.map((courier) => (
+                                            <option
+                                                key={courier.id}
+                                                value={courier.id}
+                                            >
+                                                {courier.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </BackofficeField>
+
+                                <BackofficeField
+                                    label="Date"
+                                    error={form.errors.date}
+                                >
+                                    <input
+                                        id="date"
+                                        type="date"
+                                        value={form.data.date}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'date',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className={backofficeInputClassName}
+                                    />
+                                </BackofficeField>
                             </div>
-                        )}
 
-                        <div className="space-y-1">
-                            <label htmlFor="courier_user_id" className="block text-sm">
-                                Courier
-                            </label>
-                            <select
-                                id="courier_user_id"
-                                value={form.data.courier_user_id}
-                                onChange={(event) =>
-                                    form.setData('courier_user_id', event.target.value)
-                                }
-                                className="w-full border px-3 py-2"
-                            >
-                                <option value="">Select courier</option>
-                                {couriers.map((courier) => (
-                                    <option key={courier.id} value={courier.id}>
-                                        {courier.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {form.errors.courier_user_id && (
-                                <p className="text-sm text-red-600">
-                                    {form.errors.courier_user_id}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="space-y-1">
-                            <label htmlFor="date" className="block text-sm">
-                                Date
-                            </label>
-                            <input
-                                id="date"
-                                type="date"
-                                value={form.data.date}
-                                onChange={(event) => form.setData('date', event.target.value)}
-                                className="w-full border px-3 py-2"
-                            />
-                            {form.errors.date && (
-                                <p className="text-sm text-red-600">{form.errors.date}</p>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <h2 className="font-medium">Assign orders</h2>
-                            {orders.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                    No unassigned orders available.
-                                </p>
-                            ) : (
-                                <div className="space-y-2">
-                                    {orders.map((order) => (
-                                        <label
-                                            key={order.id}
-                                            className="flex gap-2 border p-2 text-sm"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={form.data.order_ids.includes(order.id)}
-                                                onChange={() => toggleOrder(order.id)}
-                                            />
-                                            <span>
-                                                #{order.id} — {order.client_name ?? '-'} —{' '}
-                                                {order.address_label || '-'} —{' '}
-                                                {formatShortDate(order.date)}
-                                            </span>
-                                        </label>
-                                    ))}
+                            <div className="space-y-3">
+                                <div>
+                                    <h2 className="text-base font-semibold text-[#111827]">
+                                        Assign Orders
+                                    </h2>
+                                    <p className="text-sm text-[#6b7280]">
+                                        Select the orders that should be
+                                        included on this route.
+                                    </p>
                                 </div>
-                            )}
-                            {form.errors.order_ids && (
-                                <p className="text-sm text-red-600">{form.errors.order_ids}</p>
-                            )}
-                        </div>
 
-                        <div className="flex gap-2">
-                            <Button type="submit" disabled={form.processing}>
-                                Save
-                            </Button>
-                            <Button asChild type="button" variant="outline">
-                                <Link href="/dispatcher/routes">Cancel</Link>
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-            </ResourceShell>
+                                {orders.length === 0 ? (
+                                    <BackofficeInfoNote>
+                                        No unassigned orders are available right
+                                        now.
+                                    </BackofficeInfoNote>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {orders.map((order) => (
+                                            <label
+                                                key={order.id}
+                                                className="flex items-start gap-3 rounded-lg border border-[#e5e7eb] px-4 py-3 text-sm transition hover:bg-[#f9fafb]"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.data.order_ids.includes(
+                                                        order.id,
+                                                    )}
+                                                    onChange={() =>
+                                                        toggleOrder(order.id)
+                                                    }
+                                                    className="mt-1 h-4 w-4 rounded border-[#cbd5e1]"
+                                                />
+                                                <span>
+                                                    <span className="font-semibold text-[#111827]">
+                                                        #{order.id}{' '}
+                                                        {order.client_name ??
+                                                            '-'}
+                                                    </span>
+                                                    <span className="mt-1 block text-[#6b7280]">
+                                                        {order.address_label} ·{' '}
+                                                        {formatShortDate(
+                                                            order.date,
+                                                        )}{' '}
+                                                        ·{' '}
+                                                        {order.time_from.slice(
+                                                            0,
+                                                            5,
+                                                        )}{' '}
+                                                        -{' '}
+                                                        {order.time_to.slice(
+                                                            0,
+                                                            5,
+                                                        )}
+                                                    </span>
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {form.errors.order_ids ? (
+                                    <p className="text-sm text-red-600">
+                                        {form.errors.order_ids}
+                                    </p>
+                                ) : null}
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="submit"
+                                    disabled={form.processing}
+                                    className={backofficeButtonClassName(
+                                        'primary',
+                                    )}
+                                >
+                                    Save
+                                </button>
+                                <BackofficeActionLink
+                                    href="/dispatcher/routes"
+                                    variant="outline"
+                                >
+                                    Cancel
+                                </BackofficeActionLink>
+                            </div>
+                        </form>
+                    </BackofficeCardBody>
+                </BackofficeCard>
+            </BackofficePage>
         </AppLayout>
     );
 }

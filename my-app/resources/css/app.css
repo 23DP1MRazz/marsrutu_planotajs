@@ -139,10 +139,23 @@
 
     body {
         @apply bg-background text-foreground;
+        font-feature-settings: 'cv11', 'ss01';
     }
 }
 
 @layer components {
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     .leaflet-host {
         background: transparent;
     }

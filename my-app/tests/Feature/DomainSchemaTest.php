@@ -10,7 +10,6 @@ use App\Models\Order;
 use App\Models\Organization;
 use App\Models\ProofOfDelivery;
 use App\Models\RouteStop;
-use App\Models\TransportVehicle;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -67,18 +66,9 @@ class DomainSchemaTest extends TestCase
             'taken_at' => '2026-03-17 10:05:00',
         ]);
 
-        $vehicle = TransportVehicle::query()->create([
-            'organization_id' => $organization->id,
-            'courier_user_id' => $courierUser->id,
-            'type' => 'AUTO',
-            'cap_weight_kg' => 120,
-            'cap_volume_l' => 350,
-        ]);
-
         $this->assertTrue($route->organization->is($organization));
         $this->assertTrue($routeStop->route->is($route));
         $this->assertTrue($proofOfDelivery->routeStop->is($routeStop));
-        $this->assertTrue($vehicle->courier->is($courierUser->courierProfile));
     }
 
     public function test_routes_are_unique_per_organization_courier_and_date(): void
@@ -107,7 +97,7 @@ class DomainSchemaTest extends TestCase
         ]);
     }
 
-    public function test_transport_vehicle_and_proof_of_delivery_are_one_to_one(): void
+    public function test_proof_of_delivery_is_one_to_one(): void
     {
         $organization = Organization::factory()->create();
         $courierUser = User::factory()->courier($organization->id)->create();
@@ -146,14 +136,6 @@ class DomainSchemaTest extends TestCase
             'status' => 'PENDING',
         ]);
 
-        TransportVehicle::query()->create([
-            'organization_id' => $organization->id,
-            'courier_user_id' => $courierUser->id,
-            'type' => 'VELO',
-            'cap_weight_kg' => 30,
-            'cap_volume_l' => 80,
-        ]);
-
         ProofOfDelivery::query()->create([
             'organization_id' => $organization->id,
             'route_stop_id' => $routeStop->id,
@@ -161,19 +143,6 @@ class DomainSchemaTest extends TestCase
             'file_url' => 'proofs/one.jpg',
             'taken_at' => '2026-03-18 10:05:00',
         ]);
-
-        try {
-            TransportVehicle::query()->create([
-                'organization_id' => $organization->id,
-                'courier_user_id' => $courierUser->id,
-                'type' => 'AUTO',
-                'cap_weight_kg' => 120,
-                'cap_volume_l' => 300,
-            ]);
-            $this->fail('Expected transport_vehicles unique constraint to fail.');
-        } catch (QueryException $exception) {
-            $this->assertTrue(true);
-        }
 
         $this->expectException(QueryException::class);
 
@@ -186,4 +155,3 @@ class DomainSchemaTest extends TestCase
         ]);
     }
 }
-

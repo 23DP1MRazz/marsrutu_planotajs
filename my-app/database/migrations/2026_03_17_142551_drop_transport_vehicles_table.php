@@ -6,29 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
+    {
+        Schema::dropIfExists('transport_vehicles');
+    }
+
+    public function down(): void
     {
         Schema::create('transport_vehicles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignId('courier_user_id')->unique()->constrained('couriers', 'user_id')->cascadeOnDelete();
             $table->string('type', 32);
-            $table->decimal('cap_weight_kg', 8, 2)->default(0);
-            $table->decimal('cap_volume_l', 8, 2)->default(0);
+            $table->unsignedInteger('cap_weight_kg')->nullable();
+            $table->unsignedInteger('cap_volume_l')->nullable();
             $table->timestamps();
-
-            $table->index(['organization_id', 'type']);
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('transport_vehicles');
     }
 };

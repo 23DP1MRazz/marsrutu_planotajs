@@ -312,7 +312,7 @@ class RoutePlanningTest extends TestCase
             ->get(route('dispatcher.routes.index', [
                 'date' => '2026-04-15',
                 'status' => 'PLANNED',
-                'courier' => 'Courier',
+                'search' => 'Courier',
                 'sort' => 'courier_desc',
             ]))
             ->assertOk()
@@ -323,6 +323,16 @@ class RoutePlanningTest extends TestCase
                 ->where('deliveryRoutes.1.id', $annaRoute->id)
                 ->where('filters.sort', 'courier_desc')
                 ->where('filters.status', 'PLANNED'));
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.routes.index', [
+                'search' => 'apri',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/routes/index')
+                ->has('deliveryRoutes', 2)
+                ->where('filters.search', 'apri'));
     }
 
     public function test_route_create_page_defaults_date_to_today(): void

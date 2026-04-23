@@ -9,12 +9,11 @@ type UseLiveFilteringOptions<TData extends Record<string, LiveFilterValue>> = {
     url: string;
 };
 
-export function useLiveFiltering<TData extends Record<string, LiveFilterValue>>({
-    data,
-    debounceMs = 300,
-    url,
-}: UseLiveFilteringOptions<TData>) {
+export function useLiveFiltering<
+    TData extends Record<string, LiveFilterValue>,
+>({ data, debounceMs = 300, url }: UseLiveFilteringOptions<TData>) {
     const isFirstRender = useRef(true);
+    const serializedData = JSON.stringify(data);
 
     useEffect(() => {
         if (isFirstRender.current) {
@@ -31,5 +30,5 @@ export function useLiveFiltering<TData extends Record<string, LiveFilterValue>>(
         }, debounceMs);
 
         return () => window.clearTimeout(timeoutId);
-    }, [data, debounceMs, url]);
+    }, [serializedData, debounceMs, url]);
 }

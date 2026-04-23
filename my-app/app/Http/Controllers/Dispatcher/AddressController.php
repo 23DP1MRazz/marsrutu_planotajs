@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dispatcher;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Dispatcher\Concerns\ParsesSearchFilters;
 use App\Http\Requests\Dispatcher\StoreAddressRequest;
 use App\Http\Requests\Dispatcher\UpdateAddressRequest;
 use App\Models\Address;
@@ -16,6 +17,8 @@ use Inertia\Response;
 
 class AddressController extends Controller
 {
+    use ParsesSearchFilters;
+
     public function index(Request $request): Response
     {
         $this->authorizeDispatcherAccess($request);
@@ -175,15 +178,18 @@ class AddressController extends Controller
     private function filteredAddressesQuery(Request $request, array $filters): Builder
     {
         $query = Address::query()
-            ->visibleTo($request->user())
-            ->when(
-                $filters['search'] !== '',
-                fn (Builder $builder) => $builder->where(function (Builder $searchQuery) use ($filters): void {
-                    $searchQuery
-                        ->where('city', 'like', '%'.$filters['search'].'%')
-                        ->orWhere('street', 'like', '%'.$filters['search'].'%');
-                }),
-            );
+            ->visibleTo($request->user());
+
+        foreach ($this->searchTerms($filters['search']) as $searchTerm) {
+            $query->where(function (Builder $searchQuery) use ($searchTerm): void {
+                $searchQuery
+                    ->where('id', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('city', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('street', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('lat', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('lng', 'like', '%'.$searchTerm.'%');
+            });
+        }
 
         return $this->applySort($query, $filters['sort']);
     }

@@ -10,7 +10,6 @@ use App\Models\Order;
 use App\Models\Organization;
 use App\Models\ProofOfDelivery;
 use App\Models\RouteStop;
-use App\Models\TransportVehicle;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
@@ -157,14 +156,6 @@ class OrganizationAuthorizationTest extends TestCase
             'taken_at' => '2026-03-19 11:00:00',
         ]);
 
-        TransportVehicle::query()->create([
-            'organization_id' => $organizationA->id,
-            'courier_user_id' => $courierA->id,
-            'type' => 'AUTO',
-            'cap_weight_kg' => 100,
-            'cap_volume_l' => 300,
-        ]);
-
         return [$courierA, $routeStopA, $routeStopB, $proofA, $proofB];
     }
 
@@ -201,4 +192,3 @@ class OrganizationAuthorizationTest extends TestCase
         ]);
     }
 }
-

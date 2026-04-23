@@ -1,15 +1,26 @@
-import { Head, Link } from '@inertiajs/react';
-import { Check, Copy, Link2, Users } from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import { Check, Copy, Link2, Plus } from 'lucide-react';
+import {
+    BackofficeActionLink,
+    BackofficeCard,
+    BackofficeCardBody,
+    BackofficeListItem,
+    BackofficePage,
+    BackofficePageHeader,
+    BackofficePanelHeader,
+    BackofficeStatCard,
+    BackofficeStatusBadge,
+    backofficeButtonClassName,
+} from '@/components/backoffice/ui';
 import { useClipboard } from '@/hooks/use-clipboard';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
-import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard().url,
+        href: '/dashboard',
     },
 ];
 
@@ -68,407 +79,346 @@ type DashboardProps = {
     } | null;
 };
 
-export default function Dashboard({ dashboardSummary, organizationInvitation }: DashboardProps) {
+export default function Dashboard({
+    dashboardSummary,
+    organizationInvitation,
+}: DashboardProps) {
     const [copiedText, copyToClipboard] = useClipboard();
-    const registrationLink = organizationInvitation === null
-        ? null
-        : `${
-            typeof window === 'undefined' ? '' : window.location.origin
-        }${organizationInvitation.registration_url}`;
+    const registrationLink =
+        organizationInvitation === null
+            ? null
+            : `${typeof window === 'undefined' ? '' : window.location.origin}${organizationInvitation.registration_url}`;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+
+            <BackofficePage>
                 {dashboardSummary?.role === 'admin' ? (
                     <>
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <Link
+                        <BackofficePageHeader
+                            title="Dashboard"
+                            description="Overview of platform users and organizations."
+                        />
+
+                        <div className="grid gap-3 lg:grid-cols-2">
+                            <BackofficeStatCard
+                                label="Users"
+                                value={dashboardSummary.counts.users}
+                                meta="Registered accounts across all roles"
                                 href="/admin/users"
-                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
-                            >
-                                <p className="text-sm text-muted-foreground">Users</p>
-                                <p className="mt-2 text-3xl font-semibold">
-                                    {dashboardSummary.counts.users}
-                                </p>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    Total registered accounts across all organizations.
-                                </p>
-                            </Link>
-                            <Link
+                            />
+                            <BackofficeStatCard
+                                label="Organizations"
+                                value={dashboardSummary.counts.organizations}
+                                meta="Active organizations on the platform"
                                 href="/admin/organizations"
-                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
-                            >
-                                <p className="text-sm text-muted-foreground">Organizations</p>
-                                <p className="mt-2 text-3xl font-semibold">
-                                    {dashboardSummary.counts.organizations}
-                                </p>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    Active organizations managed by the platform.
-                                </p>
-                            </Link>
+                            />
                         </div>
 
                         <div className="grid gap-4 xl:grid-cols-2">
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div>
-                                        <h2 className="text-lg font-semibold">Recent users</h2>
-                                        <p className="text-sm text-muted-foreground">
-                                            Latest created accounts across all roles.
-                                        </p>
-                                    </div>
-                                    <Link
-                                        href="/admin/users"
-                                        className="text-sm underline underline-offset-4"
-                                    >
-                                        Open users
-                                    </Link>
-                                </div>
-
-                                <div className="mt-4 space-y-3">
-                                    {dashboardSummary.recent_users.length === 0 ? (
-                                        <p className="text-sm text-muted-foreground">
+                            <BackofficeCard>
+                                <BackofficePanelHeader
+                                    title="Recent Users"
+                                    description="Latest created accounts across the platform."
+                                    href="/admin/users"
+                                    hrefLabel="Open users ->"
+                                />
+                                <BackofficeCardBody className="space-y-1">
+                                    {dashboardSummary.recent_users.length ===
+                                    0 ? (
+                                        <p className="text-sm text-[#6b7280]">
                                             No users created yet.
                                         </p>
                                     ) : (
-                                        dashboardSummary.recent_users.map((user) => (
-                                            <Link
-                                                key={user.id}
-                                                href={`/admin/users/${user.id}/edit`}
-                                                className="block rounded-lg border p-3 transition-colors hover:border-primary/50"
-                                            >
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div>
-                                                        <p className="font-medium">{user.name}</p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {user.email}
-                                                        </p>
-                                                    </div>
-                                                    <p className="text-sm uppercase text-muted-foreground">
-                                                        {user.role}
-                                                    </p>
-                                                </div>
-                                                <p className="mt-2 text-xs text-muted-foreground">
-                                                    {user.created_at
-                                                        ? formatShortDate(user.created_at)
-                                                        : '-'}
-                                                </p>
-                                            </Link>
-                                        ))
+                                        dashboardSummary.recent_users.map(
+                                            (user) => (
+                                                <BackofficeListItem
+                                                    key={user.id}
+                                                    href={`/admin/users/${user.id}/edit`}
+                                                    title={user.name}
+                                                    meta={`${user.email} · ${user.role.toUpperCase()} · ${
+                                                        user.created_at
+                                                            ? formatShortDate(
+                                                                  user.created_at,
+                                                              )
+                                                            : '-'
+                                                    }`}
+                                                />
+                                            ),
+                                        )
                                     )}
-                                </div>
-                            </div>
+                                </BackofficeCardBody>
+                            </BackofficeCard>
 
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div>
-                                        <h2 className="text-lg font-semibold">Recent organizations</h2>
-                                        <p className="text-sm text-muted-foreground">
-                                            Latest organizations and their join codes.
-                                        </p>
-                                    </div>
-                                    <Link
-                                        href="/admin/organizations"
-                                        className="text-sm underline underline-offset-4"
-                                    >
-                                        Open organizations
-                                    </Link>
-                                </div>
-
-                                <div className="mt-4 space-y-3">
-                                    {dashboardSummary.recent_organizations.length === 0 ? (
-                                        <p className="text-sm text-muted-foreground">
+                            <BackofficeCard>
+                                <BackofficePanelHeader
+                                    title="Recent Organizations"
+                                    description="Newest organizations and their invite codes."
+                                    href="/admin/organizations"
+                                    hrefLabel="Open organizations ->"
+                                />
+                                <BackofficeCardBody className="space-y-1">
+                                    {dashboardSummary.recent_organizations
+                                        .length === 0 ? (
+                                        <p className="text-sm text-[#6b7280]">
                                             No organizations created yet.
                                         </p>
                                     ) : (
-                                        dashboardSummary.recent_organizations.map((organization) => (
-                                            <Link
-                                                key={organization.id}
-                                                href={`/admin/organizations/${organization.id}/edit`}
-                                                className="block rounded-lg border p-3 transition-colors hover:border-primary/50"
-                                            >
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div>
-                                                        <p className="font-medium">{organization.name}</p>
-                                                        <p className="mt-1 font-mono text-sm text-muted-foreground">
-                                                            {organization.join_code}
-                                                        </p>
-                                                    </div>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {organization.created_at
-                                                            ? formatShortDate(organization.created_at)
-                                                        : '-'}
-                                                    </p>
-                                                </div>
-                                            </Link>
-                                        ))
+                                        dashboardSummary.recent_organizations.map(
+                                            (organization) => (
+                                                <BackofficeListItem
+                                                    key={organization.id}
+                                                    href={`/admin/organizations/${organization.id}/edit`}
+                                                    title={organization.name}
+                                                    meta={`${organization.join_code} · ${
+                                                        organization.created_at
+                                                            ? formatShortDate(
+                                                                  organization.created_at,
+                                                              )
+                                                            : '-'
+                                                    }`}
+                                                />
+                                            ),
+                                        )
                                     )}
-                                </div>
-                            </div>
+                                </BackofficeCardBody>
+                            </BackofficeCard>
                         </div>
                     </>
-                ) : dashboardSummary?.role === 'dispatcher' && organizationInvitation ? (
+                ) : dashboardSummary?.role === 'dispatcher' &&
+                  organizationInvitation ? (
                     <>
-                        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
-                            <Link
+                        <BackofficePageHeader
+                            title="Dashboard"
+                            description={`Welcome back. Here's what's happening in ${organizationInvitation.organization_name} today.`}
+                        />
+
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                            <BackofficeStatCard
+                                label="Clients"
+                                value={dashboardSummary.counts.clients}
+                                meta="Managed customer records"
                                 href="/dispatcher/clients"
-                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
-                            >
-                                <p className="text-sm text-muted-foreground">Clients</p>
-                                <p className="mt-2 text-3xl font-semibold">
-                                    {dashboardSummary.counts.clients}
-                                </p>
-                            </Link>
-                            <Link
+                            />
+                            <BackofficeStatCard
+                                label="Addresses"
+                                value={dashboardSummary.counts.addresses}
+                                meta="Saved delivery destinations"
                                 href="/dispatcher/addresses"
-                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
-                            >
-                                <p className="text-sm text-muted-foreground">Addresses</p>
-                                <p className="mt-2 text-3xl font-semibold">
-                                    {dashboardSummary.counts.addresses}
-                                </p>
-                            </Link>
-                            <Link
+                            />
+                            <BackofficeStatCard
+                                label="Orders"
+                                value={dashboardSummary.counts.orders}
+                                meta="All delivery orders"
                                 href="/dispatcher/orders"
-                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
-                            >
-                                <p className="text-sm text-muted-foreground">Orders</p>
-                                <p className="mt-2 text-3xl font-semibold">
-                                    {dashboardSummary.counts.orders}
-                                </p>
-                            </Link>
-                            <Link
+                            />
+                            <BackofficeStatCard
+                                label="Pending Orders"
+                                value={dashboardSummary.counts.pending_orders}
+                                meta="Need attention or assignment"
                                 href="/dispatcher/orders"
-                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
-                            >
-                                <p className="text-sm text-muted-foreground">Pending orders</p>
-                                <p className="mt-2 text-3xl font-semibold">
-                                    {dashboardSummary.counts.pending_orders}
-                                </p>
-                            </Link>
-                            <Link
+                                accent="amber"
+                            />
+                            <BackofficeStatCard
+                                label="Routes"
+                                value={dashboardSummary.counts.routes}
+                                meta="Created delivery routes"
                                 href="/dispatcher/routes"
-                                className="block rounded-2xl border border-border/80 bg-card/90 p-5 transition-colors hover:border-primary/50"
-                            >
-                                <p className="text-sm text-muted-foreground">Routes</p>
-                                <p className="mt-2 text-3xl font-semibold">
-                                    {dashboardSummary.counts.routes}
-                                </p>
-                            </Link>
+                            />
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-3">
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                                <p className="text-sm text-muted-foreground">Organization</p>
-                                <p className="mt-2 text-2xl font-semibold">
-                                    {organizationInvitation.organization_name}
-                                </p>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    ID #{organizationInvitation.organization_id}
-                                </p>
-                            </div>
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                                <p className="text-sm text-muted-foreground">Join code</p>
-                                <p className="mt-2 font-mono text-2xl font-semibold">
+                        <div className="grid gap-3 lg:grid-cols-3">
+                            <BackofficeCard>
+                                <BackofficeCardBody>
+                                    <div className="text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
+                                        Organization
+                                    </div>
+                                    <div className="mt-2 text-xl font-bold tracking-[-0.02em] text-[#111827]">
+                                        {
+                                            organizationInvitation.organization_name
+                                        }
+                                    </div>
+                                    <div className="mt-1 text-xs text-[#6b7280]">
+                                        ID #
+                                        {organizationInvitation.organization_id}
+                                    </div>
+                                </BackofficeCardBody>
+                            </BackofficeCard>
+
+                            <BackofficeCard>
+                                <BackofficeCardBody>
+                                    <div className="text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
+                                        Join Code
+                                    </div>
+                                    <div className="mt-2 font-mono text-2xl font-bold tracking-[0.08em] text-[#111827]">
+                                        {organizationInvitation.join_code}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            copyToClipboard(
+                                                organizationInvitation.join_code,
+                                            )
+                                        }
+                                        className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#2563eb] transition hover:text-[#1e40af]"
+                                    >
+                                        {copiedText ===
+                                        organizationInvitation.join_code ? (
+                                            <Check className="h-3.5 w-3.5" />
+                                        ) : (
+                                            <Copy className="h-3.5 w-3.5" />
+                                        )}
+                                        Copy code
+                                    </button>
+                                </BackofficeCardBody>
+                            </BackofficeCard>
+
+                            <BackofficeCard>
+                                <BackofficeCardBody>
+                                    <div className="text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
+                                        Quick Actions
+                                    </div>
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        <BackofficeActionLink
+                                            href="/dispatcher/orders/create"
+                                            variant="outline"
+                                        >
+                                            <Plus className="h-3.5 w-3.5" />
+                                            Create Order
+                                        </BackofficeActionLink>
+                                        <BackofficeActionLink
+                                            href="/dispatcher/routes/create"
+                                            variant="outline"
+                                        >
+                                            <Plus className="h-3.5 w-3.5" />
+                                            Create Route
+                                        </BackofficeActionLink>
+                                    </div>
+                                </BackofficeCardBody>
+                            </BackofficeCard>
+                        </div>
+
+                        {registrationLink ? (
+                            <div className="flex flex-col gap-4 rounded-xl border border-[#bfdbfe] bg-gradient-to-br from-[#eff6ff] to-[#dbeafe] p-5 lg:flex-row lg:items-center">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#2563eb] to-[#3b82f6] text-white">
+                                    <Link2 className="h-4 w-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-[15px] font-semibold text-[#1e40af]">
+                                        Invite to organization
+                                    </div>
+                                    <div className="truncate font-mono text-[13px] text-[#2563eb]">
+                                        {registrationLink}
+                                    </div>
+                                </div>
+                                <div className="shrink-0 rounded-md border border-[#bfdbfe] bg-white px-3 py-1 font-mono text-[15px] font-bold tracking-[0.05em] text-[#1e40af]">
                                     {organizationInvitation.join_code}
-                                </p>
+                                </div>
                                 <button
                                     type="button"
-                                    onClick={() => void copyToClipboard(organizationInvitation.join_code)}
-                                    className="mt-3 inline-flex items-center gap-2 text-sm underline underline-offset-4"
-                                >
-                                    {copiedText === organizationInvitation.join_code ? (
-                                        <Check className="size-4" />
-                                    ) : (
-                                        <Copy className="size-4" />
+                                    onClick={() =>
+                                        copyToClipboard(registrationLink)
+                                    }
+                                    className={backofficeButtonClassName(
+                                        'outline',
                                     )}
-                                    Copy code
+                                >
+                                    {copiedText === registrationLink ? (
+                                        <Check className="h-3.5 w-3.5" />
+                                    ) : (
+                                        <Copy className="h-3.5 w-3.5" />
+                                    )}
+                                    Copy Link
                                 </button>
                             </div>
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                                <p className="text-sm text-muted-foreground">Quick actions</p>
-                                <div className="mt-3 flex flex-col gap-2">
-                                    <Link
-                                        href="/dispatcher/orders/create"
-                                        className="inline-flex items-center gap-2 text-sm underline underline-offset-4"
-                                    >
-                                        <Users className="size-4" />
-                                        Create order
-                                    </Link>
-                                    <Link
-                                        href="/dispatcher/routes/create"
-                                        className="inline-flex items-center gap-2 text-sm underline underline-offset-4"
-                                    >
-                                        <Link2 className="size-4" />
-                                        Create route
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
+                        ) : null}
 
                         <div className="grid gap-4 xl:grid-cols-2">
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div>
-                                        <h2 className="text-lg font-semibold">Upcoming routes</h2>
-                                        <p className="text-sm text-muted-foreground">
-                                            Next planned routes for your organization.
-                                        </p>
-                                    </div>
-                                    <Link
-                                        href="/dispatcher/routes"
-                                        className="text-sm underline underline-offset-4"
-                                    >
-                                        Open routes
-                                    </Link>
-                                </div>
-
-                                <div className="mt-4 space-y-3">
-                                    {dashboardSummary.upcoming_routes.length === 0 ? (
-                                        <p className="text-sm text-muted-foreground">
+                            <BackofficeCard>
+                                <BackofficePanelHeader
+                                    title="Upcoming Routes"
+                                    description="Next planned routes for your organization."
+                                    href="/dispatcher/routes"
+                                    hrefLabel="Open routes ->"
+                                />
+                                <BackofficeCardBody className="space-y-1">
+                                    {dashboardSummary.upcoming_routes.length ===
+                                    0 ? (
+                                        <p className="text-sm text-[#6b7280]">
                                             No routes planned yet.
                                         </p>
                                     ) : (
-                                        dashboardSummary.upcoming_routes.map((route) => (
-                                            <Link
-                                                key={route.id}
-                                                href={`/dispatcher/routes/${route.id}`}
-                                                className="block rounded-lg border p-3 transition-colors hover:border-primary/50"
-                                            >
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div>
-                                                        <p className="font-medium">
-                                                            {route.courier_name ?? 'Unassigned courier'}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {formatShortDate(route.date)}
-                                                        </p>
-                                                    </div>
-                                                    <p className="text-sm uppercase text-muted-foreground">
-                                                        {route.status}
-                                                    </p>
-                                                </div>
-                                                <p className="mt-2 text-xs text-muted-foreground">
-                                                    {route.stops_count} stops
-                                                </p>
-                                            </Link>
-                                        ))
+                                        dashboardSummary.upcoming_routes.map(
+                                            (deliveryRoute) => (
+                                                <BackofficeListItem
+                                                    key={deliveryRoute.id}
+                                                    href={`/dispatcher/routes/${deliveryRoute.id}`}
+                                                    title={
+                                                        deliveryRoute.courier_name ??
+                                                        'Unassigned courier'
+                                                    }
+                                                    meta={`${formatShortDate(deliveryRoute.date)} · ${deliveryRoute.stops_count} stops`}
+                                                    badge={
+                                                        <BackofficeStatusBadge
+                                                            status={
+                                                                deliveryRoute.status
+                                                            }
+                                                        />
+                                                    }
+                                                />
+                                            ),
+                                        )
                                     )}
-                                </div>
-                            </div>
+                                </BackofficeCardBody>
+                            </BackofficeCard>
 
-                            <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div>
-                                        <h2 className="text-lg font-semibold">Pending orders</h2>
-                                        <p className="text-sm text-muted-foreground">
-                                            Orders that still need attention or assignment.
-                                        </p>
-                                    </div>
-                                    <Link
-                                        href="/dispatcher/orders"
-                                        className="text-sm underline underline-offset-4"
-                                    >
-                                        Open orders
-                                    </Link>
-                                </div>
-
-                                <div className="mt-4 space-y-3">
-                                    {dashboardSummary.pending_orders.length === 0 ? (
-                                        <p className="text-sm text-muted-foreground">
+                            <BackofficeCard>
+                                <BackofficePanelHeader
+                                    title="Pending Orders"
+                                    description="Orders that need attention or assignment."
+                                    href="/dispatcher/orders"
+                                    hrefLabel="Open orders ->"
+                                />
+                                <BackofficeCardBody className="space-y-1">
+                                    {dashboardSummary.pending_orders.length ===
+                                    0 ? (
+                                        <p className="text-sm text-[#6b7280]">
                                             No pending orders right now.
                                         </p>
                                     ) : (
-                                        dashboardSummary.pending_orders.map((order) => (
-                                            <Link
-                                                key={order.id}
-                                                href={`/dispatcher/orders/${order.id}/edit`}
-                                                className="block rounded-lg border p-3 transition-colors hover:border-primary/50"
-                                            >
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div>
-                                                        <p className="font-medium">
-                                                            {order.client_name ?? 'Unknown client'}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {order.address_label || '-'}
-                                                        </p>
-                                                    </div>
-                                                    <p className="text-sm uppercase text-muted-foreground">
-                                                        {order.status}
-                                                    </p>
-                                                </div>
-                                                <p className="mt-2 text-xs text-muted-foreground">
-                                                    {formatShortDate(order.date)}
-                                                </p>
-                                            </Link>
-                                        ))
+                                        dashboardSummary.pending_orders.map(
+                                            (order) => (
+                                                <BackofficeListItem
+                                                    key={order.id}
+                                                    href={`/dispatcher/orders/${order.id}/edit`}
+                                                    title={
+                                                        order.client_name ??
+                                                        `Order #${order.id}`
+                                                    }
+                                                    meta={`${order.address_label} · ${formatShortDate(order.date)}`}
+                                                    badge={
+                                                        <BackofficeStatusBadge
+                                                            status={
+                                                                order.status
+                                                            }
+                                                        />
+                                                    }
+                                                />
+                                            ),
+                                        )
                                     )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                <div className="space-y-2">
-                                    <h2 className="text-lg font-semibold">Invite to organization</h2>
-                                    <p className="text-sm text-muted-foreground">
-                                        Share this registration link so dispatchers or couriers can join
-                                        your organization with the code already filled in.
-                                    </p>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {registrationLink && (
-                                        <button
-                                            type="button"
-                                            onClick={() => void copyToClipboard(registrationLink)}
-                                            className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm"
-                                        >
-                                            {copiedText === registrationLink ? (
-                                                <Check className="size-4" />
-                                            ) : (
-                                                <Copy className="size-4" />
-                                            )}
-                                            Copy link
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="mt-4 rounded-md border px-4 py-3 text-sm font-mono break-all">
-                                {registrationLink ?? organizationInvitation.registration_url}
-                            </div>
+                                </BackofficeCardBody>
+                            </BackofficeCard>
                         </div>
                     </>
                 ) : (
-                    <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                        <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                            <p className="text-sm text-muted-foreground">Dashboard</p>
-                            <p className="mt-2 text-lg font-semibold">Welcome back</p>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                Your role-specific dashboard widgets will continue expanding in the
-                                next commits.
-                            </p>
-                        </div>
-                        <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                            <p className="text-sm text-muted-foreground">Admin tools</p>
-                            <p className="mt-2 text-lg font-semibold">Manage users and organizations</p>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                Use the sidebar to open admin user and organization management.
-                            </p>
-                        </div>
-                        <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
-                            <p className="text-sm text-muted-foreground">Next steps</p>
-                            <p className="mt-2 text-lg font-semibold">Dashboards are being refined</p>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                More role-specific cards and summaries come in the next dashboard
-                                commits.
-                            </p>
-                        </div>
-                    </div>
+                    <BackofficePageHeader
+                        title="Dashboard"
+                        description="No summary is available for this account yet."
+                    />
                 )}
-            </div>
+            </BackofficePage>
         </AppLayout>
     );
 }

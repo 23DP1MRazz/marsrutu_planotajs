@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dispatcher;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Dispatcher\Concerns\ParsesSearchFilters;
 use App\Http\Requests\Dispatcher\StoreOrderRequest;
 use App\Http\Requests\Dispatcher\UpdateOrderRequest;
 use App\Models\Address;
@@ -18,6 +19,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OrderController extends Controller
 {
+    use ParsesSearchFilters;
+
     /**
      * @var list<string>
      */
@@ -37,10 +40,9 @@ class OrderController extends Controller
         $this->authorize('viewAny', Order::class);
 
         $filters = [
+            'search' => $request->string('search')->toString(),
             'date' => $request->string('date')->toString(),
             'status' => $request->string('status')->toString(),
-            'client' => $request->string('client')->toString(),
-            'address' => $request->string('address')->toString(),
             'organization_id' => $request->user()->isAdmin()
                 ? $request->string('organization_id')->toString()
                 : '',
@@ -92,10 +94,9 @@ class OrderController extends Controller
         $this->authorize('viewAny', Order::class);
 
         $filters = [
+            'search' => $request->string('search')->toString(),
             'date' => $request->string('date')->toString(),
             'status' => $request->string('status')->toString(),
-            'client' => $request->string('client')->toString(),
-            'address' => $request->string('address')->toString(),
             'organization_id' => $request->user()->isAdmin()
                 ? $request->string('organization_id')->toString()
                 : '',
@@ -285,7 +286,7 @@ class OrderController extends Controller
     }
 
     /**
-     * @param  array{date: string, status: string, client: string, address: string, organization_id: string, sort: string}  $filters
+     * @param  array{search: string, date: string, status: string, organization_id: string, sort: string}  $filters
      */
     private function filteredOrdersQuery(Request $request, array $filters): Builder
     {
@@ -295,25 +296,39 @@ class OrderController extends Controller
             ->when($filters['date'] !== '', fn (Builder $builder) => $builder->whereDate('date', $filters['date']))
             ->when($filters['status'] !== '', fn (Builder $builder) => $builder->where('status', $filters['status']))
             ->when(
-                $filters['client'] !== '',
-                fn (Builder $builder) => $builder->whereHas(
-                    'client',
-                    fn (Builder $clientQuery) => $clientQuery->where('name', 'like', '%'.$filters['client'].'%'),
-                ),
-            )
-            ->when(
-                $filters['address'] !== '',
-                fn (Builder $builder) => $builder->whereHas(
-                    'address',
-                    fn (Builder $addressQuery) => $addressQuery
-                        ->where('city', 'like', '%'.$filters['address'].'%')
-                        ->orWhere('street', 'like', '%'.$filters['address'].'%'),
-                ),
-            )
-            ->when(
                 $request->user()->isAdmin() && $filters['organization_id'] !== '',
                 fn (Builder $builder) => $builder->where('organization_id', (int) $filters['organization_id']),
             );
+
+        foreach ($this->searchTerms($filters['search']) as $searchTerm) {
+            $searchStatus = strtoupper(str_replace(' ', '_', $searchTerm));
+            $searchMonth = $this->monthNumberForSearchTerm($searchTerm);
+
+            $query->where(function (Builder $searchQuery) use ($searchTerm, $searchStatus, $searchMonth): void {
+                $searchQuery
+                    ->where('id', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('date', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('time_from', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('time_to', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('status', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('status', 'like', '%'.$searchStatus.'%')
+                    ->orWhere('notes', 'like', '%'.$searchTerm.'%')
+                    ->orWhereHas(
+                        'client',
+                        fn (Builder $clientQuery) => $clientQuery->where('name', 'like', '%'.$searchTerm.'%'),
+                    )
+                    ->orWhereHas(
+                        'address',
+                        fn (Builder $addressQuery) => $addressQuery
+                            ->where('city', 'like', '%'.$searchTerm.'%')
+                            ->orWhere('street', 'like', '%'.$searchTerm.'%'),
+                    );
+
+                if ($searchMonth !== null) {
+                    $searchQuery->orWhereMonth('date', $searchMonth);
+                }
+            });
+        }
 
         return $this->applySort($query, $filters['sort']);
     }

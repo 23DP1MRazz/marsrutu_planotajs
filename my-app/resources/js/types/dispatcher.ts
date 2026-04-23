@@ -60,10 +60,9 @@ export type OrderRecord = {
 };
 
 export type OrderFilters = {
+    search: string;
     date: string;
     status: string;
-    client: string;
-    address: string;
     organization_id: string;
     sort: string;
 };
@@ -96,9 +95,9 @@ export type DeliveryRouteRecord = {
 };
 
 export type RouteFilters = {
+    search: string;
     date: string;
     status: string;
-    courier: string;
     organization_id: string;
     sort: string;
 };

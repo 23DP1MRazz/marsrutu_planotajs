@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dispatcher;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Dispatcher\Concerns\ParsesSearchFilters;
 use App\Http\Requests\Dispatcher\AssignRouteOrdersRequest;
 use App\Http\Requests\Dispatcher\ReorderRouteStopsRequest;
 use App\Http\Requests\Dispatcher\StoreDeliveryRouteRequest;
@@ -24,6 +25,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DeliveryRouteController extends Controller
 {
+    use ParsesSearchFilters;
+
     /**
      * @var list<string>
      */
@@ -40,9 +43,9 @@ class DeliveryRouteController extends Controller
         $this->authorize('viewAny', DeliveryRoute::class);
 
         $filters = [
+            'search' => $request->string('search')->toString(),
             'date' => $request->string('date')->toString(),
             'status' => $request->string('status')->toString(),
-            'courier' => $request->string('courier')->toString(),
             'organization_id' => $request->user()->isAdmin()
                 ? $request->string('organization_id')->toString()
                 : '',
@@ -87,9 +90,9 @@ class DeliveryRouteController extends Controller
         $this->authorize('viewAny', DeliveryRoute::class);
 
         $filters = [
+            'search' => $request->string('search')->toString(),
             'date' => $request->string('date')->toString(),
             'status' => $request->string('status')->toString(),
-            'courier' => $request->string('courier')->toString(),
             'organization_id' => $request->user()->isAdmin()
                 ? $request->string('organization_id')->toString()
                 : '',
@@ -525,7 +528,7 @@ class DeliveryRouteController extends Controller
     }
 
     /**
-     * @param  array{date: string, status: string, courier: string, organization_id: string, sort: string}  $filters
+     * @param  array{search: string, date: string, status: string, organization_id: string, sort: string}  $filters
      */
     private function filteredRoutesQuery(Request $request, array $filters): Builder
     {
@@ -538,13 +541,37 @@ class DeliveryRouteController extends Controller
             ->when($filters['date'] !== '', fn (Builder $builder) => $builder->whereDate('routes.date', $filters['date']))
             ->when($filters['status'] !== '', fn (Builder $builder) => $builder->where('routes.status', $filters['status']))
             ->when(
-                $filters['courier'] !== '',
-                fn (Builder $builder) => $builder->where('courier_users.name', 'like', '%'.$filters['courier'].'%'),
-            )
-            ->when(
                 $request->user()->isAdmin() && $filters['organization_id'] !== '',
                 fn (Builder $builder) => $builder->where('routes.organization_id', (int) $filters['organization_id']),
             );
+
+        foreach ($this->searchTerms($filters['search']) as $searchTerm) {
+            $searchStatus = strtoupper(str_replace(' ', '_', $searchTerm));
+            $searchMonth = $this->monthNumberForSearchTerm($searchTerm);
+
+            $query->where(function (Builder $searchQuery) use ($searchTerm, $searchStatus, $searchMonth): void {
+                $searchQuery
+                    ->where('routes.id', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('routes.date', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('routes.status', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('routes.status', 'like', '%'.$searchStatus.'%')
+                    ->orWhere('courier_users.name', 'like', '%'.$searchTerm.'%')
+                    ->orWhereHas(
+                        'routeStops.order.client',
+                        fn (Builder $clientQuery) => $clientQuery->where('name', 'like', '%'.$searchTerm.'%'),
+                    )
+                    ->orWhereHas(
+                        'routeStops.order.address',
+                        fn (Builder $addressQuery) => $addressQuery
+                            ->where('city', 'like', '%'.$searchTerm.'%')
+                            ->orWhere('street', 'like', '%'.$searchTerm.'%'),
+                    );
+
+                if ($searchMonth !== null) {
+                    $searchQuery->orWhereMonth('routes.date', $searchMonth);
+                }
+            });
+        }
 
         return $this->applyRouteSort($query, $filters['sort']);
     }

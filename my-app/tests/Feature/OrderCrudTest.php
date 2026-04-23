@@ -78,12 +78,19 @@ class OrderCrudTest extends TestCase
             'status' => 'ASSIGNED',
         ]);
 
+        Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $clientA->id,
+            'address_id' => $addressA->id,
+            'date' => '2026-05-11',
+            'status' => 'ASSIGNED',
+        ]);
+
         $this->actingAs($dispatcher)
             ->get(route('dispatcher.orders.index', [
                 'date' => '2026-04-10',
                 'status' => 'ASSIGNED',
-                'client' => $clientA->name,
-                'address' => $addressA->city,
+                'search' => $clientA->name,
                 'sort' => 'updated_desc',
             ]))
             ->assertOk()
@@ -93,9 +100,18 @@ class OrderCrudTest extends TestCase
                 ->where('orders.0.id', $matchingOrder->id)
                 ->where('filters.date', '2026-04-10')
                 ->where('filters.status', 'ASSIGNED')
-                ->where('filters.client', $clientA->name)
-                ->where('filters.address', $addressA->city)
+                ->where('filters.search', $clientA->name)
                 ->where('filters.sort', 'updated_desc'));
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.orders.index', [
+                'search' => 'apri',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/orders/index')
+                ->has('orders', 3)
+                ->where('filters.search', 'apri'));
     }
 
     public function test_dispatcher_can_export_filtered_orders_to_csv(): void
@@ -125,7 +141,7 @@ class OrderCrudTest extends TestCase
         $response = $this->actingAs($dispatcher)
             ->get(route('dispatcher.orders.export', [
                 'status' => 'PENDING',
-                'client' => $clientA->name,
+                'search' => $clientA->name,
             ]));
 
         $response

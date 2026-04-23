@@ -40,6 +40,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+                'organization_name' => $request->user()?->organization?->name,
             ],
             'registerPrefill' => [
                 'join_code' => $request->routeIs('register')

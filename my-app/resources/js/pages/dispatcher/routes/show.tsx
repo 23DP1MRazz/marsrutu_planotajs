@@ -4,8 +4,16 @@ import {
     LeafletMap,
     type LeafletMapMarker,
 } from '@/components/dispatcher/leaflet-map';
-import { ResourceShell } from '@/components/dispatcher/resource-shell';
-import { Button } from '@/components/ui/button';
+import {
+    BackofficeActionLink,
+    BackofficeCard,
+    BackofficeCardBody,
+    BackofficeInfoNote,
+    BackofficePage,
+    BackofficePageHeader,
+    BackofficeStatusBadge,
+    backofficeButtonClassName,
+} from '@/components/backoffice/ui';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
 import type {
@@ -45,7 +53,10 @@ export default function DispatcherRoutesShow({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Routes', href: '/dispatcher/routes' },
-        { title: `Route ${deliveryRoute.id}`, href: `/dispatcher/routes/${deliveryRoute.id}` },
+        {
+            title: `Route ${deliveryRoute.id}`,
+            href: `/dispatcher/routes/${deliveryRoute.id}`,
+        },
     ];
 
     const form = useForm({
@@ -56,7 +67,9 @@ export default function DispatcherRoutesShow({
         form.setData(
             'order_ids',
             form.data.order_ids.includes(orderId)
-                ? form.data.order_ids.filter((selectedOrderId) => selectedOrderId !== orderId)
+                ? form.data.order_ids.filter(
+                      (selectedOrderId) => selectedOrderId !== orderId,
+                  )
                 : [...form.data.order_ids, orderId],
         );
     };
@@ -79,11 +92,18 @@ export default function DispatcherRoutesShow({
                     lat: Number(stop.lat),
                     lng: Number(stop.lng),
                     label: `Stop ${index + 1}`,
-                    description: [stop.client_name ?? `Order #${stop.order_id}`, stop.address_label]
+                    description: [
+                        stop.client_name ?? `Order #${stop.order_id}`,
+                        stop.address_label,
+                    ]
                         .filter(Boolean)
-                        .join(' — '),
+                        .join(' - '),
                 }))
-                .filter((marker) => Number.isFinite(marker.lat) && Number.isFinite(marker.lng)),
+                .filter(
+                    (marker) =>
+                        Number.isFinite(marker.lat) &&
+                        Number.isFinite(marker.lng),
+                ),
         [orderedStops],
     );
 
@@ -107,9 +127,12 @@ export default function DispatcherRoutesShow({
     };
 
     const saveStopOrder = () => {
-        reorderForm.patch(`/dispatcher/routes/${deliveryRoute.id}/stops/reorder`, {
-            preserveScroll: true,
-        });
+        reorderForm.patch(
+            `/dispatcher/routes/${deliveryRoute.id}/stops/reorder`,
+            {
+                preserveScroll: true,
+            },
+        );
     };
 
     const removeStop = (stop: RouteStopRecord) => {
@@ -125,53 +148,75 @@ export default function DispatcherRoutesShow({
             return;
         }
 
-        removeStopForm.delete(`/dispatcher/routes/${deliveryRoute.id}/stops/${stop.id}`, {
-            preserveScroll: true,
-        });
+        removeStopForm.delete(
+            `/dispatcher/routes/${deliveryRoute.id}/stops/${stop.id}`,
+            {
+                preserveScroll: true,
+            },
+        );
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Route ${deliveryRoute.id}`} />
-            <ResourceShell
-                title={`Route ${deliveryRoute.id}`}
-                description={`${deliveryRoute.courier_name ?? '-'} — ${formatShortDate(deliveryRoute.date)} — ${deliveryRoute.status}`}
-                actionHref="/dispatcher/routes"
-                actionLabel="Back to routes"
-            >
-                <div className="flex justify-end">
-                    <Button asChild type="button" variant="outline">
-                        <a
-                            href={`/dispatcher/routes/${deliveryRoute.id}/print`}
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            Print route sheet
-                        </a>
-                    </Button>
-                </div>
 
-                <LeafletMap
-                    markers={mapMarkers}
-                    emptyMessage="No route stop coordinates available yet."
+            <BackofficePage>
+                <BackofficePageHeader
+                    title={`Route ${deliveryRoute.id}`}
+                    description={`${deliveryRoute.courier_name ?? '-'} · ${formatShortDate(deliveryRoute.date)} · ${deliveryRoute.status}`}
+                    actions={
+                        <>
+                            <a
+                                href={`/dispatcher/routes/${deliveryRoute.id}/print`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={backofficeButtonClassName('outline')}
+                            >
+                                Print route sheet
+                            </a>
+                            <BackofficeActionLink
+                                href="/dispatcher/routes"
+                                variant="outline"
+                            >
+                                Back to routes
+                            </BackofficeActionLink>
+                        </>
+                    }
                 />
 
-                <div className="border p-4">
-                    <div className="mb-4 flex items-center justify-between gap-4">
-                        <h2 className="font-medium">Stops</h2>
+                <div className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white">
+                    <LeafletMap
+                        markers={mapMarkers}
+                        emptyMessage="No route stop coordinates available yet."
+                    />
+                </div>
 
-                        {hasLocalReorderChanges && (
-                            <div className="flex gap-2">
-                                <Button
+                <BackofficeCard>
+                    <div className="flex flex-col gap-3 border-b border-[#e5e7eb] px-5 py-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <h2 className="text-base font-semibold text-[#111827]">
+                                Stops
+                            </h2>
+                            <p className="text-sm text-[#6b7280]">
+                                Reorder stops locally, then save when the
+                                sequence looks right.
+                            </p>
+                        </div>
+
+                        {hasLocalReorderChanges ? (
+                            <div className="flex flex-wrap gap-2">
+                                <button
                                     type="button"
                                     onClick={saveStopOrder}
                                     disabled={reorderForm.processing}
+                                    className={backofficeButtonClassName(
+                                        'primary',
+                                    )}
                                 >
                                     Save order
-                                </Button>
-                                <Button
+                                </button>
+                                <button
                                     type="button"
-                                    variant="outline"
                                     onClick={() => {
                                         setOrderedStops(stops);
                                         reorderForm.setData(
@@ -180,158 +225,187 @@ export default function DispatcherRoutesShow({
                                         );
                                     }}
                                     disabled={reorderForm.processing}
+                                    className={backofficeButtonClassName(
+                                        'outline',
+                                    )}
                                 >
                                     Reset preview
-                                </Button>
+                                </button>
                             </div>
-                        )}
+                        ) : null}
                     </div>
 
-                    {orderedStops.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                            No stops assigned yet.
-                        </p>
-                    ) : (
-                        <div className="space-y-2">
-                            {orderedStops.map((stop, index) => (
+                    <BackofficeCardBody className="space-y-3">
+                        {orderedStops.length === 0 ? (
+                            <BackofficeInfoNote>
+                                No stops assigned yet.
+                            </BackofficeInfoNote>
+                        ) : (
+                            orderedStops.map((stop, index) => (
                                 <div
                                     key={stop.id}
-                                    className="flex items-center justify-between gap-4 border p-3 text-sm"
+                                    className="flex flex-col gap-4 rounded-lg border border-[#e5e7eb] px-4 py-4 lg:flex-row lg:items-center lg:justify-between"
                                 >
                                     <div className="space-y-1">
-                                        <p>
-                                            <span className="font-medium">
-                                                Stop {index + 1}
-                                            </span>{' '}
-                                            — Order #{stop.order_id}
+                                        <p className="font-semibold text-[#111827]">
+                                            Stop {index + 1} - Order #
+                                            {stop.order_id}
                                         </p>
-                                        <p>{stop.client_name ?? '-'}</p>
-                                        <p>{stop.address_label || '-'}</p>
-                                        <p className="text-muted-foreground">
-                                            Status: {stop.status}
+                                        <p className="text-sm text-[#111827]">
+                                            {stop.client_name ?? '-'}
                                         </p>
-                                        {stop.proof_view_url && (
-                                            <p>
-                                                Proof of delivery:{' '}
+                                        <p className="text-sm text-[#6b7280]">
+                                            {stop.address_label || '-'}
+                                        </p>
+                                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                                            <BackofficeStatusBadge
+                                                status={stop.status}
+                                            />
+                                            {stop.proof_view_url ? (
                                                 <a
                                                     href={stop.proof_view_url}
-                                                    className="underline"
                                                     target="_blank"
                                                     rel="noreferrer"
+                                                    className="text-sm font-medium text-[#2563eb] hover:text-[#1e40af] hover:underline"
                                                 >
-                                                    Open file
+                                                    Open proof of delivery
                                                 </a>
-                                            </p>
-                                        )}
+                                            ) : null}
+                                        </div>
                                     </div>
 
                                     <div className="flex flex-wrap gap-2">
-                                        <Button
+                                        <button
                                             type="button"
-                                            variant="outline"
-                                            size="sm"
                                             onClick={() => moveStop(index, -1)}
                                             disabled={
-                                                index === 0
-                                                || reorderForm.processing
-                                                || removeStopForm.processing
+                                                index === 0 ||
+                                                reorderForm.processing ||
+                                                removeStopForm.processing
                                             }
+                                            className={backofficeButtonClassName(
+                                                'outline',
+                                                'sm',
+                                            )}
                                         >
                                             Up
-                                        </Button>
-                                        <Button
+                                        </button>
+                                        <button
                                             type="button"
-                                            variant="outline"
-                                            size="sm"
                                             onClick={() => moveStop(index, 1)}
                                             disabled={
-                                                index === orderedStops.length - 1
-                                                || reorderForm.processing
-                                                || removeStopForm.processing
+                                                index ===
+                                                    orderedStops.length - 1 ||
+                                                reorderForm.processing ||
+                                                removeStopForm.processing
                                             }
+                                            className={backofficeButtonClassName(
+                                                'outline',
+                                                'sm',
+                                            )}
                                         >
                                             Down
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => removeStop(stop)}
-                                            disabled={
-                                                !stop.can_remove
-                                                || reorderForm.processing
-                                                || removeStopForm.processing
-                                            }
-                                        >
-                                            Remove
-                                        </Button>
+                                        </button>
+                                        {stop.can_remove ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeStop(stop)}
+                                                disabled={
+                                                    removeStopForm.processing
+                                                }
+                                                className={backofficeButtonClassName(
+                                                    'outline',
+                                                    'sm',
+                                                )}
+                                            >
+                                                Remove
+                                            </button>
+                                        ) : null}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            ))
+                        )}
+                    </BackofficeCardBody>
+                </BackofficeCard>
 
-                    {hasLocalReorderChanges && (
-                        <p className="mt-4 text-sm text-muted-foreground">
-                            Review the new order, then save it to update sequence numbers and
-                            ETA values.
-                        </p>
-                    )}
-
-                    {reorderForm.errors.stop_ids && (
-                        <p className="mt-4 text-sm text-red-600">
-                            {reorderForm.errors.stop_ids}
-                        </p>
-                    )}
-
-                    {removeStopForm.errors.route_stop && (
-                        <p className="mt-4 text-sm text-red-600">
-                            {removeStopForm.errors.route_stop}
-                        </p>
-                    )}
-                </div>
-
-                <div className="border p-4">
-                    <form className="space-y-4" onSubmit={submit}>
-                        <h2 className="font-medium">Assign more orders</h2>
-                        {availableOrders.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                No unassigned orders available.
-                            </p>
-                        ) : (
-                            <div className="space-y-2">
-                                {availableOrders.map((order) => (
-                                    <label
-                                        key={order.id}
-                                        className="flex gap-2 border p-2 text-sm"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={form.data.order_ids.includes(order.id)}
-                                            onChange={() => toggleOrder(order.id)}
-                                        />
-                                        <span>
-                                            #{order.id} — {order.client_name ?? '-'} —{' '}
-                                            {order.address_label || '-'} —{' '}
-                                            {formatShortDate(order.date)}
-                                        </span>
-                                    </label>
-                                ))}
+                <BackofficeCard>
+                    <BackofficeCardBody>
+                        <form className="space-y-4" onSubmit={submit}>
+                            <div>
+                                <h2 className="text-base font-semibold text-[#111827]">
+                                    Add orders to route
+                                </h2>
+                                <p className="text-sm text-[#6b7280]">
+                                    Assign more available orders to this route.
+                                </p>
                             </div>
-                        )}
-                        {form.errors.order_ids && (
-                            <p className="text-sm text-red-600">{form.errors.order_ids}</p>
-                        )}
 
-                        <Button
-                            type="submit"
-                            disabled={form.processing || availableOrders.length === 0}
-                        >
-                            Assign selected
-                        </Button>
-                    </form>
-                </div>
-            </ResourceShell>
+                            {availableOrders.length === 0 ? (
+                                <BackofficeInfoNote>
+                                    No additional orders are available.
+                                </BackofficeInfoNote>
+                            ) : (
+                                <div className="space-y-2">
+                                    {availableOrders.map((order) => (
+                                        <label
+                                            key={order.id}
+                                            className="flex items-start gap-3 rounded-lg border border-[#e5e7eb] px-4 py-3 text-sm transition hover:bg-[#f9fafb]"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={form.data.order_ids.includes(
+                                                    order.id,
+                                                )}
+                                                onChange={() =>
+                                                    toggleOrder(order.id)
+                                                }
+                                                className="mt-1 h-4 w-4 rounded border-[#cbd5e1]"
+                                            />
+                                            <span>
+                                                <span className="font-semibold text-[#111827]">
+                                                    #{order.id}{' '}
+                                                    {order.client_name ?? '-'}
+                                                </span>
+                                                <span className="mt-1 block text-[#6b7280]">
+                                                    {order.address_label} ·{' '}
+                                                    {formatShortDate(
+                                                        order.date,
+                                                    )}{' '}
+                                                    ·{' '}
+                                                    {order.time_from.slice(
+                                                        0,
+                                                        5,
+                                                    )}{' '}
+                                                    -{' '}
+                                                    {order.time_to.slice(0, 5)}
+                                                </span>
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+
+                            {form.errors.order_ids ? (
+                                <p className="text-sm text-red-600">
+                                    {form.errors.order_ids}
+                                </p>
+                            ) : null}
+
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="submit"
+                                    disabled={form.processing}
+                                    className={backofficeButtonClassName(
+                                        'primary',
+                                    )}
+                                >
+                                    Add selected orders
+                                </button>
+                            </div>
+                        </form>
+                    </BackofficeCardBody>
+                </BackofficeCard>
+            </BackofficePage>
         </AppLayout>
     );
 }

@@ -6,7 +6,6 @@ use App\Models\Courier;
 use App\Models\DeliveryRoute;
 use App\Models\Dispatcher;
 use App\Models\Organization;
-use App\Models\TransportVehicle;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -165,7 +164,7 @@ class AdminUserManagementTest extends TestCase
             ->assertSessionHasErrors('role');
     }
 
-    public function test_courier_with_route_or_vehicle_cannot_change_role_or_organization(): void
+    public function test_courier_with_route_cannot_change_role_or_organization(): void
     {
         $organizationA = Organization::factory()->create();
         $organizationB = Organization::factory()->create();
@@ -175,11 +174,6 @@ class AdminUserManagementTest extends TestCase
         Courier::query()->create([
             'user_id' => $courierUser->id,
             'on_duty' => false,
-        ]);
-
-        TransportVehicle::factory()->create([
-            'organization_id' => $organizationA->id,
-            'courier_user_id' => $courierUser->id,
         ]);
 
         DeliveryRoute::factory()->create([
