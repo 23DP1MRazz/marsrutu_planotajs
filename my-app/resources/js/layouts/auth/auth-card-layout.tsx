@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { useTranslation } from '@/hooks/use-translation';
 import type { AuthLayoutProps } from '@/types';
 import { home } from '@/routes';
 import '../../../css/landing.css';
@@ -9,6 +10,8 @@ export default function AuthCardLayout({
     title,
     description,
 }: AuthLayoutProps) {
+    const { t } = useTranslation();
+
     return (
         <div className="landing-root auth-shell">
             <header className="header" id="header">
@@ -30,7 +33,7 @@ export default function AuthCardLayout({
                             >
                                 <path d="M19 12H5M12 5l-7 7 7 7" />
                             </svg>
-                            <span>Back to home</span>
+                            <span>{t('auth.back_to_home')}</span>
                         </Link>
                     </nav>
                 </div>
@@ -66,7 +69,7 @@ export default function AuthCardLayout({
 
             <footer className="auth-shell__footer">
                 <p className="auth-shell__footer-text">
-                    © 2026 Maršrutu plānotājs · Iekšējā loģistikas pārvaldības sistēma
+                    {t('auth.footer_caption')}
                 </p>
             </footer>
         </div>

@@ -7,6 +7,8 @@ import type { Auth } from './auth';
 export type SharedData = {
     name: string;
     auth: Auth;
+    locale: 'en' | 'lv';
+    availableLocales: Array<'en' | 'lv'>;
     registerPrefill: {
         join_code: string | null;
     };

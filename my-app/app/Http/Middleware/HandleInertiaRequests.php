@@ -42,6 +42,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
                 'organization_name' => $request->user()?->organization?->name,
             ],
+            'locale' => app()->getLocale(),
+            'availableLocales' => config('app.supported_locales', ['en']),
             'registerPrefill' => [
                 'join_code' => $request->routeIs('register')
                     ? $request->query('join_code')
