@@ -7,6 +7,7 @@ use App\Http\Controllers\Dispatcher\AddressController;
 use App\Http\Controllers\Dispatcher\ClientController;
 use App\Http\Controllers\Dispatcher\DeliveryRouteController;
 use App\Http\Controllers\Dispatcher\OrderController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProofOfDeliveryController;
 use App\Models\Address;
 use App\Models\Client;
@@ -24,6 +25,8 @@ Route::get('/', function () {
         'canRegister' => Features::enabled(Features::registration()),
     ]);
 })->name('home');
+
+Route::patch('locale', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::get('dashboard', function (Request $request) {
     if ($request->user()?->isCourier()) {

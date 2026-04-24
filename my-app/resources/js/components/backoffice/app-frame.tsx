@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
@@ -137,6 +138,7 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                 <div className="min-w-0 flex-1 truncate text-[13px] font-medium text-[#6b7280]">
                     {organizationName}
                 </div>
+                <LanguageSwitcher />
             </header>
 
             <div className="flex min-h-screen pt-16">

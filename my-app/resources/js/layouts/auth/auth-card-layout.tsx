@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/hooks/use-translation';
 import type { AuthLayoutProps } from '@/types';
 import { home } from '@/routes';
@@ -20,6 +21,7 @@ export default function AuthCardLayout({
                         MARŠRUTU PLĀNOTĀJS
                     </Link>
                     <nav className="nav">
+                        <LanguageSwitcher />
                         <Link href={home()} className="auth-back-link">
                             <svg
                                 width="14"

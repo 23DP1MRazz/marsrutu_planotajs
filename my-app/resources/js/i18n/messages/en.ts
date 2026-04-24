@@ -5,6 +5,11 @@ const en = {
     },
     common: {
         app_name: 'Maršrutu plānotājs',
+        language: 'Language',
+        languages: {
+            en: 'English',
+            lv: 'Latvian',
+        },
     },
 } as const;
 

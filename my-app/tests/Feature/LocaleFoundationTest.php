@@ -38,4 +38,22 @@ class LocaleFoundationTest extends TestCase
                 ->where('locale', 'en')
                 ->where('availableLocales', ['en', 'lv']));
     }
+
+    public function test_locale_can_be_updated_and_persisted(): void
+    {
+        $this->from(route('register'))
+            ->patch(route('locale.update'), ['locale' => 'lv'])
+            ->assertRedirect(route('register', absolute: false))
+            ->assertPlainCookie('locale', 'lv');
+
+        $this->assertSame('lv', session('locale'));
+    }
+
+    public function test_invalid_locale_is_rejected(): void
+    {
+        $this->from(route('register'))
+            ->patch(route('locale.update'), ['locale' => 'de'])
+            ->assertRedirect(route('register', absolute: false))
+            ->assertSessionHasErrors('locale');
+    }
 }

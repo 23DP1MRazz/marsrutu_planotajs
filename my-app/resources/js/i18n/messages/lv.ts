@@ -5,6 +5,11 @@ const lv = {
     },
     common: {
         app_name: 'Maršrutu plānotājs',
+        language: 'Valoda',
+        languages: {
+            en: 'Angļu',
+            lv: 'Latviešu',
+        },
     },
 } as const;
 
