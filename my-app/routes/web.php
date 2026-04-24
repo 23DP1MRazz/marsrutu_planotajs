@@ -136,13 +136,13 @@ Route::get('dashboard', function (Request $request) {
                 ], false),
             ],
     ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth'])->name('dashboard');
 
 Route::get('proof-of-delivery/{proofOfDelivery}', [ProofOfDeliveryController::class, 'show'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('proof-of-delivery.show');
 
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -156,7 +156,7 @@ Route::middleware(['auth', 'verified'])
         Route::post('organizations/{organization}/regenerate-join-code', [AdminOrganizationController::class, 'regenerateJoinCode'])->name('organizations.regenerate-join-code');
     });
 
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth'])
     ->prefix('dispatcher')
     ->name('dispatcher.')
     ->group(function () {
@@ -200,7 +200,7 @@ Route::middleware(['auth', 'verified'])
         Route::delete('routes/{deliveryRoute}/stops/{routeStop}', [DeliveryRouteController::class, 'destroyStop'])->name('routes.stops.destroy');
     });
 
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth'])
     ->prefix('courier')
     ->name('courier.')
     ->group(function () {

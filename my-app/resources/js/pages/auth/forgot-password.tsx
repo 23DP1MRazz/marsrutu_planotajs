@@ -1,5 +1,6 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { Spinner } from '@/components/ui/spinner';
+import { useTranslation } from '@/hooks/use-translation';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { email } from '@/routes/password';
@@ -11,15 +12,20 @@ const spinnerStyle = {
 } as const;
 
 export default function ForgotPassword({ status }: { status?: string }) {
+    const { t } = useTranslation();
+
     return (
         <AuthLayout
-            title="Forgot password"
-            description="Enter your email to receive a password reset link"
+            title={t('auth.forgot_password.title')}
+            description={t('auth.forgot_password.description')}
         >
-            <Head title="Forgot password" />
+            <Head title={t('auth.forgot_password.title')} />
 
             {status && (
-                <div className="auth-success" style={{ marginBottom: '1.25rem' }}>
+                <div
+                    className="auth-success"
+                    style={{ marginBottom: '1.25rem' }}
+                >
                     {status}
                 </div>
             )}
@@ -28,16 +34,22 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 {({ processing, errors }) => (
                     <>
                         <div className="auth-field">
-                            <label htmlFor="email">Email address</label>
+                            <label htmlFor="email">
+                                {t('auth.fields.email_address')}
+                            </label>
                             <input
                                 id="email"
                                 type="email"
                                 name="email"
                                 autoComplete="off"
                                 autoFocus
-                                placeholder="you@example.com"
+                                placeholder={t('auth.placeholders.email')}
                             />
-                            {errors.email && <span className="auth-error">{errors.email}</span>}
+                            {errors.email && (
+                                <span className="auth-error">
+                                    {errors.email}
+                                </span>
+                            )}
                         </div>
 
                         <button
@@ -46,14 +58,16 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             disabled={processing}
                             data-test="email-password-reset-link-button"
                         >
-                            {processing ? <Spinner style={spinnerStyle} /> : null}
-                            Email password reset link
+                            {processing ? (
+                                <Spinner style={spinnerStyle} />
+                            ) : null}
+                            {t('auth.forgot_password.submit')}
                         </button>
 
                         <p className="auth-footer-text">
-                            Or, return to{' '}
+                            {t('auth.forgot_password.return_to_login')}{' '}
                             <Link href={login()} className="auth-link">
-                                log in
+                                {t('auth.login.submit')}
                             </Link>
                         </p>
                     </>

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AnchorHTMLAttributes, MouseEventHandler } from 'react';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { useTranslation } from '@/hooks/use-translation';
 import { HEADER_SCROLL_OFFSET_PX } from './data';
 import { AuthButton } from './AuthButton';
 
@@ -58,6 +60,7 @@ export function LandingLink({
 }
 
 export function Header() {
+    const { t } = useTranslation();
     const headerRef = useRef<HTMLElement | null>(null);
     const menuToggleRef = useRef<HTMLButtonElement | null>(null);
     const navLinksRef = useRef<HTMLUListElement | null>(null);
@@ -150,10 +153,10 @@ export function Header() {
                 </a>
                 <nav className="nav">
                     <button
-                        className={`menu-toggle${isMenuOpen ? ' active' : ''}`}
+                        className={`menu-toggle${isMenuOpen ? 'active' : ''}`}
                         id="menuToggle"
                         ref={menuToggleRef}
-                        aria-label="Toggle menu"
+                        aria-label={t('landing.header.menu')}
                         aria-controls="navLinks"
                         aria-expanded={isMenuOpen}
                         onClick={() => {
@@ -165,7 +168,7 @@ export function Header() {
                         <span />
                     </button>
                     <ul
-                        className={`nav-links${isMenuOpen ? ' active' : ''}`}
+                        className={`nav-links${isMenuOpen ? 'active' : ''}`}
                         id="navLinks"
                         ref={navLinksRef}
                     >
@@ -175,7 +178,7 @@ export function Header() {
                                 className="nav-link"
                                 closeMenu={closeMenu}
                             >
-                                Par sistēmu
+                                {t('landing.header.about')}
                             </LandingLink>
                         </li>
                         <li>
@@ -184,7 +187,7 @@ export function Header() {
                                 className="nav-link"
                                 closeMenu={closeMenu}
                             >
-                                Kā tas darbojas
+                                {t('landing.header.how_it_works')}
                             </LandingLink>
                         </li>
                         <li>
@@ -193,7 +196,7 @@ export function Header() {
                                 className="nav-link"
                                 closeMenu={closeMenu}
                             >
-                                Funkcionalitāte
+                                {t('landing.header.features')}
                             </LandingLink>
                         </li>
                         <li>
@@ -202,8 +205,11 @@ export function Header() {
                                 className="nav-link"
                                 closeMenu={closeMenu}
                             >
-                                Kam paredzēts
+                                {t('landing.header.users')}
                             </LandingLink>
+                        </li>
+                        <li>
+                            <LanguageSwitcher />
                         </li>
                         <li>
                             <AuthButton />

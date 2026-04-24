@@ -1,5 +1,6 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { Spinner } from '@/components/ui/spinner';
+import { useTranslation } from '@/hooks/use-translation';
 import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
@@ -22,12 +23,14 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: Props) {
+    const { t } = useTranslation();
+
     return (
         <AuthLayout
-            title="Welcome back"
-            description="Log in to manage your courier routes"
+            title={t('auth.login.title')}
+            description={t('auth.login.description')}
         >
-            <Head title="Log in" />
+            <Head title={t('auth.login.submit')} />
 
             <Form
                 {...store.form()}
@@ -46,7 +49,9 @@ export default function Login({
                         )}
 
                         <div className="auth-field">
-                            <label htmlFor="email">Email address</label>
+                            <label htmlFor="email">
+                                {t('auth.fields.email_address')}
+                            </label>
                             <input
                                 id="email"
                                 type="email"
@@ -54,17 +59,26 @@ export default function Login({
                                 required
                                 autoFocus
                                 autoComplete="email"
-                                placeholder="you@example.com"
+                                placeholder={t('auth.placeholders.email')}
                             />
-                            {errors.email && <span className="auth-error">{errors.email}</span>}
+                            {errors.email && (
+                                <span className="auth-error">
+                                    {errors.email}
+                                </span>
+                            )}
                         </div>
 
                         <div className="auth-field">
                             <div className="auth-helper-row">
-                                <label htmlFor="password">Password</label>
+                                <label htmlFor="password">
+                                    {t('auth.fields.password')}
+                                </label>
                                 {canResetPassword && (
-                                    <Link href={request()} className="auth-forgot-link">
-                                        Forgot password?
+                                    <Link
+                                        href={request()}
+                                        className="auth-forgot-link"
+                                    >
+                                        {t('auth.forgot_password.link')}
                                     </Link>
                                 )}
                             </div>
@@ -74,14 +88,22 @@ export default function Login({
                                 name="password"
                                 required
                                 autoComplete="current-password"
-                                placeholder="••••••••"
+                                placeholder={t('auth.placeholders.password')}
                             />
-                            {errors.password && <span className="auth-error">{errors.password}</span>}
+                            {errors.password && (
+                                <span className="auth-error">
+                                    {errors.password}
+                                </span>
+                            )}
                         </div>
 
                         <label className="auth-checkbox-label">
-                            <input type="checkbox" id="remember" name="remember" />
-                            <span>Remember me</span>
+                            <input
+                                type="checkbox"
+                                id="remember"
+                                name="remember"
+                            />
+                            <span>{t('auth.login.remember')}</span>
                         </label>
 
                         <button
@@ -90,15 +112,17 @@ export default function Login({
                             disabled={processing}
                             data-test="login-button"
                         >
-                            {processing ? <Spinner style={spinnerStyle} /> : null}
-                            Log in
+                            {processing ? (
+                                <Spinner style={spinnerStyle} />
+                            ) : null}
+                            {t('auth.login.submit')}
                         </button>
 
                         {canRegister && (
                             <p className="auth-footer-text">
-                                Don&apos;t have an account?{' '}
+                                {t('auth.login.no_account')}{' '}
                                 <Link href={register()} className="auth-link">
-                                    Sign up
+                                    {t('auth.register.create_account')}
                                 </Link>
                             </p>
                         )}
