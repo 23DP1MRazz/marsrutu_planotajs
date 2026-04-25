@@ -11,15 +11,10 @@ import {
     backofficeInputClassName,
     backofficeSelectClassName,
 } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { OrganizationOption } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Clients', href: '/dispatcher/clients' },
-    { title: 'Create', href: '/dispatcher/clients/create' },
-];
 
 type DispatcherClientsCreateProps = {
     organizations: OrganizationOption[];
@@ -30,6 +25,7 @@ export default function DispatcherClientsCreate({
     organizations,
     canSelectOrganization,
 }: DispatcherClientsCreateProps) {
+    const { t } = useTranslation();
     const form = useForm({
         organization_id:
             canSelectOrganization && organizations[0]?.id
@@ -51,21 +47,29 @@ export default function DispatcherClientsCreate({
         });
         form.post('/dispatcher/clients');
     };
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.clients'), href: '/dispatcher/clients' },
+        {
+            title: t('dispatcher.clients.create_title'),
+            href: '/dispatcher/clients/create',
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Client" />
+            <Head title={t('dispatcher.clients.create_title')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Create Client"
-                    description="Add a new client record."
+                    title={t('dispatcher.clients.create_title')}
+                    description={t('dispatcher.clients.create_description')}
                     actions={
                         <BackofficeActionLink
                             href="/dispatcher/clients"
                             variant="outline"
                         >
-                            Back to clients
+                            {t('dispatcher.clients.back')}
                         </BackofficeActionLink>
                     }
                 />
@@ -76,7 +80,7 @@ export default function DispatcherClientsCreate({
                             {canSelectOrganization &&
                             organizations.length > 0 ? (
                                 <BackofficeField
-                                    label="Organization"
+                                    label={t('common.fields.organization')}
                                     error={form.errors.organization_id}
                                 >
                                     <select
@@ -105,7 +109,7 @@ export default function DispatcherClientsCreate({
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <BackofficeField
-                                    label="Name"
+                                    label={t('common.fields.name')}
                                     error={form.errors.name}
                                 >
                                     <input
@@ -124,7 +128,7 @@ export default function DispatcherClientsCreate({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Phone"
+                                    label={t('common.fields.phone')}
                                     error={form.errors.phone}
                                 >
                                     <input
@@ -151,13 +155,13 @@ export default function DispatcherClientsCreate({
                                         'primary',
                                     )}
                                 >
-                                    Save
+                                    {t('common.actions.save')}
                                 </button>
                                 <BackofficeActionLink
                                     href="/dispatcher/clients"
                                     variant="outline"
                                 >
-                                    Cancel
+                                    {t('common.actions.cancel')}
                                 </BackofficeActionLink>
                             </div>
                         </form>

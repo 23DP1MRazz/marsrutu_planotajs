@@ -1,11 +1,19 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { CheckCircle2, MapPinned, Navigation, Upload, XCircle } from 'lucide-react';
+import {
+    CheckCircle2,
+    MapPinned,
+    Navigation,
+    Upload,
+    XCircle,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
     LeafletMap,
     type LeafletMapMarker,
 } from '@/components/dispatcher/leaflet-map';
+import { BackofficeStatusBadge } from '@/components/backoffice/ui';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
 import type {
@@ -28,9 +36,12 @@ export default function CourierRoutePage({
     dashboardMode = false,
     dashboardSummary = null,
 }: CourierRoutePageProps) {
+    const { t } = useTranslation();
     const [failedStopId, setFailedStopId] = useState<number | null>(null);
     const [failReasons, setFailReasons] = useState<Record<number, string>>({});
-    const [selectedProofFiles, setSelectedProofFiles] = useState<Record<number, File | null>>({});
+    const [selectedProofFiles, setSelectedProofFiles] = useState<
+        Record<number, File | null>
+    >({});
     const statusForm = useForm({
         status: '',
         fail_reason: '',
@@ -47,12 +58,20 @@ export default function CourierRoutePage({
                     id: stop.id,
                     lat: stop.lat ?? 0,
                     lng: stop.lng ?? 0,
-                    label: `Stop ${stop.seq_no}`,
-                    description: [stop.client_name ?? `Order #${stop.order_id}`, stop.address_label]
+                    label: t('courier.stop.stop_number', {
+                        number: stop.seq_no,
+                    }),
+                    description: [
+                        stop.client_name ??
+                            t('courier.stop.order_number', {
+                                id: stop.order_id,
+                            }),
+                        stop.address_label,
+                    ]
                         .filter(Boolean)
                         .join(' — '),
                 })),
-        [stops],
+        [stops, t],
     );
 
     const updateStopStatus = (
@@ -103,24 +122,31 @@ export default function CourierRoutePage({
     };
 
     const breadcrumbs: BreadcrumbItem[] = dashboardMode
-        ? [{ title: 'Dashboard', href: '/dashboard' }]
+        ? [{ title: t('dashboard.title'), href: '/dashboard' }]
         : [
-              { title: 'Dashboard', href: '/dashboard' },
-              { title: 'Today route', href: '/courier/today-route' },
+              { title: t('dashboard.title'), href: '/dashboard' },
+              { title: t('courier.today_route'), href: '/courier/today-route' },
           ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={dashboardMode ? 'Dashboard' : 'Today route'} />
+            <Head
+                title={
+                    dashboardMode
+                        ? t('dashboard.title')
+                        : t('courier.today_route')
+                }
+            />
 
             <div className="flex flex-1 flex-col gap-4 p-3 sm:gap-6 sm:p-4">
                 <div className="rounded-3xl border border-border/80 bg-card/90 p-4 shadow-sm sm:p-6">
                     <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-                        {dashboardMode ? 'Courier dashboard' : 'Today route'}
+                        {dashboardMode
+                            ? t('courier.dashboard.title')
+                            : t('courier.today_route')}
                     </h1>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Open directions fast, update delivery progress, and capture proof from
-                        your phone.
+                        {t('courier.dashboard.description')}
                     </p>
                 </div>
 
@@ -128,18 +154,22 @@ export default function CourierRoutePage({
                     <>
                         <div className="grid gap-3 sm:grid-cols-3">
                             <SummaryCard
-                                label="Done routes"
+                                label={t('courier.dashboard.done_routes')}
                                 value={String(dashboardSummary.done_routes)}
                                 href="/courier/routes/completed"
                             />
                             <SummaryCard
-                                label="Completed orders"
-                                value={String(dashboardSummary.completed_orders)}
+                                label={t('courier.dashboard.completed_orders')}
+                                value={String(
+                                    dashboardSummary.completed_orders,
+                                )}
                                 href="/courier/orders/completed"
                             />
                             <SummaryCard
-                                label="Upcoming routes"
-                                value={String(dashboardSummary.upcoming_routes_count)}
+                                label={t('courier.dashboard.upcoming_routes')}
+                                value={String(
+                                    dashboardSummary.upcoming_routes_count,
+                                )}
                                 href="/courier/routes/upcoming"
                             />
                         </div>
@@ -148,46 +178,58 @@ export default function CourierRoutePage({
                             <div className="flex items-center justify-between gap-3">
                                 <div>
                                     <h2 className="text-base font-semibold sm:text-lg">
-                                        Upcoming routes
+                                        {t('courier.dashboard.upcoming_routes')}
                                     </h2>
                                     <p className="text-sm text-muted-foreground">
-                                        Your next assigned routes after today.
+                                        {t(
+                                            'courier.routes.upcoming_description',
+                                        )}
                                     </p>
                                 </div>
                                 <Link
                                     href="/courier/routes/upcoming"
                                     className="text-sm underline underline-offset-4"
                                 >
-                                    View all
+                                    {t('courier.dashboard.open_all')}
                                 </Link>
                             </div>
 
                             <div className="mt-4 space-y-3">
-                                {dashboardSummary.upcoming_routes.length === 0 ? (
+                                {dashboardSummary.upcoming_routes.length ===
+                                0 ? (
                                     <p className="text-sm text-muted-foreground">
-                                        No upcoming routes assigned yet.
+                                        {t('courier.routes.upcoming_empty')}
                                     </p>
                                 ) : (
-                                    dashboardSummary.upcoming_routes.map((route) => (
-                                        <div
-                                            key={route.id}
-                                            className="rounded-2xl border border-border/80 p-3"
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {formatShortDate(route.date)}
-                                                    </p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {route.stops_count} planned stops
-                                                    </p>
+                                    dashboardSummary.upcoming_routes.map(
+                                        (route) => (
+                                            <div
+                                                key={route.id}
+                                                className="rounded-2xl border border-border/80 p-3"
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="font-medium">
+                                                            {formatShortDate(
+                                                                route.date,
+                                                            )}
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {t(
+                                                                'courier.routes.planned_stops',
+                                                                {
+                                                                    count: route.stops_count,
+                                                                },
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                    <BackofficeStatusBadge
+                                                        status={route.status}
+                                                    />
                                                 </div>
-                                                <span className="rounded-full border border-border/80 px-3 py-1 text-xs font-medium">
-                                                    {route.status}
-                                                </span>
                                             </div>
-                                        </div>
-                                    ))
+                                        ),
+                                    )
                                 )}
                             </div>
                         </div>
@@ -197,22 +239,24 @@ export default function CourierRoutePage({
                 {deliveryRoute === null ? (
                     <div className="rounded-3xl border border-dashed border-border/80 bg-card/60 p-6 text-center">
                         <p className="text-sm text-muted-foreground">
-                            No route is assigned to you for today.
+                            {t('courier.dashboard.no_today_route')}
                         </p>
                     </div>
                 ) : (
                     <>
                         <div className="grid gap-3 sm:grid-cols-3">
                             <SummaryCard
-                                label="Date"
+                                label={t('common.fields.date')}
                                 value={formatShortDate(deliveryRoute.date)}
                             />
                             <SummaryCard
-                                label="Route status"
-                                value={deliveryRoute.status}
+                                label={t('courier.dashboard.route_status')}
+                                value={t(
+                                    `common.statuses.${deliveryRoute.status.toLowerCase()}`,
+                                )}
                             />
                             <SummaryCard
-                                label="Total stops"
+                                label={t('courier.dashboard.total_stops')}
                                 value={String(stops.length)}
                             />
                         </div>
@@ -220,7 +264,7 @@ export default function CourierRoutePage({
                         <LeafletMap
                             markers={routeMarkers}
                             heightClassName="h-64 sm:h-80"
-                            emptyMessage="No saved coordinates for today’s stops yet."
+                            emptyMessage={t('courier.dashboard.no_coordinates')}
                         />
 
                         <div className="space-y-4">
@@ -232,16 +276,27 @@ export default function CourierRoutePage({
                                     <div className="space-y-2">
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
-                                                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                                                    Stop {stop.seq_no}
+                                                <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+                                                    {t(
+                                                        'courier.stop.stop_number',
+                                                        {
+                                                            number: stop.seq_no,
+                                                        },
+                                                    )}
                                                 </p>
                                                 <p className="mt-1 text-base font-semibold">
-                                                    {stop.client_name ?? `Order #${stop.order_id}`}
+                                                    {stop.client_name ??
+                                                        t(
+                                                            'courier.stop.order_number',
+                                                            {
+                                                                id: stop.order_id,
+                                                            },
+                                                        )}
                                                 </p>
                                             </div>
-                                            <span className="rounded-full border border-border/80 px-3 py-1 text-xs font-medium">
-                                                {stop.status}
-                                            </span>
+                                            <BackofficeStatusBadge
+                                                status={stop.status}
+                                            />
                                         </div>
 
                                         <p className="text-sm text-muted-foreground">
@@ -250,20 +305,29 @@ export default function CourierRoutePage({
 
                                         {stop.fail_reason && (
                                             <p className="text-sm text-red-600">
-                                                Fail reason: {stop.fail_reason}
+                                                {t(
+                                                    'courier.stop.fail_reason_value',
+                                                    {
+                                                        reason: stop.fail_reason,
+                                                    },
+                                                )}
                                             </p>
                                         )}
 
                                         {stop.proof_view_url && (
                                             <p className="text-sm">
-                                                Proof uploaded:{' '}
+                                                {t(
+                                                    'courier.stop.proof_uploaded',
+                                                )}{' '}
                                                 <a
                                                     href={stop.proof_view_url}
                                                     className="underline underline-offset-4"
                                                     target="_blank"
                                                     rel="noreferrer"
                                                 >
-                                                    Open file
+                                                    {t(
+                                                        'courier.stop.open_file',
+                                                    )}
                                                 </a>
                                             </p>
                                         )}
@@ -282,7 +346,7 @@ export default function CourierRoutePage({
                                                 rel="noreferrer"
                                             >
                                                 <MapPinned className="size-4" />
-                                                Open in Google Maps
+                                                {t('courier.stop.google_maps')}
                                             </a>
                                         </Button>
                                         <Button
@@ -297,7 +361,7 @@ export default function CourierRoutePage({
                                                 rel="noreferrer"
                                             >
                                                 <Navigation className="size-4" />
-                                                Open in Waze
+                                                {t('courier.stop.waze')}
                                             </a>
                                         </Button>
                                     </div>
@@ -307,21 +371,37 @@ export default function CourierRoutePage({
                                             type="button"
                                             variant="outline"
                                             className="h-11 justify-start rounded-2xl"
-                                            disabled={statusForm.processing || stop.status === 'ARRIVED'}
-                                            onClick={() => updateStopStatus(stop.id, 'ARRIVED')}
+                                            disabled={
+                                                statusForm.processing ||
+                                                stop.status === 'ARRIVED'
+                                            }
+                                            onClick={() =>
+                                                updateStopStatus(
+                                                    stop.id,
+                                                    'ARRIVED',
+                                                )
+                                            }
                                         >
                                             <Navigation className="size-4" />
-                                            Arrived
+                                            {t('courier.stop.arrived')}
                                         </Button>
                                         <Button
                                             type="button"
                                             variant="outline"
                                             className="h-11 justify-start rounded-2xl"
-                                            disabled={statusForm.processing || stop.status === 'COMPLETED'}
-                                            onClick={() => updateStopStatus(stop.id, 'COMPLETED')}
+                                            disabled={
+                                                statusForm.processing ||
+                                                stop.status === 'COMPLETED'
+                                            }
+                                            onClick={() =>
+                                                updateStopStatus(
+                                                    stop.id,
+                                                    'COMPLETED',
+                                                )
+                                            }
                                         >
                                             <CheckCircle2 className="size-4" />
-                                            Completed
+                                            {t('courier.stop.completed')}
                                         </Button>
                                         <Button
                                             type="button"
@@ -329,13 +409,17 @@ export default function CourierRoutePage({
                                             className="h-11 justify-start rounded-2xl"
                                             disabled={statusForm.processing}
                                             onClick={() =>
-                                                setFailedStopId((currentStopId) =>
-                                                    currentStopId === stop.id ? null : stop.id,
+                                                setFailedStopId(
+                                                    (currentStopId) =>
+                                                        currentStopId ===
+                                                        stop.id
+                                                            ? null
+                                                            : stop.id,
                                                 )
                                             }
                                         >
                                             <XCircle className="size-4" />
-                                            Failed
+                                            {t('courier.stop.failed')}
                                         </Button>
                                     </div>
 
@@ -345,24 +429,33 @@ export default function CourierRoutePage({
                                                 htmlFor={`fail-reason-${stop.id}`}
                                                 className="block text-sm font-medium"
                                             >
-                                                Fail reason
+                                                {t('courier.stop.fail_reason')}
                                             </label>
                                             <input
                                                 id={`fail-reason-${stop.id}`}
                                                 type="text"
-                                                value={failReasons[stop.id] ?? ''}
+                                                value={
+                                                    failReasons[stop.id] ?? ''
+                                                }
                                                 onChange={(event) =>
-                                                    setFailReasons((currentReasons) => ({
-                                                        ...currentReasons,
-                                                        [stop.id]: event.target.value,
-                                                    }))
+                                                    setFailReasons(
+                                                        (currentReasons) => ({
+                                                            ...currentReasons,
+                                                            [stop.id]:
+                                                                event.target
+                                                                    .value,
+                                                        }),
+                                                    )
                                                 }
                                                 className="w-full rounded-2xl border px-3 py-3 text-sm"
                                                 disabled={statusForm.processing}
                                             />
                                             {statusForm.errors.fail_reason && (
                                                 <p className="text-sm text-red-600">
-                                                    {statusForm.errors.fail_reason}
+                                                    {
+                                                        statusForm.errors
+                                                            .fail_reason
+                                                    }
                                                 </p>
                                             )}
                                             <div className="grid gap-2 sm:grid-cols-2">
@@ -373,34 +466,48 @@ export default function CourierRoutePage({
                                                         updateStopStatus(
                                                             stop.id,
                                                             'FAILED',
-                                                            failReasons[stop.id] ?? '',
+                                                            failReasons[
+                                                                stop.id
+                                                            ] ?? '',
                                                         )
                                                     }
-                                                    disabled={statusForm.processing}
+                                                    disabled={
+                                                        statusForm.processing
+                                                    }
                                                 >
-                                                    Save failed status
+                                                    {t(
+                                                        'courier.stop.save_failed',
+                                                    )}
                                                 </Button>
                                                 <Button
                                                     type="button"
                                                     variant="outline"
                                                     className="h-11 rounded-2xl"
-                                                    onClick={() => setFailedStopId(null)}
-                                                    disabled={statusForm.processing}
+                                                    onClick={() =>
+                                                        setFailedStopId(null)
+                                                    }
+                                                    disabled={
+                                                        statusForm.processing
+                                                    }
                                                 >
-                                                    Cancel
+                                                    {t('common.actions.cancel')}
                                                 </Button>
                                             </div>
                                         </div>
                                     )}
 
-                                    {!stop.proof_file_url
-                                        && ['COMPLETED', 'FAILED'].includes(stop.status) && (
+                                    {!stop.proof_file_url &&
+                                        ['COMPLETED', 'FAILED'].includes(
+                                            stop.status,
+                                        ) && (
                                             <div className="mt-4 space-y-2 rounded-2xl border border-border/80 bg-background/40 p-3">
                                                 <label
                                                     htmlFor={`proof-file-${stop.id}`}
                                                     className="block text-sm font-medium"
                                                 >
-                                                    Upload proof photo
+                                                    {t(
+                                                        'courier.stop.upload_proof_photo',
+                                                    )}
                                                 </label>
                                                 <input
                                                     id={`proof-file-${stop.id}`}
@@ -408,14 +515,20 @@ export default function CourierRoutePage({
                                                     accept="image/*"
                                                     capture="environment"
                                                     onChange={(event) =>
-                                                        setSelectedProofFiles((currentFiles) => ({
-                                                            ...currentFiles,
-                                                            [stop.id]:
-                                                                event.target.files?.[0] ?? null,
-                                                        }))
+                                                        setSelectedProofFiles(
+                                                            (currentFiles) => ({
+                                                                ...currentFiles,
+                                                                [stop.id]:
+                                                                    event.target
+                                                                        .files?.[0] ??
+                                                                    null,
+                                                            }),
+                                                        )
                                                     }
                                                     className="block w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground"
-                                                    disabled={proofForm.processing}
+                                                    disabled={
+                                                        proofForm.processing
+                                                    }
                                                 />
                                                 {proofForm.errors.file && (
                                                     <p className="text-sm text-red-600">
@@ -425,14 +538,20 @@ export default function CourierRoutePage({
                                                 <Button
                                                     type="button"
                                                     className="h-11 rounded-2xl"
-                                                    onClick={() => uploadProof(stop.id)}
+                                                    onClick={() =>
+                                                        uploadProof(stop.id)
+                                                    }
                                                     disabled={
-                                                        proofForm.processing
-                                                        || !selectedProofFiles[stop.id]
+                                                        proofForm.processing ||
+                                                        !selectedProofFiles[
+                                                            stop.id
+                                                        ]
                                                     }
                                                 >
                                                     <Upload className="size-4" />
-                                                    Upload proof
+                                                    {t(
+                                                        'courier.stop.upload_proof',
+                                                    )}
                                                 </Button>
                                             </div>
                                         )}
@@ -457,7 +576,7 @@ function SummaryCard({
 }) {
     const content = (
         <div className="rounded-2xl border border-border/80 bg-card/90 p-4 transition-colors hover:border-primary/50">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
                 {label}
             </p>
             <p className="mt-2 text-base font-semibold">{value}</p>

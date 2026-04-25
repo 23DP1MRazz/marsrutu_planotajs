@@ -14,6 +14,7 @@ import {
 } from '@/components/backoffice/ui';
 import AppLayout from '@/layouts/app-layout';
 import { useForm } from '@inertiajs/react';
+import { useTranslation } from '@/hooks/use-translation';
 import type { BreadcrumbItem } from '@/types';
 
 type AdminUserEditProps = {
@@ -32,17 +33,12 @@ type AdminUserEditProps = {
     }>;
 };
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Users', href: '/admin/users' },
-    { title: 'Edit user', href: '#' },
-];
-
 export default function AdminUsersEdit({
     user,
     roles,
     organizations,
 }: AdminUserEditProps) {
+    const { t } = useTranslation();
     const form = useForm({
         name: user.name,
         email: user.email,
@@ -53,6 +49,11 @@ export default function AdminUsersEdit({
     });
 
     const selectedRoleNeedsOrganization = form.data.role !== 'admin';
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('admin.users.title'), href: '/admin/users' },
+        { title: t('admin.users.edit_title'), href: '#' },
+    ];
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -61,18 +62,18 @@ export default function AdminUsersEdit({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Edit user" />
+            <Head title={t('admin.users.edit_title')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Edit User"
-                    description="Update role and organization carefully. Users with the admin role stay global."
+                    title={t('admin.users.edit_title')}
+                    description={t('admin.users.edit_description')}
                     actions={
                         <BackofficeActionLink
                             href="/admin/users"
                             variant="outline"
                         >
-                            Back to users
+                            {t('admin.users.back')}
                         </BackofficeActionLink>
                     }
                 />
@@ -82,7 +83,7 @@ export default function AdminUsersEdit({
                         <form className="space-y-5" onSubmit={submit}>
                             <div className="grid gap-4 md:grid-cols-2">
                                 <BackofficeField
-                                    label="Name"
+                                    label={t('common.fields.name')}
                                     error={form.errors.name}
                                 >
                                     <input
@@ -100,7 +101,7 @@ export default function AdminUsersEdit({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Email"
+                                    label={t('common.fields.email')}
                                     error={form.errors.email}
                                 >
                                     <input
@@ -120,7 +121,7 @@ export default function AdminUsersEdit({
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <BackofficeField
-                                    label="Role"
+                                    label={t('common.fields.role')}
                                     error={form.errors.role}
                                 >
                                     <select
@@ -142,14 +143,14 @@ export default function AdminUsersEdit({
                                     >
                                         {roles.map((role) => (
                                             <option key={role} value={role}>
-                                                {role}
+                                                {t(`common.roles.${role}`)}
                                             </option>
                                         ))}
                                     </select>
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Organization"
+                                    label={t('common.fields.organization')}
                                     error={form.errors.organization_id}
                                 >
                                     <select
@@ -168,8 +169,10 @@ export default function AdminUsersEdit({
                                     >
                                         <option value="">
                                             {selectedRoleNeedsOrganization
-                                                ? 'Select organization'
-                                                : 'Not needed for admin'}
+                                                ? t(
+                                                      'admin.users.select_organization',
+                                                  )
+                                                : t('admin.users.admin_no_org')}
                                         </option>
                                         {organizations.map((organization) => (
                                             <option
@@ -185,13 +188,13 @@ export default function AdminUsersEdit({
 
                             <BackofficeInfoNote>
                                 <p>
-                                    Current organization:{' '}
-                                    {user.organization_name ?? '-'}
+                                    {t('admin.users.current_organization', {
+                                        organization:
+                                            user.organization_name ?? '-',
+                                    })}
                                 </p>
                                 <p className="mt-1">
-                                    Changing a courier with existing route or
-                                    route records is blocked by backend safety
-                                    checks.
+                                    {t('admin.users.route_safety_note')}
                                 </p>
                             </BackofficeInfoNote>
 
@@ -203,13 +206,13 @@ export default function AdminUsersEdit({
                                         'primary',
                                     )}
                                 >
-                                    Save
+                                    {t('common.actions.save')}
                                 </button>
                                 <BackofficeActionLink
                                     href="/admin/users"
                                     variant="outline"
                                 >
-                                    Cancel
+                                    {t('common.actions.cancel')}
                                 </BackofficeActionLink>
                             </div>
                         </form>

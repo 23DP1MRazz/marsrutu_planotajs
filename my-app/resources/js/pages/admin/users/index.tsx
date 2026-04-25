@@ -8,6 +8,7 @@ import {
     BackofficePageHeader,
     BackofficeStatCard,
 } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -23,64 +24,65 @@ type AdminUsersIndexProps = {
     users: AdminUserRecord[];
 };
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Users', href: '/admin/users' },
-];
-
 export default function AdminUsersIndex({ users }: AdminUsersIndexProps) {
+    const { t } = useTranslation();
     const adminCount = users.filter((user) => user.role === 'admin').length;
     const dispatcherCount = users.filter(
         (user) => user.role === 'dispatcher',
     ).length;
     const courierCount = users.filter((user) => user.role === 'courier').length;
 
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('admin.users.title'), href: '/admin/users' },
+    ];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Users" />
+            <Head title={t('admin.users.title')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Users"
-                    description="Manage names, emails, roles, and organization assignments."
+                    title={t('admin.users.title')}
+                    description={t('admin.users.description')}
                     actions={
                         <BackofficeActionLink
                             href="/dashboard"
                             variant="outline"
                         >
-                            Back to dashboard
+                            {t('common.actions.back_to_dashboard')}
                         </BackofficeActionLink>
                     }
                 />
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <BackofficeStatCard
-                        label="Total users"
+                        label={t('admin.users.total')}
                         value={users.length}
-                        meta="All registered accounts"
+                        meta={t('admin.users.all_meta')}
                     />
                     <BackofficeStatCard
-                        label="Admins"
+                        label={t('admin.users.admins')}
                         value={adminCount}
-                        meta="Global platform access"
+                        meta={t('admin.users.admins_meta')}
                     />
                     <BackofficeStatCard
-                        label="Dispatchers"
+                        label={t('admin.users.dispatchers')}
                         value={dispatcherCount}
-                        meta="Organization operators"
+                        meta={t('admin.users.dispatchers_meta')}
                     />
                     <BackofficeStatCard
-                        label="Couriers"
+                        label={t('admin.users.couriers')}
                         value={courierCount}
-                        meta="Delivery staff accounts"
+                        meta={t('admin.users.couriers_meta')}
                     />
                 </div>
 
                 <BackofficeCard>
                     {users.length === 0 ? (
                         <BackofficeEmptyState
-                            title="No users found"
-                            description="User accounts will appear here once they are created."
+                            title={t('admin.users.empty_title')}
+                            description={t('admin.users.empty_description')}
                         />
                     ) : (
                         <div className="overflow-x-auto">
@@ -88,16 +90,16 @@ export default function AdminUsersIndex({ users }: AdminUsersIndexProps) {
                                 <thead>
                                     <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Name
+                                            {t('common.fields.name')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Email
+                                            {t('common.fields.email')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Role
+                                            {t('common.fields.role')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Organization
+                                            {t('common.fields.organization')}
                                         </th>
                                     </tr>
                                 </thead>
@@ -119,7 +121,7 @@ export default function AdminUsersIndex({ users }: AdminUsersIndexProps) {
                                                 {user.email}
                                             </td>
                                             <td className="px-4 py-4 text-[#6b7280] uppercase">
-                                                {user.role}
+                                                {t(`common.roles.${user.role}`)}
                                             </td>
                                             <td className="px-4 py-4 text-[#6b7280]">
                                                 {user.organization_name ?? '-'}

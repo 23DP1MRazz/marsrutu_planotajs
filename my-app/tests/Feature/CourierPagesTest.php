@@ -11,6 +11,7 @@ use App\Models\Organization;
 use App\Models\RouteStop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -99,7 +100,7 @@ class CourierPagesTest extends TestCase
         $upcomingRoute = DeliveryRoute::factory()->create([
             'organization_id' => $organization->id,
             'courier_user_id' => $courier->id,
-            'date' => '2026-04-21',
+            'date' => Carbon::tomorrow()->toDateString(),
             'status' => 'PLANNED',
         ]);
 
@@ -185,7 +186,7 @@ class CourierPagesTest extends TestCase
         $upcomingRoute = DeliveryRoute::factory()->create([
             'organization_id' => $organization->id,
             'courier_user_id' => $courier->id,
-            'date' => '2026-04-21',
+            'date' => Carbon::tomorrow()->toDateString(),
             'status' => 'PLANNED',
         ]);
 
@@ -205,7 +206,7 @@ class CourierPagesTest extends TestCase
         DeliveryRoute::factory()->create([
             'organization_id' => $organization->id,
             'courier_user_id' => $otherCourier->id,
-            'date' => '2026-04-22',
+            'date' => Carbon::tomorrow()->addDay()->toDateString(),
             'status' => 'PLANNED',
         ]);
 

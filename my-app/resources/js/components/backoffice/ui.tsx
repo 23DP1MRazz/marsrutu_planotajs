@@ -2,6 +2,7 @@ import { Slot } from '@radix-ui/react-slot';
 import type { ComponentProps, ReactNode } from 'react';
 import { Link } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils';
 
 export const backofficeInputClassName =
@@ -141,18 +142,16 @@ export function BackofficeResultsBar({
         label: string;
     }>;
 }) {
+    const { t } = useTranslation();
+
     return (
         <div className="flex flex-col gap-3 border-b border-[#e5e7eb] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-[#6b7280]">
-                Showing{' '}
-                <strong className="font-semibold text-[#111827]">
-                    {count}
-                </strong>{' '}
-                {noun}
+                {t('app.tables.showing', { count, noun })}
             </p>
             {sortValue !== undefined && onSortChange && sortOptions ? (
                 <div className="flex items-center gap-2 text-xs text-[#6b7280]">
-                    <span>Sort:</span>
+                    <span>{t('app.tables.sort')}</span>
                     <select
                         value={sortValue}
                         onChange={(event) => onSortChange(event.target.value)}
@@ -285,7 +284,9 @@ export function BackofficeStatusBadge({
     status: string;
     className?: string;
 }) {
+    const { t } = useTranslation();
     const normalizedStatus = status.trim().toUpperCase();
+    const statusKey = normalizedStatus.toLowerCase();
     const statusClassName = (() => {
         switch (normalizedStatus) {
             case 'PLANNED':
@@ -319,7 +320,7 @@ export function BackofficeStatusBadge({
                 className,
             )}
         >
-            {status.replaceAll('_', ' ')}
+            {t(`common.statuses.${statusKey}`)}
         </span>
     );
 }

@@ -11,6 +11,7 @@ import {
     backofficeInputClassName,
     backofficeSelectClassName,
 } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { ClientRecord, OrganizationOption } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
@@ -28,11 +29,12 @@ export default function DispatcherClientsEdit({
     organizations,
     canSelectOrganization,
 }: DispatcherClientsEditProps) {
+    const { t } = useTranslation();
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Clients', href: '/dispatcher/clients' },
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.clients'), href: '/dispatcher/clients' },
         {
-            title: `Edit ${clientId}`,
+            title: t('dispatcher.clients.edit_title'),
             href: `/dispatcher/clients/${clientId}/edit`,
         },
     ];
@@ -60,18 +62,18 @@ export default function DispatcherClientsEdit({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Edit Client" />
+            <Head title={t('dispatcher.clients.edit_title')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title={`Edit Client ${clientId}`}
-                    description="Update the selected client record."
+                    title={`${t('dispatcher.clients.edit_title')} ${clientId}`}
+                    description={t('dispatcher.clients.edit_description')}
                     actions={
                         <BackofficeActionLink
                             href="/dispatcher/clients"
                             variant="outline"
                         >
-                            Back to clients
+                            {t('dispatcher.clients.back')}
                         </BackofficeActionLink>
                     }
                 />
@@ -82,7 +84,7 @@ export default function DispatcherClientsEdit({
                             {canSelectOrganization &&
                             organizations.length > 0 ? (
                                 <BackofficeField
-                                    label="Organization"
+                                    label={t('common.fields.organization')}
                                     error={form.errors.organization_id}
                                 >
                                     <select
@@ -111,7 +113,7 @@ export default function DispatcherClientsEdit({
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <BackofficeField
-                                    label="Name"
+                                    label={t('common.fields.name')}
                                     error={form.errors.name}
                                 >
                                     <input
@@ -130,7 +132,7 @@ export default function DispatcherClientsEdit({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Phone"
+                                    label={t('common.fields.phone')}
                                     error={form.errors.phone}
                                 >
                                     <input
@@ -157,13 +159,13 @@ export default function DispatcherClientsEdit({
                                         'primary',
                                     )}
                                 >
-                                    Save
+                                    {t('common.actions.save')}
                                 </button>
                                 <BackofficeActionLink
                                     href="/dispatcher/clients"
                                     variant="outline"
                                 >
-                                    Cancel
+                                    {t('common.actions.cancel')}
                                 </BackofficeActionLink>
                             </div>
                         </form>

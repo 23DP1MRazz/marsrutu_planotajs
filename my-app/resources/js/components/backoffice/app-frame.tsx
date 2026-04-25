@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useInitials } from '@/hooks/use-initials';
+import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
@@ -31,24 +32,27 @@ type NavGroup = {
     }>;
 };
 
-function getNavigation(role: SharedData['auth']['user']['role']): NavGroup[] {
+function getNavigation(
+    role: SharedData['auth']['user']['role'],
+    t: (key: string) => string,
+): NavGroup[] {
     if (role === 'courier') {
         return [
             {
-                label: 'Platform',
+                label: t('app.navigation.platform'),
                 items: [
                     {
-                        title: 'Dashboard',
+                        title: t('app.navigation.dashboard'),
                         href: '/dashboard',
                         icon: LayoutGrid,
                     },
                     {
-                        title: 'Active Route',
+                        title: t('app.navigation.active_route'),
                         href: '/courier/routes',
                         icon: Truck,
                     },
                     {
-                        title: 'Completed Orders',
+                        title: t('app.navigation.completed_orders'),
                         href: '/courier/completed-orders',
                         icon: ClipboardList,
                     },
@@ -59,35 +63,47 @@ function getNavigation(role: SharedData['auth']['user']['role']): NavGroup[] {
 
     return [
         {
-            label: 'Platform',
+            label: t('app.navigation.platform'),
             items: [
-                { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
-                { title: 'Clients', href: '/dispatcher/clients', icon: Users },
                 {
-                    title: 'Addresses',
+                    title: t('app.navigation.dashboard'),
+                    href: '/dashboard',
+                    icon: LayoutGrid,
+                },
+                {
+                    title: t('app.navigation.clients'),
+                    href: '/dispatcher/clients',
+                    icon: Users,
+                },
+                {
+                    title: t('app.navigation.addresses'),
                     href: '/dispatcher/addresses',
                     icon: MapPinned,
                 },
                 {
-                    title: 'Orders',
+                    title: t('app.navigation.orders'),
                     href: '/dispatcher/orders',
                     icon: ClipboardList,
                 },
-                { title: 'Routes', href: '/dispatcher/routes', icon: Route },
+                {
+                    title: t('app.navigation.routes'),
+                    href: '/dispatcher/routes',
+                    icon: Route,
+                },
             ],
         },
         ...(role === 'admin'
             ? [
                   {
-                      label: 'Administration',
+                      label: t('app.navigation.administration'),
                       items: [
                           {
-                              title: 'Users',
+                              title: t('app.navigation.users'),
                               href: '/admin/users',
                               icon: Shield,
                           },
                           {
-                              title: 'Organizations',
+                              title: t('app.navigation.organizations'),
                               href: '/admin/organizations',
                               icon: Users,
                           },
@@ -101,14 +117,15 @@ function getNavigation(role: SharedData['auth']['user']['role']): NavGroup[] {
 export function BackofficeAppFrame({ children }: AppLayoutProps) {
     const page = usePage<SharedData>();
     const getInitials = useInitials();
+    const { t } = useTranslation();
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const pathname = page.url.split('?')[0];
-    const navigation = getNavigation(page.props.auth.user.role);
+    const navigation = getNavigation(page.props.auth.user.role, t);
     const organizationName =
         page.props.auth.organization_name ??
         (page.props.auth.user.role === 'admin'
-            ? 'Platform administration'
-            : 'No organization assigned');
+            ? t('app.shell.platform_admin')
+            : t('app.shell.no_organization'));
 
     useEffect(() => {
         setMobileNavOpen(false);
@@ -189,7 +206,9 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                                         {page.props.auth.user.name}
                                     </div>
                                     <div className="text-[11px] text-[#6b7280] capitalize">
-                                        {page.props.auth.user.role}
+                                        {t(
+                                            `common.roles.${page.props.auth.user.role}`,
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -199,7 +218,7 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                                     className="inline-flex items-center justify-center gap-1.5 rounded-md border border-[#e5e7eb] px-2 py-1.5 text-xs font-semibold text-[#111827] transition hover:bg-[#f9fafb]"
                                 >
                                     <Settings className="h-3.5 w-3.5" />
-                                    Settings
+                                    {t('app.shell.settings')}
                                 </Link>
                                 <Link
                                     href={logout()}
@@ -209,7 +228,7 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                                     data-test="logout-button"
                                 >
                                     <LogOut className="h-3.5 w-3.5" />
-                                    Log out
+                                    {t('app.shell.sign_out')}
                                 </Link>
                             </div>
                         </div>
@@ -222,12 +241,12 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                             type="button"
                             className="absolute inset-0 bg-black/25"
                             onClick={() => setMobileNavOpen(false)}
-                            aria-label="Close navigation"
+                            aria-label={t('app.shell.close_navigation')}
                         />
                         <div className="absolute inset-y-16 left-0 flex w-72 flex-col border-r border-[#e5e7eb] bg-white p-4 shadow-xl">
                             <div className="mb-3 flex items-center justify-between">
                                 <div className="text-xs font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                                    Navigation
+                                    {t('app.navigation.navigation')}
                                 </div>
                                 <button
                                     type="button"
@@ -288,7 +307,9 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                                             {page.props.auth.user.name}
                                         </div>
                                         <div className="text-[11px] text-[#6b7280] capitalize">
-                                            {page.props.auth.user.role}
+                                            {t(
+                                                `common.roles.${page.props.auth.user.role}`,
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -298,7 +319,7 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                                         className="inline-flex items-center justify-center gap-1.5 rounded-md border border-[#e5e7eb] px-2 py-1.5 text-xs font-semibold text-[#111827] transition hover:bg-[#f9fafb]"
                                     >
                                         <Settings className="h-3.5 w-3.5" />
-                                        Settings
+                                        {t('app.shell.settings')}
                                     </Link>
                                     <Link
                                         href={logout()}
@@ -308,7 +329,7 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                                         data-test="logout-button"
                                     >
                                         <LogOut className="h-3.5 w-3.5" />
-                                        Log out
+                                        {t('app.shell.sign_out')}
                                     </Link>
                                 </div>
                             </div>

@@ -12,6 +12,7 @@ import {
     backofficeButtonClassName,
     backofficeInputClassName,
 } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -24,15 +25,10 @@ type AdminOrganizationEditProps = {
     };
 };
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Admin organizations', href: '/admin/organizations' },
-    { title: 'Edit organization', href: '#' },
-];
-
 export default function AdminOrganizationsEdit({
     organization,
 }: AdminOrganizationEditProps) {
+    const { t } = useTranslation();
     const form = useForm({
         name: organization.name,
     });
@@ -49,44 +45,49 @@ export default function AdminOrganizationsEdit({
             `/admin/organizations/${organization.id}/regenerate-join-code`,
         );
     };
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('admin.organizations.title'), href: '/admin/organizations' },
+        { title: t('admin.organizations.edit_title'), href: '#' },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Edit organization" />
+            <Head title={t('admin.organizations.edit_title')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Edit Organization"
-                    description="Update the organization name or generate a fresh join code."
+                    title={t('admin.organizations.edit_title')}
+                    description={t('admin.organizations.edit_description')}
                     actions={
                         <BackofficeActionLink
                             href="/admin/organizations"
                             variant="outline"
                         >
-                            Back to organizations
+                            {t('admin.organizations.back')}
                         </BackofficeActionLink>
                     }
                 />
 
                 <div className="grid gap-3 md:grid-cols-3">
                     <BackofficeStatCard
-                        label="Join code"
+                        label={t('admin.organizations.join_code')}
                         value={
                             <span className="font-mono">
                                 {organization.join_code}
                             </span>
                         }
-                        meta="Current invite code"
+                        meta={t('admin.organizations.current_join_code')}
                     />
                     <BackofficeStatCard
-                        label="Assigned users"
+                        label={t('admin.organizations.users')}
                         value={organization.users_count}
-                        meta="Users in this organization"
+                        meta={t('admin.organizations.users_this_org')}
                     />
                     <BackofficeStatCard
-                        label="Organization ID"
+                        label={t('common.fields.organization_id')}
                         value={organization.id}
-                        meta="Internal platform identifier"
+                        meta={t('admin.organizations.id_meta')}
                     />
                 </div>
 
@@ -94,7 +95,7 @@ export default function AdminOrganizationsEdit({
                     <BackofficeCardBody>
                         <form className="space-y-5" onSubmit={submit}>
                             <BackofficeField
-                                label="Organization name"
+                                label={t('admin.organizations.name')}
                                 error={form.errors.name}
                             >
                                 <input
@@ -109,9 +110,7 @@ export default function AdminOrganizationsEdit({
                             </BackofficeField>
 
                             <BackofficeInfoNote>
-                                Regenerating the join code keeps the
-                                organization the same, but old invite codes stop
-                                working.
+                                {t('admin.organizations.regenerate_note')}
                             </BackofficeInfoNote>
 
                             <div className="flex flex-wrap gap-2">
@@ -122,7 +121,7 @@ export default function AdminOrganizationsEdit({
                                         'primary',
                                     )}
                                 >
-                                    Save
+                                    {t('common.actions.save')}
                                 </button>
                                 <button
                                     type="button"
@@ -132,13 +131,13 @@ export default function AdminOrganizationsEdit({
                                         'outline',
                                     )}
                                 >
-                                    Regenerate join code
+                                    {t('admin.organizations.regenerate')}
                                 </button>
                                 <BackofficeActionLink
                                     href="/admin/organizations"
                                     variant="outline"
                                 >
-                                    Back
+                                    {t('common.actions.back')}
                                 </BackofficeActionLink>
                             </div>
                         </form>

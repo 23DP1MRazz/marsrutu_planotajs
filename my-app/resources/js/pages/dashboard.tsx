@@ -13,16 +13,10 @@ import {
     backofficeButtonClassName,
 } from '@/components/backoffice/ui';
 import { useClipboard } from '@/hooks/use-clipboard';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
 import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-    },
-];
 
 type DashboardProps = {
     dashboardSummary:
@@ -84,34 +78,41 @@ export default function Dashboard({
     organizationInvitation,
 }: DashboardProps) {
     const [copiedText, copyToClipboard] = useClipboard();
+    const { t } = useTranslation();
     const registrationLink =
         organizationInvitation === null
             ? null
             : `${typeof window === 'undefined' ? '' : window.location.origin}${organizationInvitation.registration_url}`;
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: t('dashboard.title'),
+            href: '/dashboard',
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
+            <Head title={t('dashboard.title')} />
 
             <BackofficePage>
                 {dashboardSummary?.role === 'admin' ? (
                     <>
                         <BackofficePageHeader
-                            title="Dashboard"
-                            description="Overview of platform users and organizations."
+                            title={t('dashboard.title')}
+                            description={t('dashboard.admin.description')}
                         />
 
                         <div className="grid gap-3 lg:grid-cols-2">
                             <BackofficeStatCard
-                                label="Users"
+                                label={t('app.navigation.users')}
                                 value={dashboardSummary.counts.users}
-                                meta="Registered accounts across all roles"
+                                meta={t('dashboard.admin.users_meta')}
                                 href="/admin/users"
                             />
                             <BackofficeStatCard
-                                label="Organizations"
+                                label={t('app.navigation.organizations')}
                                 value={dashboardSummary.counts.organizations}
-                                meta="Active organizations on the platform"
+                                meta={t('dashboard.admin.organizations_meta')}
                                 href="/admin/organizations"
                             />
                         </div>
@@ -119,16 +120,18 @@ export default function Dashboard({
                         <div className="grid gap-4 xl:grid-cols-2">
                             <BackofficeCard>
                                 <BackofficePanelHeader
-                                    title="Recent Users"
-                                    description="Latest created accounts across the platform."
+                                    title={t('dashboard.admin.recent_users')}
+                                    description={t(
+                                        'dashboard.admin.recent_users_description',
+                                    )}
                                     href="/admin/users"
-                                    hrefLabel="Open users ->"
+                                    hrefLabel={t('dashboard.links.open_users')}
                                 />
                                 <BackofficeCardBody className="space-y-1">
                                     {dashboardSummary.recent_users.length ===
                                     0 ? (
                                         <p className="text-sm text-[#6b7280]">
-                                            No users created yet.
+                                            {t('dashboard.empty.no_users')}
                                         </p>
                                     ) : (
                                         dashboardSummary.recent_users.map(
@@ -137,7 +140,7 @@ export default function Dashboard({
                                                     key={user.id}
                                                     href={`/admin/users/${user.id}/edit`}
                                                     title={user.name}
-                                                    meta={`${user.email} · ${user.role.toUpperCase()} · ${
+                                                    meta={`${user.email} · ${t(`common.roles.${user.role}`)} · ${
                                                         user.created_at
                                                             ? formatShortDate(
                                                                   user.created_at,
@@ -153,16 +156,24 @@ export default function Dashboard({
 
                             <BackofficeCard>
                                 <BackofficePanelHeader
-                                    title="Recent Organizations"
-                                    description="Newest organizations and their invite codes."
+                                    title={t(
+                                        'dashboard.admin.recent_organizations',
+                                    )}
+                                    description={t(
+                                        'dashboard.admin.recent_organizations_description',
+                                    )}
                                     href="/admin/organizations"
-                                    hrefLabel="Open organizations ->"
+                                    hrefLabel={t(
+                                        'dashboard.links.open_organizations',
+                                    )}
                                 />
                                 <BackofficeCardBody className="space-y-1">
                                     {dashboardSummary.recent_organizations
                                         .length === 0 ? (
                                         <p className="text-sm text-[#6b7280]">
-                                            No organizations created yet.
+                                            {t(
+                                                'dashboard.empty.no_organizations',
+                                            )}
                                         </p>
                                     ) : (
                                         dashboardSummary.recent_organizations.map(
@@ -190,40 +201,47 @@ export default function Dashboard({
                   organizationInvitation ? (
                     <>
                         <BackofficePageHeader
-                            title="Dashboard"
-                            description={`Welcome back. Here's what's happening in ${organizationInvitation.organization_name} today.`}
+                            title={t('dashboard.title')}
+                            description={t('dashboard.dispatcher.description', {
+                                organization:
+                                    organizationInvitation.organization_name,
+                            })}
                         />
 
                         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                             <BackofficeStatCard
-                                label="Clients"
+                                label={t('app.navigation.clients')}
                                 value={dashboardSummary.counts.clients}
-                                meta="Managed customer records"
+                                meta={t('dashboard.dispatcher.clients_meta')}
                                 href="/dispatcher/clients"
                             />
                             <BackofficeStatCard
-                                label="Addresses"
+                                label={t('app.navigation.addresses')}
                                 value={dashboardSummary.counts.addresses}
-                                meta="Saved delivery destinations"
+                                meta={t('dashboard.dispatcher.addresses_meta')}
                                 href="/dispatcher/addresses"
                             />
                             <BackofficeStatCard
-                                label="Orders"
+                                label={t('app.navigation.orders')}
                                 value={dashboardSummary.counts.orders}
-                                meta="All delivery orders"
+                                meta={t(
+                                    'dashboard.dispatcher.total_orders_meta',
+                                )}
                                 href="/dispatcher/orders"
                             />
                             <BackofficeStatCard
-                                label="Pending Orders"
+                                label={t('dashboard.dispatcher.pending_orders')}
                                 value={dashboardSummary.counts.pending_orders}
-                                meta="Need attention or assignment"
+                                meta={t(
+                                    'dashboard.dispatcher.pending_orders_meta',
+                                )}
                                 href="/dispatcher/orders"
                                 accent="amber"
                             />
                             <BackofficeStatCard
-                                label="Routes"
+                                label={t('app.navigation.routes')}
                                 value={dashboardSummary.counts.routes}
-                                meta="Created delivery routes"
+                                meta={t('dashboard.dispatcher.routes_meta')}
                                 href="/dispatcher/routes"
                             />
                         </div>
@@ -232,7 +250,7 @@ export default function Dashboard({
                             <BackofficeCard>
                                 <BackofficeCardBody>
                                     <div className="text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                                        Organization
+                                        {t('common.fields.organization')}
                                     </div>
                                     <div className="mt-2 text-xl font-bold tracking-[-0.02em] text-[#111827]">
                                         {
@@ -240,8 +258,12 @@ export default function Dashboard({
                                         }
                                     </div>
                                     <div className="mt-1 text-xs text-[#6b7280]">
-                                        ID #
-                                        {organizationInvitation.organization_id}
+                                        {t(
+                                            'dashboard.dispatcher.organization_id',
+                                            {
+                                                id: organizationInvitation.organization_id,
+                                            },
+                                        )}
                                     </div>
                                 </BackofficeCardBody>
                             </BackofficeCard>
@@ -249,7 +271,7 @@ export default function Dashboard({
                             <BackofficeCard>
                                 <BackofficeCardBody>
                                     <div className="text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                                        Join Code
+                                        {t('admin.organizations.join_code')}
                                     </div>
                                     <div className="mt-2 font-mono text-2xl font-bold tracking-[0.08em] text-[#111827]">
                                         {organizationInvitation.join_code}
@@ -269,7 +291,7 @@ export default function Dashboard({
                                         ) : (
                                             <Copy className="h-3.5 w-3.5" />
                                         )}
-                                        Copy code
+                                        {t('dashboard.dispatcher.copy_code')}
                                     </button>
                                 </BackofficeCardBody>
                             </BackofficeCard>
@@ -277,7 +299,9 @@ export default function Dashboard({
                             <BackofficeCard>
                                 <BackofficeCardBody>
                                     <div className="text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                                        Quick Actions
+                                        {t(
+                                            'dashboard.dispatcher.quick_actions',
+                                        )}
                                     </div>
                                     <div className="mt-4 flex flex-wrap gap-2">
                                         <BackofficeActionLink
@@ -285,14 +309,18 @@ export default function Dashboard({
                                             variant="outline"
                                         >
                                             <Plus className="h-3.5 w-3.5" />
-                                            Create Order
+                                            {t(
+                                                'dispatcher.orders.create_title',
+                                            )}
                                         </BackofficeActionLink>
                                         <BackofficeActionLink
                                             href="/dispatcher/routes/create"
                                             variant="outline"
                                         >
                                             <Plus className="h-3.5 w-3.5" />
-                                            Create Route
+                                            {t(
+                                                'dispatcher.routes.create_title',
+                                            )}
                                         </BackofficeActionLink>
                                     </div>
                                 </BackofficeCardBody>
@@ -306,7 +334,7 @@ export default function Dashboard({
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="text-[15px] font-semibold text-[#1e40af]">
-                                        Invite to organization
+                                        {t('dashboard.dispatcher.invite')}
                                     </div>
                                     <div className="truncate font-mono text-[13px] text-[#2563eb]">
                                         {registrationLink}
@@ -329,7 +357,7 @@ export default function Dashboard({
                                     ) : (
                                         <Copy className="h-3.5 w-3.5" />
                                     )}
-                                    Copy Link
+                                    {t('dashboard.dispatcher.copy_link')}
                                 </button>
                             </div>
                         ) : null}
@@ -337,16 +365,20 @@ export default function Dashboard({
                         <div className="grid gap-4 xl:grid-cols-2">
                             <BackofficeCard>
                                 <BackofficePanelHeader
-                                    title="Upcoming Routes"
-                                    description="Next planned routes for your organization."
+                                    title={t(
+                                        'dashboard.dispatcher.upcoming_routes',
+                                    )}
+                                    description={t(
+                                        'dashboard.dispatcher.upcoming_routes_description',
+                                    )}
                                     href="/dispatcher/routes"
-                                    hrefLabel="Open routes ->"
+                                    hrefLabel={t('dashboard.links.open_routes')}
                                 />
                                 <BackofficeCardBody className="space-y-1">
                                     {dashboardSummary.upcoming_routes.length ===
                                     0 ? (
                                         <p className="text-sm text-[#6b7280]">
-                                            No routes planned yet.
+                                            {t('dashboard.empty.no_routes')}
                                         </p>
                                     ) : (
                                         dashboardSummary.upcoming_routes.map(
@@ -356,9 +388,11 @@ export default function Dashboard({
                                                     href={`/dispatcher/routes/${deliveryRoute.id}`}
                                                     title={
                                                         deliveryRoute.courier_name ??
-                                                        'Unassigned courier'
+                                                        t(
+                                                            'dispatcher.routes.unassigned_courier',
+                                                        )
                                                     }
-                                                    meta={`${formatShortDate(deliveryRoute.date)} · ${deliveryRoute.stops_count} stops`}
+                                                    meta={`${formatShortDate(deliveryRoute.date)} · ${t('dispatcher.routes.stops_count', { count: deliveryRoute.stops_count })}`}
                                                     badge={
                                                         <BackofficeStatusBadge
                                                             status={
@@ -375,16 +409,22 @@ export default function Dashboard({
 
                             <BackofficeCard>
                                 <BackofficePanelHeader
-                                    title="Pending Orders"
-                                    description="Orders that need attention or assignment."
+                                    title={t(
+                                        'dashboard.dispatcher.pending_orders',
+                                    )}
+                                    description={t(
+                                        'dashboard.dispatcher.pending_orders_description',
+                                    )}
                                     href="/dispatcher/orders"
-                                    hrefLabel="Open orders ->"
+                                    hrefLabel={t('dashboard.links.open_orders')}
                                 />
                                 <BackofficeCardBody className="space-y-1">
                                     {dashboardSummary.pending_orders.length ===
                                     0 ? (
                                         <p className="text-sm text-[#6b7280]">
-                                            No pending orders right now.
+                                            {t(
+                                                'dashboard.empty.no_pending_orders',
+                                            )}
                                         </p>
                                     ) : (
                                         dashboardSummary.pending_orders.map(
@@ -394,7 +434,10 @@ export default function Dashboard({
                                                     href={`/dispatcher/orders/${order.id}/edit`}
                                                     title={
                                                         order.client_name ??
-                                                        `Order #${order.id}`
+                                                        t(
+                                                            'dispatcher.orders.order_number',
+                                                            { id: order.id },
+                                                        )
                                                     }
                                                     meta={`${order.address_label} · ${formatShortDate(order.date)}`}
                                                     badge={
@@ -414,8 +457,8 @@ export default function Dashboard({
                     </>
                 ) : (
                     <BackofficePageHeader
-                        title="Dashboard"
-                        description="No summary is available for this account yet."
+                        title={t('dashboard.title')}
+                        description={t('dashboard.empty.no_summary')}
                     />
                 )}
             </BackofficePage>

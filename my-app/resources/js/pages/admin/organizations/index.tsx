@@ -7,6 +7,7 @@ import {
     BackofficePageHeader,
     BackofficeStatCard,
 } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -21,64 +22,66 @@ type AdminOrganizationsIndexProps = {
     organizations: OrganizationRecord[];
 };
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Admin organizations', href: '/admin/organizations' },
-];
-
 export default function AdminOrganizationsIndex({
     organizations,
 }: AdminOrganizationsIndexProps) {
+    const { t } = useTranslation();
     const totalUsers = organizations.reduce(
         (sum, organization) => sum + organization.users_count,
         0,
     );
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('admin.organizations.title'), href: '/admin/organizations' },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Admin organizations" />
+            <Head title={t('admin.organizations.title')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Organizations"
-                    description="Review active organizations, join codes, and user counts."
+                    title={t('admin.organizations.title')}
+                    description={t('admin.organizations.description')}
                     actions={
                         <BackofficeActionLink
                             href="/dashboard"
                             variant="outline"
                         >
-                            Back to dashboard
+                            {t('common.actions.back_to_dashboard')}
                         </BackofficeActionLink>
                     }
                 />
 
                 <div className="grid gap-3 md:grid-cols-3">
                     <BackofficeStatCard
-                        label="Organizations"
+                        label={t('admin.organizations.title')}
                         value={organizations.length}
-                        meta="Active organizations"
+                        meta={t('dashboard.admin.organizations_meta')}
                     />
                     <BackofficeStatCard
-                        label="Assigned users"
+                        label={t('admin.organizations.users')}
                         value={totalUsers}
-                        meta="Users linked to an organization"
+                        meta={t('admin.organizations.users_meta')}
                     />
                     <BackofficeStatCard
-                        label="Average users per org"
+                        label={t('admin.organizations.average_users')}
                         value={
                             organizations.length === 0
                                 ? 0
                                 : Math.round(totalUsers / organizations.length)
                         }
-                        meta="Rounded organization average"
+                        meta={t('admin.organizations.average_users_meta')}
                     />
                 </div>
 
                 <BackofficeCard>
                     {organizations.length === 0 ? (
                         <BackofficeEmptyState
-                            title="No organizations found"
-                            description="Organizations will appear here as they are created."
+                            title={t('admin.organizations.empty_title')}
+                            description={t(
+                                'admin.organizations.empty_description',
+                            )}
                         />
                     ) : (
                         <div className="overflow-x-auto">
@@ -86,13 +89,13 @@ export default function AdminOrganizationsIndex({
                                 <thead>
                                     <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Name
+                                            {t('common.fields.name')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Join code
+                                            {t('admin.organizations.join_code')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Users
+                                            {t('admin.organizations.users')}
                                         </th>
                                     </tr>
                                 </thead>

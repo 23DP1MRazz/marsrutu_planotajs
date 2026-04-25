@@ -14,21 +14,10 @@ import {
     backofficeInputClassName,
 } from '@/components/backoffice/ui';
 import { useLiveFiltering } from '@/hooks/use-live-filtering';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { ClientFilters, ClientRecord } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Clients', href: '/dispatcher/clients' },
-];
-
-const sortOptions = [
-    { value: 'name_asc', label: 'Name (A-Z)' },
-    { value: 'name_desc', label: 'Name (Z-A)' },
-    { value: 'updated_desc', label: 'Updated (newest)' },
-    { value: 'updated_asc', label: 'Updated (oldest)' },
-];
 
 const searchSeparator = '||';
 
@@ -52,6 +41,7 @@ export default function DispatcherClientsIndex({
     clients,
     filters,
 }: DispatcherClientsIndexProps) {
+    const { t } = useTranslation();
     const filterForm = useForm({
         search: filters.search ?? '',
         sort: filters.sort ?? 'name_asc',
@@ -62,6 +52,16 @@ export default function DispatcherClientsIndex({
         ...searchTerms,
         ...(draftSearch.trim() === '' ? [] : [draftSearch.trim()]),
     ]);
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.clients'), href: '/dispatcher/clients' },
+    ];
+    const sortOptions = [
+        { value: 'name_asc', label: t('dispatcher.sort.name_asc') },
+        { value: 'name_desc', label: t('dispatcher.sort.name_desc') },
+        { value: 'updated_desc', label: t('dispatcher.sort.updated_desc') },
+        { value: 'updated_asc', label: t('dispatcher.sort.updated_asc') },
+    ];
 
     useLiveFiltering({
         data: {
@@ -72,7 +72,7 @@ export default function DispatcherClientsIndex({
     });
 
     const deleteClient = (clientId: number) => {
-        if (window.confirm('Delete this client?')) {
+        if (window.confirm(t('dispatcher.clients.delete_confirm'))) {
             router.delete(`/dispatcher/clients/${clientId}`);
         }
     };
@@ -110,15 +110,15 @@ export default function DispatcherClientsIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Clients" />
+            <Head title={t('app.navigation.clients')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Clients"
-                    description="Manage client records for your organization."
+                    title={t('app.navigation.clients')}
+                    description={t('dispatcher.clients.description')}
                     actions={
                         <BackofficeActionLink href="/dispatcher/clients/create">
-                            Create Client
+                            {t('dispatcher.clients.create_title')}
                         </BackofficeActionLink>
                     }
                 />
@@ -126,12 +126,12 @@ export default function DispatcherClientsIndex({
                 <BackofficeCard>
                     <div className="border-b border-[#e5e7eb] px-5 py-4">
                         <div className="mb-4 text-[13px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                            Filters
+                            {t('dispatcher.filters.filters')}
                         </div>
                         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
                             <label className="flex flex-col gap-1.5">
                                 <span className="text-xs font-semibold text-[#6b7280]">
-                                    Search
+                                    {t('dispatcher.filters.search')}
                                 </span>
                                 <div className="relative">
                                     <input
@@ -149,11 +149,13 @@ export default function DispatcherClientsIndex({
                                             }
                                         }}
                                         className={`${backofficeInputClassName} pr-24`}
-                                        placeholder="Name, phone..."
+                                        placeholder={t(
+                                            'dispatcher.clients.placeholder',
+                                        )}
                                     />
                                     {draftSearch.trim() !== '' ? (
                                         <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2 py-1 text-[11px] font-semibold text-[#1e40af]">
-                                            Enter
+                                            {t('dispatcher.filters.enter')}
                                         </span>
                                     ) : null}
                                 </div>
@@ -167,7 +169,7 @@ export default function DispatcherClientsIndex({
                                     'sm',
                                 )}
                             >
-                                Clear
+                                {t('common.actions.clear')}
                             </button>
                         </div>
                         {searchTerms.length > 0 ? (
@@ -179,7 +181,9 @@ export default function DispatcherClientsIndex({
                                         onClick={() => removeSearchTerm(term)}
                                         className="inline-flex items-center gap-2 rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1 text-xs font-medium text-[#1e40af]"
                                     >
-                                        Search: {term}
+                                        {t('dispatcher.clients.search_tag', {
+                                            term,
+                                        })}
                                         <span className="text-[#2563eb]">
                                             x
                                         </span>
@@ -191,7 +195,7 @@ export default function DispatcherClientsIndex({
 
                     <BackofficeResultsBar
                         count={clients.length}
-                        noun="clients"
+                        noun={t('dispatcher.nouns.clients')}
                         sortValue={filterForm.data.sort}
                         onSortChange={(value) =>
                             filterForm.setData('sort', value)
@@ -201,8 +205,10 @@ export default function DispatcherClientsIndex({
 
                     {clients.length === 0 ? (
                         <BackofficeEmptyState
-                            title="No clients created yet"
-                            description="Create your first client to start organizing deliveries."
+                            title={t('dispatcher.clients.empty_title')}
+                            description={t(
+                                'dispatcher.clients.empty_description',
+                            )}
                         />
                     ) : (
                         <div className="overflow-x-auto">
@@ -210,10 +216,10 @@ export default function DispatcherClientsIndex({
                                 <thead>
                                     <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Name
+                                            {t('common.fields.name')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Phone
+                                            {t('common.fields.phone')}
                                         </th>
                                         <th className="px-4 py-3 text-right text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase"></th>
                                     </tr>

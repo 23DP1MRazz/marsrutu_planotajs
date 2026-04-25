@@ -1,4 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
+import { BackofficeStatusBadge } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
 import type { CourierCompletedOrderRecord } from '@/types/courier';
@@ -11,31 +13,35 @@ type CourierCompletedOrdersPageProps = {
 export default function CourierCompletedOrdersPage({
     orders,
 }: CourierCompletedOrdersPageProps) {
+    const { t } = useTranslation();
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Completed orders', href: '/courier/orders/completed' },
+        { title: t('dashboard.title'), href: '/dashboard' },
+        {
+            title: t('courier.completed_orders.title'),
+            href: '/courier/orders/completed',
+        },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Completed orders" />
+            <Head title={t('courier.completed_orders.title')} />
 
             <div className="flex flex-1 flex-col gap-4 p-3 sm:gap-6 sm:p-4">
                 <div className="rounded-3xl border border-border/80 bg-card/90 p-4 shadow-sm sm:p-6">
                     <div className="flex items-start justify-between gap-3">
                         <div>
                             <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-                                Completed orders
+                                {t('courier.completed_orders.title')}
                             </h1>
                             <p className="mt-2 text-sm text-muted-foreground">
-                                Review delivered orders and open proof files when needed.
+                                {t('courier.completed_orders.description')}
                             </p>
                         </div>
                         <Link
                             href="/dashboard"
                             className="rounded-2xl border border-border/80 px-4 py-2 text-sm"
                         >
-                            Back to dashboard
+                            {t('courier.routes.back')}
                         </Link>
                     </div>
                 </div>
@@ -43,7 +49,7 @@ export default function CourierCompletedOrdersPage({
                 <div className="rounded-3xl border border-border/80 bg-card/90 p-4 shadow-sm sm:p-5">
                     {orders.length === 0 ? (
                         <p className="text-sm text-muted-foreground">
-                            You have no completed orders yet.
+                            {t('courier.completed_orders.empty')}
                         </p>
                     ) : (
                         <div className="space-y-3">
@@ -55,22 +61,45 @@ export default function CourierCompletedOrdersPage({
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <p className="font-medium">
-                                                {order.client_name ?? `Order #${order.order_id}`}
+                                                {order.client_name ??
+                                                    t(
+                                                        'dispatcher.orders.order_number',
+                                                        { id: order.order_id },
+                                                    )}
                                             </p>
                                             <p className="mt-1 text-sm text-muted-foreground">
                                                 {order.address_label || '-'}
                                             </p>
                                         </div>
-                                        <span className="rounded-full border border-border/80 px-3 py-1 text-xs font-medium">
-                                            {order.status}
-                                        </span>
+                                        <BackofficeStatusBadge
+                                            status={order.status}
+                                        />
                                     </div>
 
                                     <div className="mt-3 space-y-1 text-sm text-muted-foreground">
-                                        <p>Route date: {order.route_date ? formatShortDate(order.route_date) : '-'}</p>
                                         <p>
-                                            Completed:{' '}
-                                            {order.completed_at ? formatShortDate(order.completed_at) : '-'}
+                                            {t(
+                                                'courier.completed_orders.route_date',
+                                                {
+                                                    date: order.route_date
+                                                        ? formatShortDate(
+                                                              order.route_date,
+                                                          )
+                                                        : '-',
+                                                },
+                                            )}
+                                        </p>
+                                        <p>
+                                            {t(
+                                                'courier.completed_orders.completed',
+                                                {
+                                                    date: order.completed_at
+                                                        ? formatShortDate(
+                                                              order.completed_at,
+                                                          )
+                                                        : '-',
+                                                },
+                                            )}
                                         </p>
                                     </div>
 
@@ -82,7 +111,9 @@ export default function CourierCompletedOrdersPage({
                                                 rel="noreferrer"
                                                 className="text-sm underline underline-offset-4"
                                             >
-                                                Open proof file
+                                                {t(
+                                                    'courier.completed_orders.open_proof',
+                                                )}
                                             </a>
                                         </div>
                                     )}
