@@ -127,7 +127,7 @@ class CourierRouteTest extends TestCase
             ->patch(route('courier.stops.update', $firstStop), [
                 'status' => 'ARRIVED',
             ])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('courier.route.page'));
 
         $this->assertDatabaseHas('route_stops', [
             'id' => $firstStop->id,
@@ -143,13 +143,13 @@ class CourierRouteTest extends TestCase
             ->patch(route('courier.stops.update', $firstStop), [
                 'status' => 'COMPLETED',
             ])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('courier.route.page'));
 
         $this->actingAs($courier)
             ->patch(route('courier.stops.update', $secondStop), [
                 'status' => 'COMPLETED',
             ])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('courier.route.page'));
 
         $this->assertDatabaseHas('route_stops', [
             'id' => $firstStop->id,
@@ -179,11 +179,11 @@ class CourierRouteTest extends TestCase
         $stop = $this->createRouteStop($organization, $deliveryRoute);
 
         $this->actingAs($courier)
-            ->from(route('courier.route.show'))
+            ->from(route('courier.route.page'))
             ->patch(route('courier.stops.update', $stop), [
                 'status' => 'FAILED',
             ])
-            ->assertRedirect(route('courier.route.show'))
+            ->assertRedirect(route('courier.route.page'))
             ->assertSessionHasErrors(['fail_reason']);
     }
 
@@ -204,7 +204,7 @@ class CourierRouteTest extends TestCase
                 'status' => 'FAILED',
                 'fail_reason' => 'Customer not at address',
             ])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('courier.route.page'));
 
         $this->assertDatabaseHas('route_stops', [
             'id' => $stop->id,
@@ -235,12 +235,12 @@ class CourierRouteTest extends TestCase
         $stop = $this->createRouteStop($organization, $deliveryRoute);
 
         $this->actingAs($courier)
-            ->from(route('courier.route.show'))
+            ->from(route('courier.route.page'))
             ->patch(route('courier.stops.update', $stop), [
                 'status' => 'ARRIVED',
                 'fail_reason' => 'Should not be here',
             ])
-            ->assertRedirect(route('courier.route.show'))
+            ->assertRedirect(route('courier.route.page'))
             ->assertSessionHasErrors(['fail_reason']);
     }
 
@@ -322,7 +322,7 @@ class CourierRouteTest extends TestCase
             ->post(route('courier.stops.proof.store', $stop), [
                 'file' => UploadedFile::fake()->image('proof.jpg'),
             ])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('courier.route.page'));
 
         $proof = ProofOfDelivery::query()->where('route_stop_id', $stop->id)->first();
 

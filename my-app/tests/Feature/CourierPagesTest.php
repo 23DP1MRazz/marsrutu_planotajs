@@ -37,15 +37,15 @@ class CourierPagesTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('courier/route')
-                ->has('stops')
+                ->component('courier/dashboard')
+                ->has('stops', 0)
                 ->where('dashboardSummary.done_routes', 0)
                 ->where('dashboardSummary.completed_orders', 0)
                 ->where('dashboardSummary.upcoming_routes_count', 0)
-                ->where('dashboardMode', true));
+                ->where('deliveryRoute', null));
     }
 
-    public function test_courier_today_route_url_redirects_to_dashboard(): void
+    public function test_courier_today_route_page_is_accessible(): void
     {
         $organization = Organization::factory()->create();
         $courier = User::factory()->courier($organization->id)->create();
@@ -57,7 +57,10 @@ class CourierPagesTest extends TestCase
 
         $this->actingAs($courier)
             ->get('/courier/today-route')
-            ->assertRedirect(route('dashboard'));
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('courier/route')
+                ->where('deliveryRoute', null));
     }
 
     public function test_courier_dashboard_includes_summary_counts_and_upcoming_routes(): void
@@ -121,7 +124,7 @@ class CourierPagesTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('courier/route')
+                ->component('courier/dashboard')
                 ->where('dashboardSummary.done_routes', 1)
                 ->where('dashboardSummary.completed_orders', 1)
                 ->where('dashboardSummary.upcoming_routes_count', 1)
@@ -216,6 +219,7 @@ class CourierPagesTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('courier/routes')
                 ->where('title', 'Done routes')
+                ->where('filters.sort', 'date_desc')
                 ->where('routes.0.id', $completedRoute->id)
                 ->has('routes', 1));
 
@@ -225,6 +229,7 @@ class CourierPagesTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('courier/routes')
                 ->where('title', 'Upcoming routes')
+                ->where('filters.sort', 'date_asc')
                 ->where('routes.0.id', $upcomingRoute->id)
                 ->has('routes', 1));
 
@@ -233,9 +238,120 @@ class CourierPagesTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('courier/completed-orders')
+                ->where('filters.sort', 'completed_desc')
                 ->where('orders.0.order_id', $completedOrder->id)
                 ->where('orders.0.route_id', $completedRoute->id)
                 ->has('orders', 1));
+
+        $this->actingAs($courier)
+            ->get(route('courier.routes.show', $completedRoute))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('courier/route')
+                ->where('readOnly', true)
+                ->where('deliveryRoute.id', $completedRoute->id)
+                ->where('stops.0.order_id', $completedOrder->id)
+                ->has('stops', 1));
+
+        $this->actingAs($courier)
+            ->get(route('courier.routes.show', $upcomingRoute))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('courier/route')
+                ->where('readOnly', true)
+                ->where('deliveryRoute.id', $upcomingRoute->id)
+                ->where('stops.0.order_id', $upcomingOrder->id)
+                ->has('stops', 1));
+    }
+
+    public function test_courier_detail_pages_support_filtering_and_sorting(): void
+    {
+        $organization = Organization::factory()->create();
+        $courier = User::factory()->courier($organization->id)->create();
+
+        Courier::query()->create([
+            'user_id' => $courier->id,
+            'on_duty' => false,
+        ]);
+
+        $clientA = Client::factory()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Alpha Store',
+        ]);
+        $clientB = Client::factory()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Beta Shop',
+        ]);
+        $address = Address::factory()->create([
+            'organization_id' => $organization->id,
+        ]);
+
+        $olderDoneRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-17',
+            'status' => 'DONE',
+        ]);
+        $newerDoneRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-18',
+            'status' => 'DONE',
+        ]);
+
+        $completedOrderA = Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $clientA->id,
+            'address_id' => $address->id,
+            'status' => 'COMPLETED',
+        ]);
+        $completedOrderB = Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $clientB->id,
+            'address_id' => $address->id,
+            'status' => 'COMPLETED',
+        ]);
+
+        RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $olderDoneRoute->id,
+            'order_id' => $completedOrderA->id,
+            'status' => 'COMPLETED',
+            'completed_at' => '2026-04-17 09:00:00',
+        ]);
+        RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $newerDoneRoute->id,
+            'order_id' => $completedOrderB->id,
+            'status' => 'COMPLETED',
+            'completed_at' => '2026-04-18 11:00:00',
+        ]);
+
+        $this->actingAs($courier)
+            ->get(route('courier.routes.completed', [
+                'search' => '2026-04-17',
+                'sort' => 'date_asc',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('courier/routes')
+                ->where('filters.search', '2026-04-17')
+                ->where('filters.sort', 'date_asc')
+                ->has('routes', 1)
+                ->where('routes.0.id', $olderDoneRoute->id));
+
+        $this->actingAs($courier)
+            ->get(route('courier.orders.completed', [
+                'search' => 'Beta',
+                'sort' => 'completed_desc',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('courier/completed-orders')
+                ->where('filters.search', 'Beta')
+                ->where('filters.sort', 'completed_desc')
+                ->has('orders', 1)
+                ->where('orders.0.order_id', $completedOrderB->id));
     }
 
     public function test_dispatcher_cannot_open_courier_detail_pages(): void

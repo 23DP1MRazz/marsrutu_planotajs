@@ -128,7 +128,7 @@ class DashboardTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('courier/route')
-                ->where('dashboardMode', true));
+                ->component('courier/dashboard')
+                ->where('dashboardSummary.done_routes', 0));
     }
 }

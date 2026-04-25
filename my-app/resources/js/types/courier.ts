@@ -4,6 +4,7 @@ export type CourierRouteRecord = {
     courier_user_id: number;
     date: string;
     status: string;
+    stops_count?: number;
 };
 
 export type CourierDashboardSummary = {
@@ -13,11 +14,24 @@ export type CourierDashboardSummary = {
     upcoming_routes: CourierRouteListRecord[];
 };
 
+export type CourierRouteListFilters = {
+    search: string;
+    date: string;
+    sort: string;
+};
+
 export type CourierRouteListRecord = {
     id: number;
     date: string;
     status: string;
     stops_count: number;
+    href: string;
+};
+
+export type CourierCompletedOrderFilters = {
+    search: string;
+    date: string;
+    sort: string;
 };
 
 export type CourierCompletedOrderRecord = {
@@ -37,6 +51,8 @@ export type CourierRouteStopRecord = {
     seq_no: number;
     order_id: number;
     planned_eta: string | null;
+    time_from: string | null;
+    time_to: string | null;
     arrived_at: string | null;
     completed_at: string | null;
     status: string;

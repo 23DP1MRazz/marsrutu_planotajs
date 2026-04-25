@@ -8,6 +8,7 @@ use App\Http\Requests\Courier\UploadProofOfDeliveryRequest;
 use App\Models\DeliveryRoute;
 use App\Models\ProofOfDelivery;
 use App\Models\RouteStop;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,23 +23,63 @@ class CourierRouteController extends Controller
 {
     public function showPage(Request $request): Response
     {
-        return $this->renderRoutePage($request, false);
+        $this->authorizeCourierAccess($request);
+
+        $deliveryRoute = $this->todayRouteForUser($request);
+
+        return Inertia::render('courier/route', [
+            'deliveryRoute' => $deliveryRoute ? $this->formatRoute($deliveryRoute) : null,
+            'stops' => $deliveryRoute ? $this->formatStops($deliveryRoute) : [],
+        ]);
     }
 
     public function showDashboard(Request $request): Response
     {
-        return $this->renderRoutePage($request, true);
+        $this->authorizeCourierAccess($request);
+
+        $deliveryRoute = $this->todayRouteForUser($request);
+
+        return Inertia::render('courier/dashboard', [
+            'deliveryRoute' => $deliveryRoute ? $this->formatRoute($deliveryRoute) : null,
+            'stops' => $deliveryRoute ? $this->formatStops($deliveryRoute) : [],
+            'dashboardSummary' => $this->dashboardSummaryForUser($request),
+        ]);
+    }
+
+    public function showRouteDetailPage(Request $request, DeliveryRoute $deliveryRoute): Response
+    {
+        $this->authorizeCourierAccess($request);
+
+        $deliveryRoute = $this->routeForCourier($request, $deliveryRoute);
+
+        return Inertia::render('courier/route', [
+            'deliveryRoute' => $this->formatRoute($deliveryRoute),
+            'stops' => $this->formatStops($deliveryRoute),
+            'readOnly' => true,
+            'pageTitle' => 'Route #'.$deliveryRoute->id,
+            'pageDescription' => $deliveryRoute->status === 'DONE'
+                ? 'Review completed stops and delivered orders.'
+                : 'See stops and planned orders for this route.',
+            'backHref' => '/dashboard',
+        ]);
     }
 
     public function showCompletedRoutesPage(Request $request): Response
     {
         $this->authorizeCourierAccess($request);
 
+        $filters = [
+            'search' => $request->string('search')->toString(),
+            'date' => $request->string('date')->toString(),
+            'sort' => $this->normalizeRouteSort($request->string('sort')->toString(), true),
+        ];
+
         return Inertia::render('courier/routes', [
             'title' => 'Done routes',
             'description' => 'Review routes you already finished.',
             'emptyMessage' => 'You have no completed routes yet.',
-            'routes' => $this->completedRoutesForUser($request),
+            'routes' => $this->completedRoutesForUser($request, $filters),
+            'filters' => $filters,
         ]);
     }
 
@@ -46,11 +87,18 @@ class CourierRouteController extends Controller
     {
         $this->authorizeCourierAccess($request);
 
+        $filters = [
+            'search' => $request->string('search')->toString(),
+            'date' => $request->string('date')->toString(),
+            'sort' => $this->normalizeRouteSort($request->string('sort')->toString(), false),
+        ];
+
         return Inertia::render('courier/routes', [
             'title' => 'Upcoming routes',
             'description' => 'See routes assigned to you after today.',
             'emptyMessage' => 'No upcoming routes assigned yet.',
-            'routes' => $this->upcomingRoutesForUser($request),
+            'routes' => $this->upcomingRoutesForUser($request, $filters),
+            'filters' => $filters,
         ]);
     }
 
@@ -58,8 +106,15 @@ class CourierRouteController extends Controller
     {
         $this->authorizeCourierAccess($request);
 
+        $filters = [
+            'search' => $request->string('search')->toString(),
+            'date' => $request->string('date')->toString(),
+            'sort' => $this->normalizeCompletedOrderSort($request->string('sort')->toString()),
+        ];
+
         return Inertia::render('courier/completed-orders', [
-            'orders' => $this->completedOrdersForUser($request),
+            'orders' => $this->completedOrdersForUser($request, $filters),
+            'filters' => $filters,
         ]);
     }
 
@@ -101,7 +156,7 @@ class CourierRouteController extends Controller
             $this->refreshRouteStatus($routeStop->route);
         });
 
-        return to_route('dashboard');
+        return to_route('courier.route.page');
     }
 
     public function uploadProof(
@@ -128,23 +183,7 @@ class CourierRouteController extends Controller
             'taken_at' => Carbon::now(),
         ]);
 
-        return to_route('dashboard');
-    }
-
-    private function renderRoutePage(Request $request, bool $dashboardMode): Response
-    {
-        $this->authorizeCourierAccess($request);
-
-        $deliveryRoute = $this->todayRouteForUser($request);
-
-        return Inertia::render('courier/route', [
-            'deliveryRoute' => $deliveryRoute ? $this->formatRoute($deliveryRoute) : null,
-            'stops' => $deliveryRoute ? $this->formatStops($deliveryRoute) : [],
-            'dashboardMode' => $dashboardMode,
-            'dashboardSummary' => $dashboardMode
-                ? $this->dashboardSummaryForUser($request)
-                : null,
-        ]);
+        return to_route('courier.route.page');
     }
 
     /**
@@ -169,23 +208,46 @@ class CourierRouteController extends Controller
         ];
     }
 
-    private function completedRoutesForUser(Request $request): array
+    /**
+     * @param  array{search: string, date: string, sort: string}  $filters
+     * @return array<int, array{id: int, date: string, status: string, stops_count: int}>
+     */
+    private function completedRoutesForUser(Request $request, array $filters): array
     {
         return $this->formatRouteList(
-            $this->completedRoutesQuery($request)->get(),
+            $this->applyRouteFilters(
+                $this->completedRoutesQuery($request),
+                $filters,
+                true,
+            )->get(),
         );
     }
 
-    private function upcomingRoutesForUser(Request $request): array
+    /**
+     * @param  array{search: string, date: string, sort: string}  $filters
+     * @return array<int, array{id: int, date: string, status: string, stops_count: int}>
+     */
+    private function upcomingRoutesForUser(Request $request, array $filters): array
     {
         return $this->formatRouteList(
-            $this->upcomingRoutesQuery($request)->get(),
+            $this->applyRouteFilters(
+                $this->upcomingRoutesQuery($request),
+                $filters,
+                false,
+            )->get(),
         );
     }
 
-    private function completedOrdersForUser(Request $request): array
+    /**
+     * @param  array{search: string, date: string, sort: string}  $filters
+     * @return array<int, array{route_stop_id: int, route_id: int, order_id: int, route_date: string|null, client_name: string|null, address_label: string, status: string, completed_at: string|null, proof_view_url: string|null}>
+     */
+    private function completedOrdersForUser(Request $request, array $filters): array
     {
-        return $this->completedOrdersQuery($request)
+        return $this->applyCompletedOrderFilters(
+            $this->completedOrdersQuery($request),
+            $filters,
+        )
             ->get()
             ->map(fn (RouteStop $routeStop) => [
                 'route_stop_id' => $routeStop->id,
@@ -207,27 +269,25 @@ class CourierRouteController extends Controller
             ->all();
     }
 
-    private function completedRoutesQuery(Request $request)
+    private function completedRoutesQuery(Request $request): Builder
     {
         return DeliveryRoute::query()
             ->where('organization_id', $request->user()->organization_id)
             ->where('courier_user_id', $request->user()->id)
             ->where('status', 'DONE')
-            ->withCount('routeStops')
-            ->orderByDesc('date');
+            ->withCount('routeStops');
     }
 
-    private function upcomingRoutesQuery(Request $request)
+    private function upcomingRoutesQuery(Request $request): Builder
     {
         return DeliveryRoute::query()
             ->where('organization_id', $request->user()->organization_id)
             ->where('courier_user_id', $request->user()->id)
             ->where('date', '>', Carbon::today()->toDateString())
-            ->withCount('routeStops')
-            ->orderBy('date');
+            ->withCount('routeStops');
     }
 
-    private function completedOrdersQuery(Request $request)
+    private function completedOrdersQuery(Request $request): Builder
     {
         return RouteStop::query()
             ->with([
@@ -238,11 +298,105 @@ class CourierRouteController extends Controller
             ])
             ->where('organization_id', $request->user()->organization_id)
             ->where('status', 'COMPLETED')
-            ->whereHas('route', fn ($query) => $query
+            ->whereHas('route', fn (Builder $query) => $query
                 ->where('organization_id', $request->user()->organization_id)
-                ->where('courier_user_id', $request->user()->id))
-            ->orderByDesc('completed_at')
-            ->orderByDesc('id');
+                ->where('courier_user_id', $request->user()->id));
+    }
+
+    /**
+     * @param  Builder<DeliveryRoute>  $query
+     * @param  array{search: string, date: string, sort: string}  $filters
+     * @return Builder<DeliveryRoute>
+     */
+    private function applyRouteFilters(
+        Builder $query,
+        array $filters,
+        bool $completedPage,
+    ): Builder {
+        $query->when(
+            $filters['date'] !== '',
+            fn (Builder $builder) => $builder->whereDate('date', $filters['date']),
+        );
+
+        foreach ($this->searchTerms($filters['search']) as $searchTerm) {
+            $searchStatus = strtoupper(str_replace(' ', '_', $searchTerm));
+
+            $query->where(function (Builder $searchQuery) use ($searchStatus, $searchTerm): void {
+                $searchQuery
+                    ->where('id', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('date', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('status', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('status', 'like', '%'.$searchStatus.'%');
+            });
+        }
+
+        return match ($filters['sort']) {
+            'date_asc' => $query->orderBy('date')->orderBy('id'),
+            'date_desc' => $query->orderByDesc('date')->orderByDesc('id'),
+            'stops_asc' => $query->orderBy('route_stops_count')->orderBy('date'),
+            'stops_desc' => $query->orderByDesc('route_stops_count')->orderByDesc('date'),
+            'status_asc' => $query->orderBy('status')->orderBy('date'),
+            'status_desc' => $query->orderByDesc('status')->orderByDesc('date'),
+            default => $completedPage
+                ? $query->orderByDesc('date')->orderByDesc('id')
+                : $query->orderBy('date')->orderBy('id'),
+        };
+    }
+
+    /**
+     * @param  Builder<RouteStop>  $query
+     * @param  array{search: string, date: string, sort: string}  $filters
+     * @return Builder<RouteStop>
+     */
+    private function applyCompletedOrderFilters(
+        Builder $query,
+        array $filters,
+    ): Builder {
+        $query->when(
+            $filters['date'] !== '',
+            fn (Builder $builder) => $builder->whereDate('completed_at', $filters['date']),
+        );
+
+        foreach ($this->searchTerms($filters['search']) as $searchTerm) {
+            $query->where(function (Builder $searchQuery) use ($searchTerm): void {
+                $searchQuery
+                    ->where('route_stops.id', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('route_stops.route_id', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('route_stops.order_id', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('route_stops.completed_at', 'like', '%'.$searchTerm.'%')
+                    ->orWhereHas(
+                        'route',
+                        fn (Builder $routeQuery) => $routeQuery->where('date', 'like', '%'.$searchTerm.'%'),
+                    )
+                    ->orWhereHas(
+                        'order.client',
+                        fn (Builder $clientQuery) => $clientQuery->where('name', 'like', '%'.$searchTerm.'%'),
+                    )
+                    ->orWhereHas(
+                        'order.address',
+                        fn (Builder $addressQuery) => $addressQuery
+                            ->where('city', 'like', '%'.$searchTerm.'%')
+                            ->orWhere('street', 'like', '%'.$searchTerm.'%'),
+                    );
+            });
+        }
+
+        return match ($filters['sort']) {
+            'completed_asc' => $query->orderBy('completed_at')->orderBy('route_stops.id'),
+            'route_date_desc' => $query->orderByDesc(
+                DeliveryRoute::query()
+                    ->select('date')
+                    ->whereColumn('routes.id', 'route_stops.route_id')
+                    ->limit(1),
+            )->orderByDesc('route_stops.id'),
+            'route_date_asc' => $query->orderBy(
+                DeliveryRoute::query()
+                    ->select('date')
+                    ->whereColumn('routes.id', 'route_stops.route_id')
+                    ->limit(1),
+            )->orderBy('route_stops.id'),
+            default => $query->orderByDesc('completed_at')->orderByDesc('route_stops.id'),
+        };
     }
 
     /**
@@ -257,24 +411,41 @@ class CourierRouteController extends Controller
                 'date' => $deliveryRoute->date,
                 'status' => $deliveryRoute->status,
                 'stops_count' => $deliveryRoute->route_stops_count,
+                'href' => route('courier.routes.show', $deliveryRoute),
             ])
             ->values()
             ->all();
     }
 
+    private function routeForCourier(Request $request, DeliveryRoute $deliveryRoute): DeliveryRoute
+    {
+        abort_unless(
+            (int) $deliveryRoute->organization_id === (int) $request->user()->organization_id
+            && (int) $deliveryRoute->courier_user_id === (int) $request->user()->id,
+            403,
+        );
+
+        return $deliveryRoute->load([
+            'routeStops' => fn ($query) => $query->orderBy('seq_no'),
+            'routeStops.proofOfDelivery',
+            'routeStops.order.client:id,name',
+            'routeStops.order.address:id,city,street,lat,lng',
+        ]);
+    }
+
     private function todayRouteForUser(Request $request): ?DeliveryRoute
     {
         return DeliveryRoute::query()
-            ->with([
+            ->where('organization_id', $request->user()->organization_id)
+            ->where('courier_user_id', $request->user()->id)
+            ->whereDate('date', Carbon::today()->toDateString())
+            ->first()
+            ?->load([
                 'routeStops' => fn ($query) => $query->orderBy('seq_no'),
                 'routeStops.proofOfDelivery',
                 'routeStops.order.client:id,name',
                 'routeStops.order.address:id,city,street,lat,lng',
-            ])
-            ->where('organization_id', $request->user()->organization_id)
-            ->where('courier_user_id', $request->user()->id)
-            ->whereDate('date', Carbon::today()->toDateString())
-            ->first();
+            ]);
     }
 
     /**
@@ -288,11 +459,14 @@ class CourierRouteController extends Controller
             'courier_user_id' => $deliveryRoute->courier_user_id,
             'date' => $deliveryRoute->date,
             'status' => $deliveryRoute->status,
+            'stops_count' => $deliveryRoute->relationLoaded('routeStops')
+                ? $deliveryRoute->routeStops->count()
+                : null,
         ];
     }
 
     /**
-     * @return Collection<int, array{id: int, seq_no: int, order_id: int, planned_eta: mixed, arrived_at: mixed, completed_at: mixed, status: string, fail_reason: string|null, proof_file_url: string|null, proof_view_url: string|null, client_name: string|null, address_label: string, lat: float|null, lng: float|null, google_maps_url: string, waze_url: string}>
+     * @return Collection<int, array{id: int, seq_no: int, order_id: int, planned_eta: mixed, time_from: string|null, time_to: string|null, arrived_at: mixed, completed_at: mixed, status: string, fail_reason: string|null, proof_file_url: string|null, proof_view_url: string|null, client_name: string|null, address_label: string, lat: float|null, lng: float|null, google_maps_url: string, waze_url: string}>
      */
     private function formatStops(DeliveryRoute $deliveryRoute)
     {
@@ -301,6 +475,8 @@ class CourierRouteController extends Controller
             'seq_no' => $routeStop->seq_no,
             'order_id' => $routeStop->order_id,
             'planned_eta' => $routeStop->planned_eta,
+            'time_from' => $routeStop->order?->time_from,
+            'time_to' => $routeStop->order?->time_to,
             'arrived_at' => $routeStop->arrived_at,
             'completed_at' => $routeStop->completed_at,
             'status' => $routeStop->status,
@@ -360,6 +536,37 @@ class CourierRouteController extends Controller
             $routeStop->order?->address?->city,
             'Latvia',
         ])->filter()->join(', ');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function searchTerms(string $search): array
+    {
+        return array_values(array_filter(
+            array_map('trim', explode('||', $search)),
+            fn (string $term): bool => $term !== '',
+        ));
+    }
+
+    private function normalizeRouteSort(string $sort, bool $completedPage): string
+    {
+        $fallback = $completedPage ? 'date_desc' : 'date_asc';
+
+        return in_array(
+            $sort,
+            ['date_asc', 'date_desc', 'stops_asc', 'stops_desc', 'status_asc', 'status_desc'],
+            true,
+        ) ? $sort : $fallback;
+    }
+
+    private function normalizeCompletedOrderSort(string $sort): string
+    {
+        return in_array(
+            $sort,
+            ['completed_desc', 'completed_asc', 'route_date_desc', 'route_date_asc'],
+            true,
+        ) ? $sort : 'completed_desc';
     }
 
     private function applyStopStatus(

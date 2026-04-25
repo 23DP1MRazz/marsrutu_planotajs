@@ -48,13 +48,23 @@ function getNavigation(
                     },
                     {
                         title: t('app.navigation.active_route'),
-                        href: '/courier/routes',
+                        href: '/courier/today-route',
                         icon: Truck,
                     },
                     {
+                        title: t('courier.dashboard.done_routes'),
+                        href: '/courier/routes/completed',
+                        icon: Route,
+                    },
+                    {
                         title: t('app.navigation.completed_orders'),
-                        href: '/courier/completed-orders',
+                        href: '/courier/orders/completed',
                         icon: ClipboardList,
+                    },
+                    {
+                        title: t('courier.dashboard.upcoming_routes'),
+                        href: '/courier/routes/upcoming',
+                        icon: MapPinned,
                     },
                 ],
             },

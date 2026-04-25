@@ -204,13 +204,10 @@ Route::middleware(['auth'])
     ->prefix('courier')
     ->name('courier.')
     ->group(function () {
-        Route::get('today-route', function (Request $request) {
-            abort_unless($request->user()?->isCourier(), 403);
-
-            return to_route('dashboard');
-        })->name('route.page');
+        Route::get('today-route', [CourierRouteController::class, 'showPage'])->name('route.page');
         Route::get('routes/completed', [CourierRouteController::class, 'showCompletedRoutesPage'])->name('routes.completed');
         Route::get('routes/upcoming', [CourierRouteController::class, 'showUpcomingRoutesPage'])->name('routes.upcoming');
+        Route::get('routes/{deliveryRoute}', [CourierRouteController::class, 'showRouteDetailPage'])->name('routes.show');
         Route::get('orders/completed', [CourierRouteController::class, 'showCompletedOrdersPage'])->name('orders.completed');
         Route::get('route', [CourierRouteController::class, 'showToday'])->name('route.show');
         Route::patch('stops/{routeStop}', [CourierRouteController::class, 'updateStopStatus'])->name('stops.update');

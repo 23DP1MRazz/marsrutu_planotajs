@@ -125,7 +125,7 @@ const en = {
     },
     app: {
         navigation: {
-            active_route: 'Active Route',
+            active_route: 'Active routes',
             addresses: 'Addresses',
             administration: 'Administration',
             clients: 'Clients',

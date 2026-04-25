@@ -127,7 +127,7 @@ const lv = {
     },
     app: {
         navigation: {
-            active_route: 'Aktīvais maršruts',
+            active_route: 'Aktīvie maršruti',
             addresses: 'Adreses',
             administration: 'Administrēšana',
             clients: 'Klienti',
