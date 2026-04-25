@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Dispatcher;
 
+use App\Http\Requests\Concerns\LocalizesValidationAttributes;
 use App\Models\Order;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreOrderRequest extends FormRequest
 {
+    use LocalizesValidationAttributes;
+
     /**
      * @var list<string>
      */

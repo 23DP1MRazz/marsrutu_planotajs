@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Dispatcher;
 
+use App\Http\Requests\Concerns\LocalizesValidationAttributes;
 use App\Models\Client;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreClientRequest extends FormRequest
 {
+    use LocalizesValidationAttributes;
+
     /**
      * Determine if the user is authorized to make this request.
      */

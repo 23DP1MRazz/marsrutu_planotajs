@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Dispatcher;
 
+use App\Http\Requests\Concerns\LocalizesValidationAttributes;
 use App\Models\DeliveryRoute;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class AssignRouteOrdersRequest extends FormRequest
 {
+    use LocalizesValidationAttributes;
+
     /**
      * @var list<string>
      */

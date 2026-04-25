@@ -15,6 +15,11 @@ const lv = {
             password: 'Parole',
             role: 'Jūsu loma',
         },
+        appearance: {
+            dark: 'Tumšs',
+            light: 'Gaišs',
+            system: 'Sistēma',
+        },
         confirm_password: {
             description:
                 'Šī ir droša lietotnes zona. Lūdzu, apstipriniet paroli, lai turpinātu.',
@@ -145,6 +150,14 @@ const lv = {
         tables: {
             showing: 'Rādīti :count :noun',
             sort: 'Kārtot:',
+        },
+        map: {
+            empty: 'Šai kartei vēl nav pieejamas koordinātas.',
+            error: 'Pašlaik karti nevar ielādēt.',
+            loading: 'Karte tiek ielādēta…',
+            title: 'Karte',
+            description:
+                'Maršruta punktu vizuāls priekšskatījums pēc saglabātajām koordinātām.',
         },
     },
     dashboard: {

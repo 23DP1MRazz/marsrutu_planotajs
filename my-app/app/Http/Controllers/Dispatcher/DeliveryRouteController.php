@@ -112,17 +112,17 @@ class DeliveryRouteController extends Controller
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
-                'Route ID',
-                'Organization',
-                'Courier',
-                'Date',
-                'Route Status',
-                'Stop Seq',
-                'Order ID',
-                'Client',
-                'Address',
-                'Stop Status',
-                'Planned ETA',
+                __('reports.routes.headers.route_id'),
+                __('reports.routes.headers.organization'),
+                __('reports.routes.headers.courier'),
+                __('reports.routes.headers.date'),
+                __('reports.routes.headers.route_status'),
+                __('reports.routes.headers.stop_seq'),
+                __('reports.routes.headers.order_id'),
+                __('reports.routes.headers.client'),
+                __('reports.routes.headers.address'),
+                __('reports.routes.headers.stop_status'),
+                __('reports.routes.headers.planned_eta'),
             ]);
 
             foreach ($deliveryRoutes as $deliveryRoute) {
@@ -132,7 +132,7 @@ class DeliveryRouteController extends Controller
                         $deliveryRoute->organization?->name,
                         $deliveryRoute->courier?->user?->name,
                         $deliveryRoute->date,
-                        $deliveryRoute->status,
+                        __('statuses.'.strtolower($deliveryRoute->status)),
                         '',
                         '',
                         '',
@@ -150,19 +150,19 @@ class DeliveryRouteController extends Controller
                         $deliveryRoute->organization?->name,
                         $deliveryRoute->courier?->user?->name,
                         $deliveryRoute->date,
-                        $deliveryRoute->status,
+                        __('statuses.'.strtolower($deliveryRoute->status)),
                         $routeStop->seq_no,
                         $routeStop->order_id,
                         $routeStop->order?->client?->name,
                         collect([$routeStop->order?->address?->city, $routeStop->order?->address?->street])->filter()->join(', '),
-                        $routeStop->status,
+                        __('statuses.'.strtolower($routeStop->status)),
                         $routeStop->planned_eta,
                     ]);
                 }
             }
 
             fclose($handle);
-        }, 'routes-report.csv', [
+        }, __('reports.routes.filename'), [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
@@ -285,7 +285,7 @@ class DeliveryRouteController extends Controller
 
         if ($routeStop->status !== 'PENDING') {
             throw ValidationException::withMessages([
-                'route_stop' => 'Only pending stops can be removed from a route.',
+                'route_stop' => __('validation.custom.route_stop.pending_only'),
             ]);
         }
 

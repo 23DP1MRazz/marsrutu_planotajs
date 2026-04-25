@@ -15,6 +15,11 @@ const en = {
             password: 'Password',
             role: 'Your role',
         },
+        appearance: {
+            dark: 'Dark',
+            light: 'Light',
+            system: 'System',
+        },
         confirm_password: {
             description:
                 'This is a secure area of the application. Please confirm your password before continuing.',
@@ -143,6 +148,14 @@ const en = {
         tables: {
             showing: 'Showing :count :noun',
             sort: 'Sort:',
+        },
+        map: {
+            empty: 'No coordinates available for this map yet.',
+            error: 'Could not load the map right now.',
+            loading: 'Loading map…',
+            title: 'Map',
+            description:
+                'Visual preview of route points based on saved coordinates.',
         },
     },
     dashboard: {

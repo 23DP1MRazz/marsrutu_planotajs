@@ -1,0 +1,98 @@
+<?php
+
+return [
+    'accepted' => ':attribute ir jāapstiprina.',
+    'after' => ':attribute jābūt pēc :date.',
+    'array' => ':attribute jābūt sarakstam.',
+    'between' => [
+        'numeric' => ':attribute jābūt starp :min un :max.',
+    ],
+    'confirmed' => ':attribute apstiprinājums nesakrīt.',
+    'current_password' => 'Parole nav pareiza.',
+    'date' => ':attribute jābūt derīgam datumam.',
+    'date_format' => ':attribute jāatbilst formātam :format.',
+    'distinct' => ':attribute satur dublētu vērtību.',
+    'email' => ':attribute jābūt derīgai e-pasta adresei.',
+    'exists' => 'Izvēlētā vērtība laukā :attribute nav derīga.',
+    'image' => ':attribute jābūt attēlam.',
+    'in' => 'Izvēlētā vērtība laukā :attribute nav derīga.',
+    'integer' => ':attribute jābūt skaitlim.',
+    'max' => [
+        'file' => ':attribute nedrīkst būt lielāks par :max kilobaitiem.',
+        'string' => ':attribute nedrīkst būt garāks par :max rakstzīmēm.',
+    ],
+    'mimes' => ':attribute jābūt šāda tipa failam: :values.',
+    'min' => [
+        'array' => ':attribute jābūt vismaz :min vienumam.',
+        'string' => ':attribute jābūt vismaz :min rakstzīmēm garam.',
+    ],
+    'numeric' => ':attribute jābūt skaitlim.',
+    'password' => [
+        'letters' => ':attribute jāsatur vismaz viens burts.',
+        'mixed' => ':attribute jāsatur vismaz viens lielais un viens mazais burts.',
+        'numbers' => ':attribute jāsatur vismaz viens cipars.',
+        'symbols' => ':attribute jāsatur vismaz viens simbols.',
+        'uncompromised' => 'Norādītā :attribute ir parādījusies datu noplūdē. Lūdzu, izvēlieties citu.',
+    ],
+    'prohibited' => ':attribute lauks ir aizliegts.',
+    'required' => ':attribute ir obligāts lauks.',
+    'required_if' => ':attribute ir obligāts lauks.',
+    'required_with' => ':attribute ir obligāts, ja ir norādīts :values.',
+    'string' => ':attribute jābūt tekstam.',
+    'unique' => ':attribute jau ir aizņemts.',
+
+    'custom' => [
+        'organization_join_code' => [
+            'invalid' => 'Nederīgs organizācijas pievienošanās kods.',
+        ],
+        'organization_id' => [
+            'required_for_role' => 'Organizācija ir obligāta.',
+        ],
+        'role' => [
+            'last_admin' => 'Jāpaliek vismaz vienam administratoram.',
+            'courier_routes_exist' => 'Šim kurjeram nevar mainīt lomu vai organizāciju, kamēr pastāv piešķirti maršruti.',
+        ],
+        'file' => [
+            'proof_status' => 'Piegādes pierādījumu var augšupielādēt tikai pabeigtām vai neveiksmīgām pieturām.',
+            'proof_exists' => 'Šai pieturai piegādes pierādījums jau ir augšupielādēts.',
+        ],
+        'stop_ids' => [
+            'complete_route' => 'Pieturu secībā jāiekļauj katra šī maršruta pietura tieši vienu reizi.',
+        ],
+        'route_stop' => [
+            'pending_only' => 'No maršruta var noņemt tikai gaidošas pieturas.',
+        ],
+    ],
+
+    'attributes' => [
+        'address_id' => 'adrese',
+        'city' => 'pilsēta',
+        'client_id' => 'klients',
+        'courier_user_id' => 'kurjers',
+        'current_password' => 'pašreizējā parole',
+        'date' => 'datums',
+        'email' => 'e-pasts',
+        'fail_reason' => 'neizdošanās iemesls',
+        'file' => 'pierādījuma fails',
+        'lat' => 'platums',
+        'lng' => 'garums',
+        'name' => 'nosaukums',
+        'notes' => 'piezīmes',
+        'order_ids' => 'pasūtījumi',
+        'order_ids.*' => 'pasūtījums',
+        'organization_id' => 'organizācija',
+        'organization_join_code' => 'pievienošanās kods',
+        'organization_name' => 'organizācijas nosaukums',
+        'org_action' => 'organizācijas darbība',
+        'password' => 'parole',
+        'password_confirmation' => 'paroles apstiprinājums',
+        'phone' => 'tālrunis',
+        'role' => 'loma',
+        'status' => 'statuss',
+        'stop_ids' => 'pieturas',
+        'stop_ids.*' => 'pietura',
+        'street' => 'iela',
+        'time_from' => 'laiks no',
+        'time_to' => 'laiks līdz',
+    ],
+];

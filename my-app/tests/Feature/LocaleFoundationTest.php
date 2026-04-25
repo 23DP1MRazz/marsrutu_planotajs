@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -55,5 +57,24 @@ class LocaleFoundationTest extends TestCase
             ->patch(route('locale.update'), ['locale' => 'de'])
             ->assertRedirect(route('register', absolute: false))
             ->assertSessionHasErrors('locale');
+    }
+
+    public function test_latvian_validation_messages_are_used_for_form_requests(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+
+        $this->withSession(['locale' => 'lv'])
+            ->actingAs($dispatcher)
+            ->from(route('dispatcher.clients.create'))
+            ->post(route('dispatcher.clients.store'), [
+                'name' => '',
+                'phone' => '',
+            ])
+            ->assertRedirect(route('dispatcher.clients.create', absolute: false))
+            ->assertSessionHasErrors([
+                'name' => 'nosaukums ir obligāts lauks.',
+                'phone' => 'tālrunis ir obligāts lauks.',
+            ]);
     }
 }

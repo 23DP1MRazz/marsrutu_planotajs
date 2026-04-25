@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Http\Requests\Concerns\LocalizesValidationAttributes;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -9,6 +10,8 @@ use Illuminate\Validation\Validator;
 
 class UpdateUserRequest extends FormRequest
 {
+    use LocalizesValidationAttributes;
+
     public function authorize(): bool
     {
         return $this->user()?->isAdmin() ?? false;
@@ -47,7 +50,7 @@ class UpdateUserRequest extends FormRequest
                 : null;
 
             if (in_array($role, ['dispatcher', 'courier'], true) && $organizationId === null) {
-                $validator->errors()->add('organization_id', 'The organization field is required.');
+                $validator->errors()->add('organization_id', __('validation.custom.organization_id.required_for_role'));
             }
 
             if (
@@ -55,7 +58,7 @@ class UpdateUserRequest extends FormRequest
                 && $role !== 'admin'
                 && User::query()->where('role', 'admin')->count() === 1
             ) {
-                $validator->errors()->add('role', 'At least one admin user must remain.');
+                $validator->errors()->add('role', __('validation.custom.role.last_admin'));
             }
 
             $isCourierTransition = $managedUser->isCourier()
@@ -71,7 +74,7 @@ class UpdateUserRequest extends FormRequest
             if ($managedUser->courierProfile?->routes()->exists()) {
                 $validator->errors()->add(
                     'role',
-                    'This courier cannot change role or organization while assigned routes exist.',
+                    __('validation.custom.role.courier_routes_exist'),
                 );
             }
         });

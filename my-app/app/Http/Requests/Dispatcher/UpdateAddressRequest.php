@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Dispatcher;
 
+use App\Http\Requests\Concerns\LocalizesValidationAttributes;
 use App\Models\Address;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateAddressRequest extends FormRequest
 {
+    use LocalizesValidationAttributes;
+
     public function authorize(): bool
     {
         $address = $this->route('address');

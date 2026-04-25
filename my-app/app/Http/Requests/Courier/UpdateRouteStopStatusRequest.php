@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Courier;
 
+use App\Http\Requests\Concerns\LocalizesValidationAttributes;
 use App\Models\RouteStop;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateRouteStopStatusRequest extends FormRequest
 {
+    use LocalizesValidationAttributes;
+
     public function authorize(): bool
     {
         $routeStop = $this->route('routeStop');

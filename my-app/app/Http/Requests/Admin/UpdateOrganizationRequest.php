@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Http\Requests\Concerns\LocalizesValidationAttributes;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateOrganizationRequest extends FormRequest
 {
+    use LocalizesValidationAttributes;
+
     public function authorize(): bool
     {
         return $this->user()?->isAdmin() ?? false;

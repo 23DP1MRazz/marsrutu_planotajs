@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils';
 
 type LeafletMapMarker = {
@@ -27,8 +28,14 @@ type LeafletMarkerOptions = {
 
 type LeafletMapInstance = {
     setView(center: LeafletLatLngExpression, zoom: number): LeafletMapInstance;
-    fitBounds(bounds: LeafletBoundsExpression, options?: { padding?: [number, number] }): void;
-    invalidateSize(options?: { pan?: boolean; debounceMoveend?: boolean }): void;
+    fitBounds(
+        bounds: LeafletBoundsExpression,
+        options?: { padding?: [number, number] },
+    ): void;
+    invalidateSize(options?: {
+        pan?: boolean;
+        debounceMoveend?: boolean;
+    }): void;
     remove(): void;
 };
 
@@ -39,8 +46,14 @@ type LeafletLayer = {
 
 type LeafletGlobal = {
     map(element: HTMLElement, options?: LeafletMapOptions): LeafletMapInstance;
-    tileLayer(urlTemplate: string, options?: LeafletTileLayerOptions): LeafletLayer;
-    marker(point: LeafletLatLngExpression, options?: LeafletMarkerOptions): LeafletLayer;
+    tileLayer(
+        urlTemplate: string,
+        options?: LeafletTileLayerOptions,
+    ): LeafletLayer;
+    marker(
+        point: LeafletLatLngExpression,
+        options?: LeafletMarkerOptions,
+    ): LeafletLayer;
 };
 
 type LeafletMapProps = {
@@ -66,26 +79,27 @@ export function LeafletMap({
     markers,
     className,
     heightClassName = 'h-80',
-    emptyMessage = 'No coordinates available for this map yet.',
+    emptyMessage,
 }: LeafletMapProps) {
+    const { t } = useTranslation();
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<LeafletMapInstance | null>(null);
-    const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
-        markers.length === 0 ? 'idle' : 'loading',
-    );
+    const [status, setStatus] = useState<
+        'idle' | 'loading' | 'ready' | 'error'
+    >(markers.length === 0 ? 'idle' : 'loading');
 
     const sanitizedMarkers = useMemo(
         () =>
             markers.filter(
-                (marker) => Number.isFinite(marker.lat) && Number.isFinite(marker.lng),
+                (marker) =>
+                    Number.isFinite(marker.lat) && Number.isFinite(marker.lng),
             ),
         [markers],
     );
+    const visibleStatus = sanitizedMarkers.length === 0 ? 'idle' : status;
 
     useEffect(() => {
         if (sanitizedMarkers.length === 0) {
-            setStatus('idle');
-
             if (mapRef.current) {
                 mapRef.current.remove();
                 mapRef.current = null;
@@ -95,8 +109,6 @@ export function LeafletMap({
         }
 
         let cancelled = false;
-
-        setStatus('loading');
 
         loadLeaflet()
             .then((leaflet) => {
@@ -114,9 +126,12 @@ export function LeafletMap({
                 });
 
                 leaflet
-                    .tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; OpenStreetMap contributors',
-                    })
+                    .tileLayer(
+                        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        {
+                            attribution: '&copy; OpenStreetMap contributors',
+                        },
+                    )
                     .addTo(map);
 
                 sanitizedMarkers.forEach((marker) => {
@@ -139,7 +154,10 @@ export function LeafletMap({
                     );
                 } else {
                     map.fitBounds(
-                        sanitizedMarkers.map((marker) => [marker.lat, marker.lng]),
+                        sanitizedMarkers.map((marker) => [
+                            marker.lat,
+                            marker.lng,
+                        ]),
                         {
                             padding: [32, 32],
                         },
@@ -178,9 +196,9 @@ export function LeafletMap({
     return (
         <div className={cn('border p-4', className)}>
             <div className="mb-3">
-                <h2 className="font-medium">Map</h2>
+                <h2 className="font-medium">{t('common.map.title')}</h2>
                 <p className="text-sm text-muted-foreground">
-                    Visual preview of route points based on saved coordinates.
+                    {t('common.map.description')}
                 </p>
             </div>
 
@@ -195,26 +213,26 @@ export function LeafletMap({
                     className="leaflet-host h-full w-full"
                 />
 
-                {status === 'idle' && (
+                {visibleStatus === 'idle' && (
                     <div className="absolute inset-0 flex items-center justify-center p-4">
                         <p className="text-center text-sm text-muted-foreground">
-                            {emptyMessage}
+                            {emptyMessage ?? t('common.map.empty')}
                         </p>
                     </div>
                 )}
 
-                {status === 'loading' && (
+                {visibleStatus === 'loading' && (
                     <div className="absolute inset-0 flex items-center justify-center p-4">
                         <p className="text-center text-sm text-muted-foreground">
-                            Loading map…
+                            {t('common.map.loading')}
                         </p>
                     </div>
                 )}
 
-                {status === 'error' && (
+                {visibleStatus === 'error' && (
                     <div className="absolute inset-0 flex items-center justify-center p-4">
                         <p className="text-center text-sm text-red-600">
-                            Could not load the map right now.
+                            {t('common.map.error')}
                         </p>
                     </div>
                 )}
@@ -232,48 +250,50 @@ function loadLeaflet(): Promise<LeafletGlobal> {
         return window.__leafletLoaderPromise;
     }
 
-    window.__leafletLoaderPromise = new Promise<LeafletGlobal>((resolve, reject) => {
-        ensureLeafletStyles();
+    window.__leafletLoaderPromise = new Promise<LeafletGlobal>(
+        (resolve, reject) => {
+            ensureLeafletStyles();
 
-        const existingScript = document.getElementById(
-            LEAFLET_SCRIPT_ID,
-        ) as HTMLScriptElement | null;
+            const existingScript = document.getElementById(
+                LEAFLET_SCRIPT_ID,
+            ) as HTMLScriptElement | null;
 
-        if (existingScript) {
-            existingScript.addEventListener('load', () => {
+            if (existingScript) {
+                existingScript.addEventListener('load', () => {
+                    if (window.L) {
+                        resolve(window.L);
+                        return;
+                    }
+
+                    reject(new Error('Leaflet failed to initialize.'));
+                });
+
+                existingScript.addEventListener('error', () => {
+                    reject(new Error('Leaflet script failed to load.'));
+                });
+
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.id = LEAFLET_SCRIPT_ID;
+            script.src = LEAFLET_SCRIPT_SRC;
+            script.async = true;
+            script.onload = () => {
                 if (window.L) {
                     resolve(window.L);
                     return;
                 }
 
                 reject(new Error('Leaflet failed to initialize.'));
-            });
-
-            existingScript.addEventListener('error', () => {
+            };
+            script.onerror = () => {
                 reject(new Error('Leaflet script failed to load.'));
-            });
+            };
 
-            return;
-        }
-
-        const script = document.createElement('script');
-        script.id = LEAFLET_SCRIPT_ID;
-        script.src = LEAFLET_SCRIPT_SRC;
-        script.async = true;
-        script.onload = () => {
-            if (window.L) {
-                resolve(window.L);
-                return;
-            }
-
-            reject(new Error('Leaflet failed to initialize.'));
-        };
-        script.onerror = () => {
-            reject(new Error('Leaflet script failed to load.'));
-        };
-
-        document.head.appendChild(script);
-    });
+            document.head.appendChild(script);
+        },
+    );
 
     return window.__leafletLoaderPromise;
 }

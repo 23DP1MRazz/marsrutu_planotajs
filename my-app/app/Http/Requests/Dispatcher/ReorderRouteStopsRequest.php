@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Dispatcher;
 
+use App\Http\Requests\Concerns\LocalizesValidationAttributes;
 use App\Models\DeliveryRoute;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -9,6 +10,8 @@ use Illuminate\Validation\Validator;
 
 class ReorderRouteStopsRequest extends FormRequest
 {
+    use LocalizesValidationAttributes;
+
     public function authorize(): bool
     {
         $deliveryRoute = $this->route('deliveryRoute');
@@ -60,7 +63,7 @@ class ReorderRouteStopsRequest extends FormRequest
             ) {
                 $validator->errors()->add(
                     'stop_ids',
-                    'The stop order must include every stop from this route exactly once.',
+                    __('validation.custom.stop_ids.complete_route'),
                 );
             }
         });

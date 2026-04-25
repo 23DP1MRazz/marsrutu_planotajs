@@ -111,15 +111,15 @@ class OrderController extends Controller
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
-                'Order ID',
-                'Organization',
-                'Client',
-                'Address',
-                'Date',
-                'Time From',
-                'Time To',
-                'Status',
-                'Notes',
+                __('reports.orders.headers.order_id'),
+                __('reports.orders.headers.organization'),
+                __('reports.orders.headers.client'),
+                __('reports.orders.headers.address'),
+                __('reports.orders.headers.date'),
+                __('reports.orders.headers.time_from'),
+                __('reports.orders.headers.time_to'),
+                __('reports.orders.headers.status'),
+                __('reports.orders.headers.notes'),
             ]);
 
             foreach ($orders as $order) {
@@ -131,13 +131,13 @@ class OrderController extends Controller
                     $order->date,
                     $order->time_from,
                     $order->time_to,
-                    $order->status,
+                    __('statuses.'.strtolower($order->status)),
                     $order->notes,
                 ]);
             }
 
             fclose($handle);
-        }, 'orders-report.csv', [
+        }, __('reports.orders.filename'), [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }

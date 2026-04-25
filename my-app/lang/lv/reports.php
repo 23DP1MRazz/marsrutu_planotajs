@@ -1,0 +1,50 @@
+<?php
+
+return [
+    'orders' => [
+        'filename' => 'pasutijumu-parskats.csv',
+        'headers' => [
+            'order_id' => 'Pasūtījuma ID',
+            'organization' => 'Organizācija',
+            'client' => 'Klients',
+            'address' => 'Adrese',
+            'date' => 'Datums',
+            'time_from' => 'Laiks no',
+            'time_to' => 'Laiks līdz',
+            'status' => 'Statuss',
+            'notes' => 'Piezīmes',
+        ],
+    ],
+    'routes' => [
+        'filename' => 'marsrutu-parskats.csv',
+        'headers' => [
+            'route_id' => 'Maršruta ID',
+            'organization' => 'Organizācija',
+            'courier' => 'Kurjers',
+            'date' => 'Datums',
+            'route_status' => 'Maršruta statuss',
+            'stop_seq' => 'Pieturas secība',
+            'order_id' => 'Pasūtījuma ID',
+            'client' => 'Klients',
+            'address' => 'Adrese',
+            'stop_status' => 'Pieturas statuss',
+            'planned_eta' => 'Plānotais ETA',
+        ],
+        'print' => [
+            'back' => 'Atpakaļ uz maršrutu',
+            'courier' => 'Kurjers',
+            'date' => 'Datums',
+            'organization' => 'Organizācija',
+            'planned_eta' => 'Plānotais ETA',
+            'print' => 'Drukāt',
+            'route_sheet' => 'Maršruta lapa #:id',
+            'status' => 'Statuss',
+            'stops' => 'Pieturas',
+            'no_stops' => 'Pieturas vēl nav piešķirtas.',
+            'stop' => 'Pietura',
+            'order' => 'Pasūtījums',
+            'client' => 'Klients',
+            'address' => 'Adrese',
+        ],
+    ],
+];

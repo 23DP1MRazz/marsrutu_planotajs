@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Courier;
 
+use App\Http\Requests\Concerns\LocalizesValidationAttributes;
 use App\Models\RouteStop;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 class UploadProofOfDeliveryRequest extends FormRequest
 {
+    use LocalizesValidationAttributes;
+
     public function authorize(): bool
     {
         $routeStop = $this->route('routeStop');
@@ -36,14 +39,14 @@ class UploadProofOfDeliveryRequest extends FormRequest
             if (! in_array($routeStop->status, ['COMPLETED', 'FAILED'], true)) {
                 $validator->errors()->add(
                     'file',
-                    'Proof of delivery can only be uploaded for completed or failed stops.',
+                    __('validation.custom.file.proof_status'),
                 );
             }
 
             if ($routeStop->proofOfDelivery !== null) {
                 $validator->errors()->add(
                     'file',
-                    'Proof of delivery has already been uploaded for this stop.',
+                    __('validation.custom.file.proof_exists'),
                 );
             }
         });

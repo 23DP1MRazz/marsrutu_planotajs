@@ -27,14 +27,19 @@ class CreateNewUser implements CreatesNewUsers
     public function create(array $input): User
     {
         // Validate role and organization choice.
-        Validator::make($input, [
-            ...$this->profileRules(),
-            'password' => $this->passwordRules(),
-            'role' => ['required', 'string', Rule::in(['dispatcher', 'courier'])],
-            'org_action' => ['required', 'string', Rule::in(['create', 'join'])],
-            'organization_name' => ['required_if:org_action,create', 'string', 'max:255'],
-            'organization_join_code' => ['required_if:org_action,join', 'string', 'max:32'],
-        ])->validate();
+        Validator::make(
+            $input,
+            [
+                ...$this->profileRules(),
+                'password' => $this->passwordRules(),
+                'role' => ['required', 'string', Rule::in(['dispatcher', 'courier'])],
+                'org_action' => ['required', 'string', Rule::in(['create', 'join'])],
+                'organization_name' => ['required_if:org_action,create', 'string', 'max:255'],
+                'organization_join_code' => ['required_if:org_action,join', 'string', 'max:32'],
+            ],
+            [],
+            (array) __('validation.attributes'),
+        )->validate();
 
         return DB::transaction(function () use ($input): User {
             // Create or find organization first.
@@ -85,7 +90,7 @@ class CreateNewUser implements CreatesNewUsers
 
         if ($organization === null) {
             throw ValidationException::withMessages([
-                'organization_join_code' => __('Invalid organization join code.'),
+                'organization_join_code' => __('validation.custom.organization_join_code.invalid'),
             ]);
         }
 

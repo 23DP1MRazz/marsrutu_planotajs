@@ -1,0 +1,50 @@
+<?php
+
+return [
+    'orders' => [
+        'filename' => 'orders-report.csv',
+        'headers' => [
+            'order_id' => 'Order ID',
+            'organization' => 'Organization',
+            'client' => 'Client',
+            'address' => 'Address',
+            'date' => 'Date',
+            'time_from' => 'Time From',
+            'time_to' => 'Time To',
+            'status' => 'Status',
+            'notes' => 'Notes',
+        ],
+    ],
+    'routes' => [
+        'filename' => 'routes-report.csv',
+        'headers' => [
+            'route_id' => 'Route ID',
+            'organization' => 'Organization',
+            'courier' => 'Courier',
+            'date' => 'Date',
+            'route_status' => 'Route Status',
+            'stop_seq' => 'Stop Seq',
+            'order_id' => 'Order ID',
+            'client' => 'Client',
+            'address' => 'Address',
+            'stop_status' => 'Stop Status',
+            'planned_eta' => 'Planned ETA',
+        ],
+        'print' => [
+            'back' => 'Back to route',
+            'courier' => 'Courier',
+            'date' => 'Date',
+            'organization' => 'Organization',
+            'planned_eta' => 'Planned ETA',
+            'print' => 'Print',
+            'route_sheet' => 'Route sheet #:id',
+            'status' => 'Status',
+            'stops' => 'Stops',
+            'no_stops' => 'No stops assigned yet.',
+            'stop' => 'Stop',
+            'order' => 'Order',
+            'client' => 'Client',
+            'address' => 'Address',
+        ],
+    ],
+];
