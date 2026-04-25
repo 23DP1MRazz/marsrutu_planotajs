@@ -11,6 +11,7 @@ import {
     backofficeInputClassName,
     backofficeSelectClassName,
 } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { AddressRecord, OrganizationOption } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
@@ -28,11 +29,12 @@ export default function DispatcherAddressesEdit({
     organizations,
     canSelectOrganization,
 }: DispatcherAddressesEditProps) {
+    const { t } = useTranslation();
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Addresses', href: '/dispatcher/addresses' },
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.addresses'), href: '/dispatcher/addresses' },
         {
-            title: `Edit ${addressId}`,
+            title: t('dispatcher.addresses.edit_title'),
             href: `/dispatcher/addresses/${addressId}/edit`,
         },
     ];
@@ -62,18 +64,18 @@ export default function DispatcherAddressesEdit({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Edit Address" />
+            <Head title={t('dispatcher.addresses.edit_title')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title={`Edit Address ${addressId}`}
-                    description="Update the selected address."
+                    title={`${t('dispatcher.addresses.edit_title')} ${addressId}`}
+                    description={t('dispatcher.addresses.edit_description')}
                     actions={
                         <BackofficeActionLink
                             href="/dispatcher/addresses"
                             variant="outline"
                         >
-                            Back to addresses
+                            {t('dispatcher.addresses.back')}
                         </BackofficeActionLink>
                     }
                 />
@@ -84,7 +86,7 @@ export default function DispatcherAddressesEdit({
                             {canSelectOrganization &&
                             organizations.length > 0 ? (
                                 <BackofficeField
-                                    label="Organization"
+                                    label={t('common.fields.organization')}
                                     error={form.errors.organization_id}
                                 >
                                     <select
@@ -113,7 +115,7 @@ export default function DispatcherAddressesEdit({
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <BackofficeField
-                                    label="City"
+                                    label={t('common.fields.city')}
                                     error={form.errors.city}
                                 >
                                     <input
@@ -132,7 +134,7 @@ export default function DispatcherAddressesEdit({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Street"
+                                    label={t('common.fields.street')}
                                     error={form.errors.street}
                                 >
                                     <input
@@ -153,7 +155,7 @@ export default function DispatcherAddressesEdit({
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <BackofficeField
-                                    label="Latitude"
+                                    label={t('common.fields.latitude')}
                                     error={form.errors.lat}
                                 >
                                     <input
@@ -172,7 +174,7 @@ export default function DispatcherAddressesEdit({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Longitude"
+                                    label={t('common.fields.longitude')}
                                     error={form.errors.lng}
                                 >
                                     <input
@@ -199,13 +201,13 @@ export default function DispatcherAddressesEdit({
                                         'primary',
                                     )}
                                 >
-                                    Save
+                                    {t('common.actions.save')}
                                 </button>
                                 <BackofficeActionLink
                                     href="/dispatcher/addresses"
                                     variant="outline"
                                 >
-                                    Cancel
+                                    {t('common.actions.cancel')}
                                 </BackofficeActionLink>
                             </div>
                         </form>

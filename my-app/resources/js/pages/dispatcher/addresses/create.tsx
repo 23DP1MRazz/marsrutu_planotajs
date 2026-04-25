@@ -11,15 +11,10 @@ import {
     backofficeInputClassName,
     backofficeSelectClassName,
 } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { OrganizationOption } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Addresses', href: '/dispatcher/addresses' },
-    { title: 'Create', href: '/dispatcher/addresses/create' },
-];
 
 type DispatcherAddressesCreateProps = {
     organizations: OrganizationOption[];
@@ -30,6 +25,7 @@ export default function DispatcherAddressesCreate({
     organizations,
     canSelectOrganization,
 }: DispatcherAddressesCreateProps) {
+    const { t } = useTranslation();
     const form = useForm({
         organization_id:
             canSelectOrganization && organizations[0]?.id
@@ -53,21 +49,29 @@ export default function DispatcherAddressesCreate({
         });
         form.post('/dispatcher/addresses');
     };
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.addresses'), href: '/dispatcher/addresses' },
+        {
+            title: t('dispatcher.addresses.create_title'),
+            href: '/dispatcher/addresses/create',
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Address" />
+            <Head title={t('dispatcher.addresses.create_title')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Create Address"
-                    description="Add a new delivery address."
+                    title={t('dispatcher.addresses.create_title')}
+                    description={t('dispatcher.addresses.create_description')}
                     actions={
                         <BackofficeActionLink
                             href="/dispatcher/addresses"
                             variant="outline"
                         >
-                            Back to addresses
+                            {t('dispatcher.addresses.back')}
                         </BackofficeActionLink>
                     }
                 />
@@ -78,7 +82,7 @@ export default function DispatcherAddressesCreate({
                             {canSelectOrganization &&
                             organizations.length > 0 ? (
                                 <BackofficeField
-                                    label="Organization"
+                                    label={t('common.fields.organization')}
                                     error={form.errors.organization_id}
                                 >
                                     <select
@@ -107,7 +111,7 @@ export default function DispatcherAddressesCreate({
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <BackofficeField
-                                    label="City"
+                                    label={t('common.fields.city')}
                                     error={form.errors.city}
                                 >
                                     <input
@@ -126,7 +130,7 @@ export default function DispatcherAddressesCreate({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Street"
+                                    label={t('common.fields.street')}
                                     error={form.errors.street}
                                 >
                                     <input
@@ -147,7 +151,7 @@ export default function DispatcherAddressesCreate({
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <BackofficeField
-                                    label="Latitude"
+                                    label={t('common.fields.latitude')}
                                     error={form.errors.lat}
                                 >
                                     <input
@@ -166,7 +170,7 @@ export default function DispatcherAddressesCreate({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Longitude"
+                                    label={t('common.fields.longitude')}
                                     error={form.errors.lng}
                                 >
                                     <input
@@ -193,13 +197,13 @@ export default function DispatcherAddressesCreate({
                                         'primary',
                                     )}
                                 >
-                                    Save
+                                    {t('common.actions.save')}
                                 </button>
                                 <BackofficeActionLink
                                     href="/dispatcher/addresses"
                                     variant="outline"
                                 >
-                                    Cancel
+                                    {t('common.actions.cancel')}
                                 </BackofficeActionLink>
                             </div>
                         </form>

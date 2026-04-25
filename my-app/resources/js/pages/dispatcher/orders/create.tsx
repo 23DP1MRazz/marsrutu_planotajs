@@ -12,6 +12,7 @@ import {
     backofficeSelectClassName,
     backofficeTextareaClassName,
 } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type {
     AddressOption,
@@ -19,12 +20,6 @@ import type {
     OrganizationOption,
 } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Orders', href: '/dispatcher/orders' },
-    { title: 'Create', href: '/dispatcher/orders/create' },
-];
 
 type DispatcherOrdersCreateProps = {
     organizations: OrganizationOption[];
@@ -41,6 +36,7 @@ export default function DispatcherOrdersCreate({
     statuses,
     canSelectOrganization,
 }: DispatcherOrdersCreateProps) {
+    const { t } = useTranslation();
     const form = useForm({
         organization_id:
             canSelectOrganization && organizations[0]?.id
@@ -67,21 +63,29 @@ export default function DispatcherOrdersCreate({
         });
         form.post('/dispatcher/orders');
     };
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.orders'), href: '/dispatcher/orders' },
+        {
+            title: t('dispatcher.orders.create_title'),
+            href: '/dispatcher/orders/create',
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Order" />
+            <Head title={t('dispatcher.orders.create_title')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Create Order"
-                    description="Add a new delivery order."
+                    title={t('dispatcher.orders.create_title')}
+                    description={t('dispatcher.orders.create_description')}
                     actions={
                         <BackofficeActionLink
                             href="/dispatcher/orders"
                             variant="outline"
                         >
-                            Back to orders
+                            {t('dispatcher.orders.back')}
                         </BackofficeActionLink>
                     }
                 />
@@ -92,7 +96,7 @@ export default function DispatcherOrdersCreate({
                             {canSelectOrganization &&
                             organizations.length > 0 ? (
                                 <BackofficeField
-                                    label="Organization"
+                                    label={t('common.fields.organization')}
                                     error={form.errors.organization_id}
                                 >
                                     <select
@@ -121,7 +125,7 @@ export default function DispatcherOrdersCreate({
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <BackofficeField
-                                    label="Client"
+                                    label={t('common.fields.client')}
                                     error={form.errors.client_id}
                                 >
                                     <select
@@ -136,7 +140,11 @@ export default function DispatcherOrdersCreate({
                                         }
                                         className={backofficeSelectClassName}
                                     >
-                                        <option value="">Select client</option>
+                                        <option value="">
+                                            {t(
+                                                'dispatcher.orders.select_client',
+                                            )}
+                                        </option>
                                         {clients.map((client) => (
                                             <option
                                                 key={client.id}
@@ -149,7 +157,7 @@ export default function DispatcherOrdersCreate({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Address"
+                                    label={t('common.fields.address')}
                                     error={form.errors.address_id}
                                 >
                                     <select
@@ -164,7 +172,11 @@ export default function DispatcherOrdersCreate({
                                         }
                                         className={backofficeSelectClassName}
                                     >
-                                        <option value="">Select address</option>
+                                        <option value="">
+                                            {t(
+                                                'dispatcher.orders.select_address',
+                                            )}
+                                        </option>
                                         {addresses.map((address) => (
                                             <option
                                                 key={address.id}
@@ -179,7 +191,7 @@ export default function DispatcherOrdersCreate({
 
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                                 <BackofficeField
-                                    label="Date"
+                                    label={t('common.fields.date')}
                                     error={form.errors.date}
                                 >
                                     <input
@@ -198,7 +210,7 @@ export default function DispatcherOrdersCreate({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Time from"
+                                    label={t('common.fields.time_from')}
                                     error={form.errors.time_from}
                                 >
                                     <input
@@ -217,7 +229,7 @@ export default function DispatcherOrdersCreate({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Time to"
+                                    label={t('common.fields.time_to')}
                                     error={form.errors.time_to}
                                 >
                                     <input
@@ -236,7 +248,7 @@ export default function DispatcherOrdersCreate({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Status"
+                                    label={t('common.fields.status')}
                                     error={form.errors.status}
                                 >
                                     <select
@@ -253,7 +265,9 @@ export default function DispatcherOrdersCreate({
                                     >
                                         {statuses.map((status) => (
                                             <option key={status} value={status}>
-                                                {status}
+                                                {t(
+                                                    `common.statuses.${status.toLowerCase()}`,
+                                                )}
                                             </option>
                                         ))}
                                     </select>
@@ -261,7 +275,7 @@ export default function DispatcherOrdersCreate({
                             </div>
 
                             <BackofficeField
-                                label="Notes"
+                                label={t('common.fields.notes')}
                                 error={form.errors.notes}
                             >
                                 <textarea
@@ -287,13 +301,13 @@ export default function DispatcherOrdersCreate({
                                         'primary',
                                     )}
                                 >
-                                    Save
+                                    {t('common.actions.save')}
                                 </button>
                                 <BackofficeActionLink
                                     href="/dispatcher/orders"
                                     variant="outline"
                                 >
-                                    Cancel
+                                    {t('common.actions.cancel')}
                                 </BackofficeActionLink>
                             </div>
                         </form>

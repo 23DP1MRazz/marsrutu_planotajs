@@ -14,23 +14,10 @@ import {
     backofficeInputClassName,
 } from '@/components/backoffice/ui';
 import { useLiveFiltering } from '@/hooks/use-live-filtering';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { AddressFilters, AddressRecord } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Addresses', href: '/dispatcher/addresses' },
-];
-
-const sortOptions = [
-    { value: 'city_asc', label: 'City (A-Z)' },
-    { value: 'city_desc', label: 'City (Z-A)' },
-    { value: 'street_asc', label: 'Street (A-Z)' },
-    { value: 'street_desc', label: 'Street (Z-A)' },
-    { value: 'updated_desc', label: 'Updated (newest)' },
-    { value: 'updated_asc', label: 'Updated (oldest)' },
-];
 
 const searchSeparator = '||';
 
@@ -54,6 +41,7 @@ export default function DispatcherAddressesIndex({
     addresses,
     filters,
 }: DispatcherAddressesIndexProps) {
+    const { t } = useTranslation();
     const filterForm = useForm({
         search: filters.search ?? '',
         sort: filters.sort ?? 'city_asc',
@@ -64,6 +52,18 @@ export default function DispatcherAddressesIndex({
         ...searchTerms,
         ...(draftSearch.trim() === '' ? [] : [draftSearch.trim()]),
     ]);
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.addresses'), href: '/dispatcher/addresses' },
+    ];
+    const sortOptions = [
+        { value: 'city_asc', label: t('dispatcher.sort.city_asc') },
+        { value: 'city_desc', label: t('dispatcher.sort.city_desc') },
+        { value: 'street_asc', label: t('dispatcher.sort.street_asc') },
+        { value: 'street_desc', label: t('dispatcher.sort.street_desc') },
+        { value: 'updated_desc', label: t('dispatcher.sort.updated_desc') },
+        { value: 'updated_asc', label: t('dispatcher.sort.updated_asc') },
+    ];
 
     useLiveFiltering({
         data: {
@@ -74,7 +74,7 @@ export default function DispatcherAddressesIndex({
     });
 
     const deleteAddress = (addressId: number) => {
-        if (window.confirm('Delete this address?')) {
+        if (window.confirm(t('dispatcher.addresses.delete_confirm'))) {
             router.delete(`/dispatcher/addresses/${addressId}`);
         }
     };
@@ -112,15 +112,15 @@ export default function DispatcherAddressesIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Addresses" />
+            <Head title={t('app.navigation.addresses')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Addresses"
-                    description="Manage delivery addresses for your organization."
+                    title={t('app.navigation.addresses')}
+                    description={t('dispatcher.addresses.description')}
                     actions={
                         <BackofficeActionLink href="/dispatcher/addresses/create">
-                            Create Address
+                            {t('dispatcher.addresses.create_title')}
                         </BackofficeActionLink>
                     }
                 />
@@ -128,12 +128,12 @@ export default function DispatcherAddressesIndex({
                 <BackofficeCard>
                     <div className="border-b border-[#e5e7eb] px-5 py-4">
                         <div className="mb-4 text-[13px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                            Filters
+                            {t('dispatcher.filters.filters')}
                         </div>
                         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
                             <label className="flex flex-col gap-1.5">
                                 <span className="text-xs font-semibold text-[#6b7280]">
-                                    Search
+                                    {t('dispatcher.filters.search')}
                                 </span>
                                 <div className="relative">
                                     <input
@@ -151,11 +151,13 @@ export default function DispatcherAddressesIndex({
                                             }
                                         }}
                                         className={`${backofficeInputClassName} pr-24`}
-                                        placeholder="City, street, coordinates..."
+                                        placeholder={t(
+                                            'dispatcher.addresses.placeholder',
+                                        )}
                                     />
                                     {draftSearch.trim() !== '' ? (
                                         <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2 py-1 text-[11px] font-semibold text-[#1e40af]">
-                                            Enter
+                                            {t('dispatcher.filters.enter')}
                                         </span>
                                     ) : null}
                                 </div>
@@ -169,7 +171,7 @@ export default function DispatcherAddressesIndex({
                                     'sm',
                                 )}
                             >
-                                Clear
+                                {t('common.actions.clear')}
                             </button>
                         </div>
                         {searchTerms.length > 0 ? (
@@ -181,7 +183,9 @@ export default function DispatcherAddressesIndex({
                                         onClick={() => removeSearchTerm(term)}
                                         className="inline-flex items-center gap-2 rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1 text-xs font-medium text-[#1e40af]"
                                     >
-                                        Search: {term}
+                                        {t('dispatcher.addresses.search_tag', {
+                                            term,
+                                        })}
                                         <span className="text-[#2563eb]">
                                             x
                                         </span>
@@ -193,7 +197,7 @@ export default function DispatcherAddressesIndex({
 
                     <BackofficeResultsBar
                         count={addresses.length}
-                        noun="addresses"
+                        noun={t('dispatcher.nouns.addresses')}
                         sortValue={filterForm.data.sort}
                         onSortChange={(value) =>
                             filterForm.setData('sort', value)
@@ -203,8 +207,10 @@ export default function DispatcherAddressesIndex({
 
                     {addresses.length === 0 ? (
                         <BackofficeEmptyState
-                            title="No addresses created yet"
-                            description="Create an address to start building delivery orders."
+                            title={t('dispatcher.addresses.empty_title')}
+                            description={t(
+                                'dispatcher.addresses.empty_description',
+                            )}
                         />
                     ) : (
                         <div className="overflow-x-auto">
@@ -212,13 +218,13 @@ export default function DispatcherAddressesIndex({
                                 <thead>
                                     <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            City
+                                            {t('common.fields.city')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Street
+                                            {t('common.fields.street')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Coordinates
+                                            {t('common.fields.coordinates')}
                                         </th>
                                         <th className="px-4 py-3 text-right text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase"></th>
                                     </tr>

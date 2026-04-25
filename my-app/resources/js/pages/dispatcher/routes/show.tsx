@@ -14,6 +14,7 @@ import {
     BackofficeStatusBadge,
     backofficeButtonClassName,
 } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
 import type {
@@ -34,6 +35,7 @@ export default function DispatcherRoutesShow({
     stops,
     availableOrders,
 }: DispatcherRoutesShowProps) {
+    const { t } = useTranslation();
     const [orderedStops, setOrderedStops] = useState(stops);
     const reorderForm = useForm({
         stop_ids: stops.map((stop) => stop.id),
@@ -51,10 +53,12 @@ export default function DispatcherRoutesShow({
     }, [stops]);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Routes', href: '/dispatcher/routes' },
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.routes'), href: '/dispatcher/routes' },
         {
-            title: `Route ${deliveryRoute.id}`,
+            title: t('dispatcher.routes.detail_title', {
+                id: deliveryRoute.id,
+            }),
             href: `/dispatcher/routes/${deliveryRoute.id}`,
         },
     ];
@@ -91,9 +95,14 @@ export default function DispatcherRoutesShow({
                     id: stop.id,
                     lat: Number(stop.lat),
                     lng: Number(stop.lng),
-                    label: `Stop ${index + 1}`,
+                    label: t('courier.stop.stop_number', {
+                        number: index + 1,
+                    }),
                     description: [
-                        stop.client_name ?? `Order #${stop.order_id}`,
+                        stop.client_name ??
+                            t('dispatcher.orders.order_number', {
+                                id: stop.order_id,
+                            }),
                         stop.address_label,
                     ]
                         .filter(Boolean)
@@ -104,7 +113,7 @@ export default function DispatcherRoutesShow({
                         Number.isFinite(marker.lat) &&
                         Number.isFinite(marker.lng),
                 ),
-        [orderedStops],
+        [orderedStops, t],
     );
 
     const moveStop = (index: number, direction: -1 | 1) => {
@@ -141,7 +150,9 @@ export default function DispatcherRoutesShow({
         }
 
         const confirmed = window.confirm(
-            `Remove stop ${stop.seq_no} from this route? The linked order will return to PENDING.`,
+            t('dispatcher.routes.remove_confirm', {
+                number: stop.seq_no,
+            }),
         );
 
         if (!confirmed) {
@@ -158,12 +169,18 @@ export default function DispatcherRoutesShow({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Route ${deliveryRoute.id}`} />
+            <Head
+                title={t('dispatcher.routes.detail_title', {
+                    id: deliveryRoute.id,
+                })}
+            />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title={`Route ${deliveryRoute.id}`}
-                    description={`${deliveryRoute.courier_name ?? '-'} · ${formatShortDate(deliveryRoute.date)} · ${deliveryRoute.status}`}
+                    title={t('dispatcher.routes.detail_title', {
+                        id: deliveryRoute.id,
+                    })}
+                    description={`${deliveryRoute.courier_name ?? '-'} · ${formatShortDate(deliveryRoute.date)} · ${t(`common.statuses.${deliveryRoute.status.toLowerCase()}`)}`}
                     actions={
                         <>
                             <a
@@ -172,13 +189,13 @@ export default function DispatcherRoutesShow({
                                 rel="noreferrer"
                                 className={backofficeButtonClassName('outline')}
                             >
-                                Print route sheet
+                                {t('dispatcher.routes.print_sheet')}
                             </a>
                             <BackofficeActionLink
                                 href="/dispatcher/routes"
                                 variant="outline"
                             >
-                                Back to routes
+                                {t('dispatcher.routes.back')}
                             </BackofficeActionLink>
                         </>
                     }
@@ -187,7 +204,7 @@ export default function DispatcherRoutesShow({
                 <div className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white">
                     <LeafletMap
                         markers={mapMarkers}
-                        emptyMessage="No route stop coordinates available yet."
+                        emptyMessage={t('dispatcher.routes.map_empty')}
                     />
                 </div>
 
@@ -195,11 +212,10 @@ export default function DispatcherRoutesShow({
                     <div className="flex flex-col gap-3 border-b border-[#e5e7eb] px-5 py-4 md:flex-row md:items-center md:justify-between">
                         <div>
                             <h2 className="text-base font-semibold text-[#111827]">
-                                Stops
+                                {t('dispatcher.routes.stops')}
                             </h2>
                             <p className="text-sm text-[#6b7280]">
-                                Reorder stops locally, then save when the
-                                sequence looks right.
+                                {t('dispatcher.routes.stops_description')}
                             </p>
                         </div>
 
@@ -213,7 +229,7 @@ export default function DispatcherRoutesShow({
                                         'primary',
                                     )}
                                 >
-                                    Save order
+                                    {t('dispatcher.routes.save_order')}
                                 </button>
                                 <button
                                     type="button"
@@ -229,7 +245,7 @@ export default function DispatcherRoutesShow({
                                         'outline',
                                     )}
                                 >
-                                    Reset preview
+                                    {t('dispatcher.routes.reset_preview')}
                                 </button>
                             </div>
                         ) : null}
@@ -238,7 +254,7 @@ export default function DispatcherRoutesShow({
                     <BackofficeCardBody className="space-y-3">
                         {orderedStops.length === 0 ? (
                             <BackofficeInfoNote>
-                                No stops assigned yet.
+                                {t('dispatcher.routes.no_stops')}
                             </BackofficeInfoNote>
                         ) : (
                             orderedStops.map((stop, index) => (
@@ -248,8 +264,10 @@ export default function DispatcherRoutesShow({
                                 >
                                     <div className="space-y-1">
                                         <p className="font-semibold text-[#111827]">
-                                            Stop {index + 1} - Order #
-                                            {stop.order_id}
+                                            {t('dispatcher.routes.stop_order', {
+                                                number: index + 1,
+                                                id: stop.order_id,
+                                            })}
                                         </p>
                                         <p className="text-sm text-[#111827]">
                                             {stop.client_name ?? '-'}
@@ -268,7 +286,9 @@ export default function DispatcherRoutesShow({
                                                     rel="noreferrer"
                                                     className="text-sm font-medium text-[#2563eb] hover:text-[#1e40af] hover:underline"
                                                 >
-                                                    Open proof of delivery
+                                                    {t(
+                                                        'courier.completed_orders.open_proof',
+                                                    )}
                                                 </a>
                                             ) : null}
                                         </div>
@@ -288,7 +308,7 @@ export default function DispatcherRoutesShow({
                                                 'sm',
                                             )}
                                         >
-                                            Up
+                                            {t('dispatcher.routes.up')}
                                         </button>
                                         <button
                                             type="button"
@@ -304,7 +324,7 @@ export default function DispatcherRoutesShow({
                                                 'sm',
                                             )}
                                         >
-                                            Down
+                                            {t('dispatcher.routes.down')}
                                         </button>
                                         {stop.can_remove ? (
                                             <button
@@ -318,7 +338,7 @@ export default function DispatcherRoutesShow({
                                                     'sm',
                                                 )}
                                             >
-                                                Remove
+                                                {t('dispatcher.routes.remove')}
                                             </button>
                                         ) : null}
                                     </div>
@@ -333,16 +353,18 @@ export default function DispatcherRoutesShow({
                         <form className="space-y-4" onSubmit={submit}>
                             <div>
                                 <h2 className="text-base font-semibold text-[#111827]">
-                                    Add orders to route
+                                    {t('dispatcher.routes.add_orders')}
                                 </h2>
                                 <p className="text-sm text-[#6b7280]">
-                                    Assign more available orders to this route.
+                                    {t(
+                                        'dispatcher.routes.add_orders_description',
+                                    )}
                                 </p>
                             </div>
 
                             {availableOrders.length === 0 ? (
                                 <BackofficeInfoNote>
-                                    No additional orders are available.
+                                    {t('dispatcher.routes.no_available_orders')}
                                 </BackofficeInfoNote>
                             ) : (
                                 <div className="space-y-2">
@@ -399,7 +421,7 @@ export default function DispatcherRoutesShow({
                                         'primary',
                                     )}
                                 >
-                                    Add selected orders
+                                    {t('dispatcher.routes.add_selected_orders')}
                                 </button>
                             </div>
                         </form>

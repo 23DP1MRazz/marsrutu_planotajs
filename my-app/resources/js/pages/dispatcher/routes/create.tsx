@@ -12,6 +12,7 @@ import {
     backofficeInputClassName,
     backofficeSelectClassName,
 } from '@/components/backoffice/ui';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
 import type {
@@ -20,12 +21,6 @@ import type {
     OrganizationOption,
 } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Routes', href: '/dispatcher/routes' },
-    { title: 'Create', href: '/dispatcher/routes/create' },
-];
 
 type DispatcherRoutesCreateProps = {
     organizations: OrganizationOption[];
@@ -42,6 +37,7 @@ export default function DispatcherRoutesCreate({
     canSelectOrganization,
     todayDate,
 }: DispatcherRoutesCreateProps) {
+    const { t } = useTranslation();
     const form = useForm({
         organization_id:
             canSelectOrganization && organizations[0]?.id
@@ -75,21 +71,29 @@ export default function DispatcherRoutesCreate({
         });
         form.post('/dispatcher/routes');
     };
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.routes'), href: '/dispatcher/routes' },
+        {
+            title: t('dispatcher.routes.create_title'),
+            href: '/dispatcher/routes/create',
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Route" />
+            <Head title={t('dispatcher.routes.create_title')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Create Route"
-                    description="Create a daily route and assign available orders."
+                    title={t('dispatcher.routes.create_title')}
+                    description={t('dispatcher.routes.create_description')}
                     actions={
                         <BackofficeActionLink
                             href="/dispatcher/routes"
                             variant="outline"
                         >
-                            Back to routes
+                            {t('dispatcher.routes.back')}
                         </BackofficeActionLink>
                     }
                 />
@@ -100,7 +104,7 @@ export default function DispatcherRoutesCreate({
                             {canSelectOrganization &&
                             organizations.length > 0 ? (
                                 <BackofficeField
-                                    label="Organization"
+                                    label={t('common.fields.organization')}
                                     error={form.errors.organization_id}
                                 >
                                     <select
@@ -128,7 +132,7 @@ export default function DispatcherRoutesCreate({
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <BackofficeField
-                                    label="Courier"
+                                    label={t('common.fields.courier')}
                                     error={form.errors.courier_user_id}
                                 >
                                     <select
@@ -142,7 +146,11 @@ export default function DispatcherRoutesCreate({
                                         }
                                         className={backofficeSelectClassName}
                                     >
-                                        <option value="">Select courier</option>
+                                        <option value="">
+                                            {t(
+                                                'dispatcher.routes.select_courier',
+                                            )}
+                                        </option>
                                         {couriers.map((courier) => (
                                             <option
                                                 key={courier.id}
@@ -155,7 +163,7 @@ export default function DispatcherRoutesCreate({
                                 </BackofficeField>
 
                                 <BackofficeField
-                                    label="Date"
+                                    label={t('common.fields.date')}
                                     error={form.errors.date}
                                 >
                                     <input
@@ -176,18 +184,20 @@ export default function DispatcherRoutesCreate({
                             <div className="space-y-3">
                                 <div>
                                     <h2 className="text-base font-semibold text-[#111827]">
-                                        Assign Orders
+                                        {t('dispatcher.routes.assign_orders')}
                                     </h2>
                                     <p className="text-sm text-[#6b7280]">
-                                        Select the orders that should be
-                                        included on this route.
+                                        {t(
+                                            'dispatcher.routes.select_orders_description',
+                                        )}
                                     </p>
                                 </div>
 
                                 {orders.length === 0 ? (
                                     <BackofficeInfoNote>
-                                        No unassigned orders are available right
-                                        now.
+                                        {t(
+                                            'dispatcher.routes.unassigned_empty',
+                                        )}
                                     </BackofficeInfoNote>
                                 ) : (
                                     <div className="space-y-2">
@@ -249,13 +259,13 @@ export default function DispatcherRoutesCreate({
                                         'primary',
                                     )}
                                 >
-                                    Save
+                                    {t('common.actions.save')}
                                 </button>
                                 <BackofficeActionLink
                                     href="/dispatcher/routes"
                                     variant="outline"
                                 >
-                                    Cancel
+                                    {t('common.actions.cancel')}
                                 </BackofficeActionLink>
                             </div>
                         </form>

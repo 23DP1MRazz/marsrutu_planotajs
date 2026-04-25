@@ -16,6 +16,7 @@ import {
     backofficeSelectClassName,
 } from '@/components/backoffice/ui';
 import { useLiveFiltering } from '@/hooks/use-live-filtering';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
 import type {
@@ -24,22 +25,6 @@ import type {
     OrganizationOption,
 } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Orders', href: '/dispatcher/orders' },
-];
-
-const sortOptions = [
-    { value: 'date_desc', label: 'Date (newest)' },
-    { value: 'date_asc', label: 'Date (oldest)' },
-    { value: 'time_asc', label: 'Time (earliest)' },
-    { value: 'time_desc', label: 'Time (latest)' },
-    { value: 'status_asc', label: 'Status (A-Z)' },
-    { value: 'status_desc', label: 'Status (Z-A)' },
-    { value: 'updated_desc', label: 'Updated (newest)' },
-    { value: 'updated_asc', label: 'Updated (oldest)' },
-];
 
 const searchSeparator = '||';
 
@@ -75,6 +60,7 @@ export default function DispatcherOrdersIndex({
     organizations,
     canFilterByOrganization,
 }: DispatcherOrdersIndexProps) {
+    const { t } = useTranslation();
     const filterForm = useForm({
         search: filters.search ?? '',
         date: filters.date ?? '',
@@ -88,6 +74,20 @@ export default function DispatcherOrdersIndex({
         ...searchTerms,
         ...(draftSearch.trim() === '' ? [] : [draftSearch.trim()]),
     ]);
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.orders'), href: '/dispatcher/orders' },
+    ];
+    const sortOptions = [
+        { value: 'date_desc', label: t('dispatcher.sort.date_desc') },
+        { value: 'date_asc', label: t('dispatcher.sort.date_asc') },
+        { value: 'time_asc', label: t('dispatcher.sort.time_asc') },
+        { value: 'time_desc', label: t('dispatcher.sort.time_desc') },
+        { value: 'status_asc', label: t('dispatcher.sort.status_asc') },
+        { value: 'status_desc', label: t('dispatcher.sort.status_desc') },
+        { value: 'updated_desc', label: t('dispatcher.sort.updated_desc') },
+        { value: 'updated_asc', label: t('dispatcher.sort.updated_asc') },
+    ];
 
     useLiveFiltering({
         data: {
@@ -98,7 +98,7 @@ export default function DispatcherOrdersIndex({
     });
 
     const deleteOrder = (orderId: number) => {
-        if (window.confirm('Delete this order?')) {
+        if (window.confirm(t('dispatcher.orders.delete_confirm'))) {
             router.delete(`/dispatcher/orders/${orderId}`);
         }
     };
@@ -146,30 +146,37 @@ export default function DispatcherOrdersIndex({
             ...searchTerms.map((term) => ({
                 key: 'search' as const,
                 value: term,
-                label: `Search: ${term}`,
+                label: t('dispatcher.clients.search_tag', { term }),
             })),
             filterForm.data.date
                 ? {
                       key: 'date' as const,
-                      label: `Date: ${formatShortDate(filterForm.data.date)}`,
+                      label: t('dispatcher.filters.active_date', {
+                          date: formatShortDate(filterForm.data.date),
+                      }),
                   }
                 : null,
             filterForm.data.status
                 ? {
                       key: 'status' as const,
-                      label: `Status: ${filterForm.data.status}`,
+                      label: t('dispatcher.filters.active_status', {
+                          status: t(
+                              `common.statuses.${filterForm.data.status.toLowerCase()}`,
+                          ),
+                      }),
                   }
                 : null,
             canFilterByOrganization && filterForm.data.organization_id
                 ? {
                       key: 'organization_id' as const,
-                      label: `Organization: ${
-                          organizations.find(
-                              (organization) =>
-                                  String(organization.id) ===
-                                  filterForm.data.organization_id,
-                          )?.name ?? filterForm.data.organization_id
-                      }`,
+                      label: t('dispatcher.filters.active_organization', {
+                          organization:
+                              organizations.find(
+                                  (organization) =>
+                                      String(organization.id) ===
+                                      filterForm.data.organization_id,
+                              )?.name ?? filterForm.data.organization_id,
+                      }),
                   }
                 : null,
         ] as Array<ActiveFilter | null>
@@ -177,22 +184,22 @@ export default function DispatcherOrdersIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Orders" />
+            <Head title={t('app.navigation.orders')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Orders"
-                    description="Manage delivery orders for your organization."
+                    title={t('app.navigation.orders')}
+                    description={t('dispatcher.orders.description')}
                     actions={
                         <>
                             <a
                                 href={`/dispatcher/orders/export${exportQuery ? `?${exportQuery}` : ''}`}
                                 className={backofficeButtonClassName('outline')}
                             >
-                                Export CSV
+                                CSV
                             </a>
                             <BackofficeActionLink href="/dispatcher/orders/create">
-                                Create Order
+                                {t('dispatcher.orders.create_title')}
                             </BackofficeActionLink>
                         </>
                     }
@@ -201,13 +208,13 @@ export default function DispatcherOrdersIndex({
                 <BackofficeCard>
                     <div className="border-b border-[#e5e7eb] px-5 py-4">
                         <div className="mb-4 text-[13px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                            Filters
+                            {t('dispatcher.filters.filters')}
                         </div>
 
                         <div className="grid gap-4 xl:grid-cols-[2fr_1fr_1fr_auto] xl:items-end">
                             <label className="flex flex-col gap-1.5">
                                 <span className="text-xs font-semibold text-[#6b7280]">
-                                    Search
+                                    {t('dispatcher.filters.search')}
                                 </span>
                                 <div className="relative">
                                     <input
@@ -225,11 +232,13 @@ export default function DispatcherOrdersIndex({
                                             }
                                         }}
                                         className={`${backofficeInputClassName} pr-24`}
-                                        placeholder="Client, address, date, status, notes..."
+                                        placeholder={t(
+                                            'dispatcher.orders.placeholder',
+                                        )}
                                     />
                                     {draftSearch.trim() !== '' ? (
                                         <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2 py-1 text-[11px] font-semibold text-[#1e40af]">
-                                            Enter
+                                            {t('dispatcher.filters.enter')}
                                         </span>
                                     ) : null}
                                 </div>
@@ -237,7 +246,7 @@ export default function DispatcherOrdersIndex({
 
                             <label className="flex flex-col gap-1.5">
                                 <span className="text-xs font-semibold text-[#6b7280]">
-                                    Date
+                                    {t('common.fields.date')}
                                 </span>
                                 <input
                                     id="date"
@@ -256,7 +265,7 @@ export default function DispatcherOrdersIndex({
 
                             <label className="flex flex-col gap-1.5">
                                 <span className="text-xs font-semibold text-[#6b7280]">
-                                    Status
+                                    {t('common.fields.status')}
                                 </span>
                                 <select
                                     id="status"
@@ -270,10 +279,14 @@ export default function DispatcherOrdersIndex({
                                     }
                                     className={backofficeSelectClassName}
                                 >
-                                    <option value="">All statuses</option>
+                                    <option value="">
+                                        {t('dispatcher.filters.all_statuses')}
+                                    </option>
                                     {statuses.map((status) => (
                                         <option key={status} value={status}>
-                                            {status}
+                                            {t(
+                                                `common.statuses.${status.toLowerCase()}`,
+                                            )}
                                         </option>
                                     ))}
                                 </select>
@@ -287,7 +300,7 @@ export default function DispatcherOrdersIndex({
                                     'sm',
                                 )}
                             >
-                                Clear
+                                {t('common.actions.clear')}
                             </button>
                         </div>
 
@@ -295,7 +308,7 @@ export default function DispatcherOrdersIndex({
                             {canFilterByOrganization ? (
                                 <label className="flex flex-col gap-1.5">
                                     <span className="text-xs font-semibold text-[#6b7280]">
-                                        Organization
+                                        {t('common.fields.organization')}
                                     </span>
                                     <select
                                         id="organization_id"
@@ -310,7 +323,9 @@ export default function DispatcherOrdersIndex({
                                         className={backofficeSelectClassName}
                                     >
                                         <option value="">
-                                            All organizations
+                                            {t(
+                                                'dispatcher.filters.all_organizations',
+                                            )}
                                         </option>
                                         {organizations.map((organization) => (
                                             <option
@@ -355,7 +370,7 @@ export default function DispatcherOrdersIndex({
 
                     <BackofficeResultsBar
                         count={orders.length}
-                        noun="orders"
+                        noun={t('dispatcher.nouns.orders')}
                         sortValue={filterForm.data.sort}
                         onSortChange={(value) =>
                             filterForm.setData('sort', value)
@@ -365,8 +380,10 @@ export default function DispatcherOrdersIndex({
 
                     {orders.length === 0 ? (
                         <BackofficeEmptyState
-                            title="No orders found"
-                            description="Adjust the filters or create a new order."
+                            title={t('dispatcher.orders.empty_title')}
+                            description={t(
+                                'dispatcher.orders.empty_description',
+                            )}
                         />
                     ) : (
                         <div className="overflow-x-auto">
@@ -374,22 +391,22 @@ export default function DispatcherOrdersIndex({
                                 <thead>
                                     <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Client
+                                            {t('common.fields.client')}
                                         </th>
                                         <th className="hidden px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase md:table-cell">
-                                            Address
+                                            {t('common.fields.address')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Date
+                                            {t('common.fields.date')}
                                         </th>
                                         <th className="hidden px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase lg:table-cell">
-                                            Time Window
+                                            {t('common.fields.time_window')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Status
+                                            {t('common.fields.status')}
                                         </th>
                                         <th className="hidden px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase lg:table-cell">
-                                            Notes
+                                            {t('common.fields.notes')}
                                         </th>
                                         <th className="px-4 py-3 text-right text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase"></th>
                                     </tr>

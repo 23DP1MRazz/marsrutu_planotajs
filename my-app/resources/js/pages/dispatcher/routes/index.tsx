@@ -13,6 +13,7 @@ import {
     backofficeSelectClassName,
 } from '@/components/backoffice/ui';
 import { useLiveFiltering } from '@/hooks/use-live-filtering';
+import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
 import type {
@@ -21,22 +22,6 @@ import type {
     RouteFilters,
 } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Routes', href: '/dispatcher/routes' },
-];
-
-const sortOptions = [
-    { value: 'date_desc', label: 'Date (newest)' },
-    { value: 'date_asc', label: 'Date (oldest)' },
-    { value: 'courier_asc', label: 'Courier (A-Z)' },
-    { value: 'courier_desc', label: 'Courier (Z-A)' },
-    { value: 'status_asc', label: 'Status (A-Z)' },
-    { value: 'status_desc', label: 'Status (Z-A)' },
-    { value: 'updated_desc', label: 'Updated (newest)' },
-    { value: 'updated_asc', label: 'Updated (oldest)' },
-];
 
 const searchSeparator = '||';
 
@@ -72,6 +57,7 @@ export default function DispatcherRoutesIndex({
     organizations,
     canFilterByOrganization,
 }: DispatcherRoutesIndexProps) {
+    const { t } = useTranslation();
     const filterForm = useForm({
         search: filters.search ?? '',
         date: filters.date ?? '',
@@ -85,6 +71,20 @@ export default function DispatcherRoutesIndex({
         ...searchTerms,
         ...(draftSearch.trim() === '' ? [] : [draftSearch.trim()]),
     ]);
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard.title'), href: '/dashboard' },
+        { title: t('app.navigation.routes'), href: '/dispatcher/routes' },
+    ];
+    const sortOptions = [
+        { value: 'date_desc', label: t('dispatcher.sort.date_desc') },
+        { value: 'date_asc', label: t('dispatcher.sort.date_asc') },
+        { value: 'courier_asc', label: t('dispatcher.sort.courier_asc') },
+        { value: 'courier_desc', label: t('dispatcher.sort.courier_desc') },
+        { value: 'status_asc', label: t('dispatcher.sort.status_asc') },
+        { value: 'status_desc', label: t('dispatcher.sort.status_desc') },
+        { value: 'updated_desc', label: t('dispatcher.sort.updated_desc') },
+        { value: 'updated_asc', label: t('dispatcher.sort.updated_asc') },
+    ];
 
     useLiveFiltering({
         data: {
@@ -137,30 +137,37 @@ export default function DispatcherRoutesIndex({
             ...searchTerms.map((term) => ({
                 key: 'search' as const,
                 value: term,
-                label: `Search: ${term}`,
+                label: t('dispatcher.clients.search_tag', { term }),
             })),
             filterForm.data.date
                 ? {
                       key: 'date' as const,
-                      label: `Date: ${formatShortDate(filterForm.data.date)}`,
+                      label: t('dispatcher.filters.active_date', {
+                          date: formatShortDate(filterForm.data.date),
+                      }),
                   }
                 : null,
             filterForm.data.status
                 ? {
                       key: 'status' as const,
-                      label: `Status: ${filterForm.data.status}`,
+                      label: t('dispatcher.filters.active_status', {
+                          status: t(
+                              `common.statuses.${filterForm.data.status.toLowerCase()}`,
+                          ),
+                      }),
                   }
                 : null,
             canFilterByOrganization && filterForm.data.organization_id
                 ? {
                       key: 'organization_id' as const,
-                      label: `Organization: ${
-                          organizations.find(
-                              (organization) =>
-                                  String(organization.id) ===
-                                  filterForm.data.organization_id,
-                          )?.name ?? filterForm.data.organization_id
-                      }`,
+                      label: t('dispatcher.filters.active_organization', {
+                          organization:
+                              organizations.find(
+                                  (organization) =>
+                                      String(organization.id) ===
+                                      filterForm.data.organization_id,
+                              )?.name ?? filterForm.data.organization_id,
+                      }),
                   }
                 : null,
         ] as Array<ActiveFilter | null>
@@ -168,22 +175,22 @@ export default function DispatcherRoutesIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Routes" />
+            <Head title={t('app.navigation.routes')} />
 
             <BackofficePage>
                 <BackofficePageHeader
-                    title="Routes"
-                    description="Manage daily courier routes."
+                    title={t('app.navigation.routes')}
+                    description={t('dispatcher.routes.description')}
                     actions={
                         <>
                             <a
                                 href={`/dispatcher/routes/export${exportQuery ? `?${exportQuery}` : ''}`}
                                 className={backofficeButtonClassName('outline')}
                             >
-                                Export CSV
+                                CSV
                             </a>
                             <BackofficeActionLink href="/dispatcher/routes/create">
-                                Create Route
+                                {t('dispatcher.routes.create_title')}
                             </BackofficeActionLink>
                         </>
                     }
@@ -192,12 +199,12 @@ export default function DispatcherRoutesIndex({
                 <BackofficeCard>
                     <div className="border-b border-[#e5e7eb] px-5 py-4">
                         <div className="mb-4 text-[13px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                            Filters
+                            {t('dispatcher.filters.filters')}
                         </div>
                         <div className="grid gap-4 xl:grid-cols-[2fr_1fr_1fr_auto] xl:items-end">
                             <label className="flex flex-col gap-1.5">
                                 <span className="text-xs font-semibold text-[#6b7280]">
-                                    Search
+                                    {t('dispatcher.filters.search')}
                                 </span>
                                 <div className="relative">
                                     <input
@@ -215,11 +222,13 @@ export default function DispatcherRoutesIndex({
                                             }
                                         }}
                                         className={`${backofficeInputClassName} pr-24`}
-                                        placeholder="Courier, client, address, date, status..."
+                                        placeholder={t(
+                                            'dispatcher.routes.placeholder',
+                                        )}
                                     />
                                     {draftSearch.trim() !== '' ? (
                                         <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2 py-1 text-[11px] font-semibold text-[#1e40af]">
-                                            Enter
+                                            {t('dispatcher.filters.enter')}
                                         </span>
                                     ) : null}
                                 </div>
@@ -227,7 +236,7 @@ export default function DispatcherRoutesIndex({
 
                             <label className="flex flex-col gap-1.5">
                                 <span className="text-xs font-semibold text-[#6b7280]">
-                                    Date
+                                    {t('common.fields.date')}
                                 </span>
                                 <input
                                     id="date"
@@ -246,7 +255,7 @@ export default function DispatcherRoutesIndex({
 
                             <label className="flex flex-col gap-1.5">
                                 <span className="text-xs font-semibold text-[#6b7280]">
-                                    Status
+                                    {t('common.fields.status')}
                                 </span>
                                 <select
                                     id="status"
@@ -260,10 +269,14 @@ export default function DispatcherRoutesIndex({
                                     }
                                     className={backofficeSelectClassName}
                                 >
-                                    <option value="">All statuses</option>
+                                    <option value="">
+                                        {t('dispatcher.filters.all_statuses')}
+                                    </option>
                                     {statuses.map((status) => (
                                         <option key={status} value={status}>
-                                            {status}
+                                            {t(
+                                                `common.statuses.${status.toLowerCase()}`,
+                                            )}
                                         </option>
                                     ))}
                                 </select>
@@ -277,7 +290,7 @@ export default function DispatcherRoutesIndex({
                                     'sm',
                                 )}
                             >
-                                Clear
+                                {t('common.actions.clear')}
                             </button>
                         </div>
 
@@ -285,7 +298,7 @@ export default function DispatcherRoutesIndex({
                             {canFilterByOrganization ? (
                                 <label className="flex flex-col gap-1.5">
                                     <span className="text-xs font-semibold text-[#6b7280]">
-                                        Organization
+                                        {t('common.fields.organization')}
                                     </span>
                                     <select
                                         id="organization_id"
@@ -300,7 +313,9 @@ export default function DispatcherRoutesIndex({
                                         className={backofficeSelectClassName}
                                     >
                                         <option value="">
-                                            All organizations
+                                            {t(
+                                                'dispatcher.filters.all_organizations',
+                                            )}
                                         </option>
                                         {organizations.map((organization) => (
                                             <option
@@ -345,7 +360,7 @@ export default function DispatcherRoutesIndex({
 
                     <BackofficeResultsBar
                         count={deliveryRoutes.length}
-                        noun="routes"
+                        noun={t('dispatcher.nouns.routes')}
                         sortValue={filterForm.data.sort}
                         onSortChange={(value) =>
                             filterForm.setData('sort', value)
@@ -355,8 +370,10 @@ export default function DispatcherRoutesIndex({
 
                     {deliveryRoutes.length === 0 ? (
                         <BackofficeEmptyState
-                            title="No routes created yet"
-                            description="Create a route to assign orders to your couriers."
+                            title={t('dispatcher.routes.empty_title')}
+                            description={t(
+                                'dispatcher.routes.empty_description',
+                            )}
                         />
                     ) : (
                         <div className="overflow-x-auto">
@@ -364,19 +381,19 @@ export default function DispatcherRoutesIndex({
                                 <thead>
                                     <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Courier
+                                            {t('common.fields.courier')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Date
+                                            {t('common.fields.date')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Status
+                                            {t('common.fields.status')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Stops
+                                            {t('common.fields.stops')}
                                         </th>
                                         <th className="px-4 py-3 text-right text-[11px] font-bold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Actions
+                                            {t('common.fields.actions')}
                                         </th>
                                     </tr>
                                 </thead>
@@ -392,7 +409,9 @@ export default function DispatcherRoutesIndex({
                                                     className="font-semibold text-[#111827] hover:text-[#2563eb]"
                                                 >
                                                     {deliveryRoute.courier_name ??
-                                                        'Unassigned courier'}
+                                                        t(
+                                                            'dispatcher.routes.unassigned_courier',
+                                                        )}
                                                 </Link>
                                             </td>
                                             <td className="px-4 py-4 text-[#111827]">
@@ -419,7 +438,9 @@ export default function DispatcherRoutesIndex({
                                                             'sm',
                                                         )}
                                                     >
-                                                        Open
+                                                        {t(
+                                                            'dispatcher.routes.open',
+                                                        )}
                                                     </Link>
                                                     <a
                                                         href={`/dispatcher/routes/${deliveryRoute.id}/print`}
@@ -430,7 +451,9 @@ export default function DispatcherRoutesIndex({
                                                             'sm',
                                                         )}
                                                     >
-                                                        Print
+                                                        {t(
+                                                            'dispatcher.routes.print',
+                                                        )}
                                                     </a>
                                                 </div>
                                             </td>
