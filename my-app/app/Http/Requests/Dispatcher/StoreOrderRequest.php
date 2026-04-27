@@ -11,19 +11,6 @@ class StoreOrderRequest extends FormRequest
 {
     use LocalizesValidationAttributes;
 
-    /**
-     * @var list<string>
-     */
-    private const STATUSES = [
-        'NEW',
-        'PENDING',
-        'ASSIGNED',
-        'IN_PROGRESS',
-        'COMPLETED',
-        'FAILED',
-        'CANCELLED',
-    ];
-
     public function authorize(): bool
     {
         return $this->user()?->can('create', Order::class) ?? false;
@@ -55,7 +42,7 @@ class StoreOrderRequest extends FormRequest
             'date' => ['required', 'date'],
             'time_from' => ['required', 'date_format:H:i'],
             'time_to' => ['required', 'date_format:H:i', 'after:time_from'],
-            'status' => ['required', 'string', Rule::in(self::STATUSES)],
+            'status' => ['prohibited'],
             'notes' => ['nullable', 'string', 'max:500'],
         ];
     }

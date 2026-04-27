@@ -25,7 +25,6 @@ type DispatcherOrdersCreateProps = {
     organizations: OrganizationOption[];
     clients: ClientOption[];
     addresses: AddressOption[];
-    statuses: string[];
     canSelectOrganization: boolean;
 };
 
@@ -33,7 +32,6 @@ export default function DispatcherOrdersCreate({
     organizations,
     clients,
     addresses,
-    statuses,
     canSelectOrganization,
 }: DispatcherOrdersCreateProps) {
     const { t } = useTranslation();
@@ -47,7 +45,6 @@ export default function DispatcherOrdersCreate({
         date: '',
         time_from: '',
         time_to: '',
-        status: statuses[0] ?? 'NEW',
         notes: '',
     });
 
@@ -189,7 +186,7 @@ export default function DispatcherOrdersCreate({
                                 </BackofficeField>
                             </div>
 
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 <BackofficeField
                                     label={t('common.fields.date')}
                                     error={form.errors.date}
@@ -245,32 +242,6 @@ export default function DispatcherOrdersCreate({
                                         }
                                         className={backofficeInputClassName}
                                     />
-                                </BackofficeField>
-
-                                <BackofficeField
-                                    label={t('common.fields.status')}
-                                    error={form.errors.status}
-                                >
-                                    <select
-                                        id="status"
-                                        name="status"
-                                        value={form.data.status}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'status',
-                                                event.target.value,
-                                            )
-                                        }
-                                        className={backofficeSelectClassName}
-                                    >
-                                        {statuses.map((status) => (
-                                            <option key={status} value={status}>
-                                                {t(
-                                                    `common.statuses.${status.toLowerCase()}`,
-                                                )}
-                                            </option>
-                                        ))}
-                                    </select>
                                 </BackofficeField>
                             </div>
 

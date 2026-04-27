@@ -62,6 +62,10 @@ return [
         'route_stop' => [
             'pending_only' => 'No maršruta var noņemt tikai gaidošas pieturas.',
         ],
+        'order' => [
+            'cancel_blocked' => 'Šo pasūtījumu nevar atcelt, jo piegāde jau ir sākta vai pabeigta.',
+            'delete_blocked' => 'Šo pasūtījumu nevar dzēst, jo tas jau ir pievienots maršrutam. Atceliet to, ja atcelšana ir atļauta.',
+        ],
     ],
 
     'attributes' => [

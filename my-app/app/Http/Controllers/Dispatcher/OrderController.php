@@ -8,11 +8,18 @@ use App\Http\Requests\Dispatcher\StoreOrderRequest;
 use App\Http\Requests\Dispatcher\UpdateOrderRequest;
 use App\Models\Address;
 use App\Models\Client;
+use App\Models\DeliveryRoute;
 use App\Models\Order;
 use App\Models\Organization;
+use App\Models\RouteStop;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -50,6 +57,11 @@ class OrderController extends Controller
         ];
 
         $orders = $this->filteredOrdersQuery($request, $filters)
+            ->withCount([
+                'routeStops',
+                'routeStops as non_pending_route_stops_count' => fn (Builder $query) => $query
+                    ->where('status', '!=', 'PENDING'),
+            ])
             ->get([
                 'id',
                 'organization_id',
@@ -80,6 +92,8 @@ class OrderController extends Controller
                     'address_label' => collect([$order->address?->city, $order->address?->street])
                         ->filter()
                         ->join(', '),
+                    'can_cancel' => $this->canCancelOrder($order),
+                    'can_delete' => (int) ($order->route_stops_count ?? 0) === 0,
                 ]),
             'filters' => $filters,
             'statuses' => self::STATUSES,
@@ -151,7 +165,6 @@ class OrderController extends Controller
             'organizations' => $this->organizationsForUser($request),
             'clients' => $this->clientsForUser($request),
             'addresses' => $this->addressesForUser($request),
-            'statuses' => self::STATUSES,
             'canSelectOrganization' => $request->user()->isAdmin(),
         ]);
     }
@@ -170,7 +183,7 @@ class OrderController extends Controller
             'date' => $data['date'],
             'time_from' => $data['time_from'],
             'time_to' => $data['time_to'],
-            'status' => $data['status'],
+            'status' => 'NEW',
             'notes' => $data['notes'] ?? null,
         ]);
 
@@ -198,7 +211,6 @@ class OrderController extends Controller
             'organizations' => $this->organizationsForUser($request),
             'clients' => $this->clientsForUser($request),
             'addresses' => $this->addressesForUser($request),
-            'statuses' => self::STATUSES,
             'canSelectOrganization' => $request->user()->isAdmin(),
         ]);
     }
@@ -217,9 +229,46 @@ class OrderController extends Controller
             'date' => $data['date'],
             'time_from' => $data['time_from'],
             'time_to' => $data['time_to'],
-            'status' => $data['status'],
             'notes' => $data['notes'] ?? null,
         ]);
+
+        return to_route('dispatcher.orders.index');
+    }
+
+    public function cancel(Request $request, Order $order): RedirectResponse
+    {
+        $this->authorizeDispatcherAccess($request);
+        $this->authorize('update', $order);
+
+        $order->load([
+            'routeStops.route',
+        ]);
+
+        if (! $this->canCancelOrder($order)) {
+            throw ValidationException::withMessages([
+                'order' => __('validation.custom.order.cancel_blocked'),
+            ]);
+        }
+
+        DB::transaction(function () use ($order): void {
+            /** @var Collection<int, DeliveryRoute> $routes */
+            $routes = $order->routeStops
+                ->pluck('route')
+                ->filter()
+                ->unique('id')
+                ->values();
+
+            $order->routeStops()->delete();
+
+            $order->update([
+                'status' => 'CANCELLED',
+            ]);
+
+            foreach ($routes as $route) {
+                $this->resequenceRouteStops($route);
+                $this->refreshRouteStatus($route);
+            }
+        });
 
         return to_route('dispatcher.orders.index');
     }
@@ -229,7 +278,19 @@ class OrderController extends Controller
         $this->authorizeDispatcherAccess($request);
         $this->authorize('delete', $order);
 
-        $order->delete();
+        if ($order->routeStops()->exists()) {
+            throw ValidationException::withMessages([
+                'order' => __('validation.custom.order.delete_blocked'),
+            ]);
+        }
+
+        try {
+            $order->delete();
+        } catch (QueryException) {
+            throw ValidationException::withMessages([
+                'order' => __('validation.custom.order.delete_blocked'),
+            ]);
+        }
 
         return to_route('dispatcher.orders.index');
     }
@@ -354,5 +415,70 @@ class OrderController extends Controller
             'updated_asc' => $query->orderBy('updated_at'),
             default => $query->orderByDesc('date')->orderBy('time_from'),
         };
+    }
+
+    private function canCancelOrder(Order $order): bool
+    {
+        if (! in_array($order->status, ['NEW', 'PENDING', 'ASSIGNED'], true)) {
+            return false;
+        }
+
+        $routeStopsCount = (int) ($order->route_stops_count ?? $order->routeStops->count());
+        $nonPendingRouteStopsCount = (int) ($order->non_pending_route_stops_count
+            ?? $order->routeStops->where('status', '!=', 'PENDING')->count());
+
+        return $routeStopsCount === 0 || $nonPendingRouteStopsCount === 0;
+    }
+
+    private function resequenceRouteStops(DeliveryRoute $deliveryRoute): void
+    {
+        $routeStops = RouteStop::query()
+            ->with('order:id,date,time_from')
+            ->where('route_id', $deliveryRoute->id)
+            ->orderBy('seq_no')
+            ->get();
+
+        foreach ($routeStops as $index => $routeStop) {
+            $routeStop->update([
+                'seq_no' => $index + 1,
+                'planned_eta' => $this->plannedEtaForStop($routeStop),
+            ]);
+        }
+    }
+
+    private function plannedEtaForStop(RouteStop $routeStop): ?Carbon
+    {
+        if (! $routeStop->order?->date || ! $routeStop->order?->time_from) {
+            return null;
+        }
+
+        return Carbon::parse($routeStop->order->date.' '.$routeStop->order->time_from);
+    }
+
+    private function refreshRouteStatus(DeliveryRoute $deliveryRoute): void
+    {
+        $deliveryRoute->load('routeStops');
+
+        $statuses = $deliveryRoute->routeStops->pluck('status');
+
+        if ($statuses->isNotEmpty() && $statuses->every(fn (string $status) => $status === 'COMPLETED')) {
+            $deliveryRoute->update([
+                'status' => 'DONE',
+            ]);
+
+            return;
+        }
+
+        if ($statuses->contains(fn (string $status) => $status !== 'PENDING')) {
+            $deliveryRoute->update([
+                'status' => 'IN_PROGRESS',
+            ]);
+
+            return;
+        }
+
+        $deliveryRoute->update([
+            'status' => 'PLANNED',
+        ]);
     }
 }

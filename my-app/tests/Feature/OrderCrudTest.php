@@ -4,8 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Address;
 use App\Models\Client;
+use App\Models\Courier;
+use App\Models\DeliveryRoute;
 use App\Models\Order;
 use App\Models\Organization;
+use App\Models\RouteStop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -168,7 +171,6 @@ class OrderCrudTest extends TestCase
                 'date' => '2026-04-01',
                 'time_from' => '09:00',
                 'time_to' => '11:00',
-                'status' => 'NEW',
                 'notes' => 'Morning delivery',
             ])
             ->assertRedirect(route('dispatcher.orders.index'));
@@ -176,6 +178,7 @@ class OrderCrudTest extends TestCase
         $order = Order::query()->where('notes', 'Morning delivery')->firstOrFail();
 
         $this->assertSame($organization->id, $order->organization_id);
+        $this->assertSame('NEW', $order->status);
 
         $this->actingAs($dispatcher)
             ->patch(route('dispatcher.orders.update', $order), [
@@ -184,7 +187,6 @@ class OrderCrudTest extends TestCase
                 'date' => '2026-04-02',
                 'time_from' => '10:00',
                 'time_to' => '12:00',
-                'status' => 'ASSIGNED',
                 'notes' => 'Updated order',
             ])
             ->assertRedirect(route('dispatcher.orders.index'));
@@ -192,7 +194,7 @@ class OrderCrudTest extends TestCase
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
             'organization_id' => $organization->id,
-            'status' => 'ASSIGNED',
+            'status' => 'NEW',
             'notes' => 'Updated order',
         ]);
 
@@ -228,7 +230,6 @@ class OrderCrudTest extends TestCase
                 'date' => '2026-04-02',
                 'time_from' => '10:00',
                 'time_to' => '12:00',
-                'status' => 'ASSIGNED',
             ])
             ->assertForbidden();
 
@@ -252,7 +253,6 @@ class OrderCrudTest extends TestCase
                 'date' => '2026-04-01',
                 'time_from' => '09:00',
                 'time_to' => '11:00',
-                'status' => 'NEW',
             ])
             ->assertRedirect(route('dispatcher.orders.create'))
             ->assertSessionHasErrors(['client_id', 'address_id']);
@@ -274,7 +274,6 @@ class OrderCrudTest extends TestCase
                 'date' => '2026-04-01',
                 'time_from' => '08:00',
                 'time_to' => '10:00',
-                'status' => 'NEW',
                 'notes' => 'Admin order',
             ])
             ->assertRedirect(route('dispatcher.orders.index'));
@@ -289,7 +288,6 @@ class OrderCrudTest extends TestCase
                 'date' => '2026-04-03',
                 'time_from' => '13:00',
                 'time_to' => '15:00',
-                'status' => 'IN_PROGRESS',
                 'notes' => 'Moved order',
             ])
             ->assertRedirect(route('dispatcher.orders.index'));
@@ -299,7 +297,7 @@ class OrderCrudTest extends TestCase
             'organization_id' => $organizationB->id,
             'client_id' => $clientB->id,
             'address_id' => $addressB->id,
-            'status' => 'IN_PROGRESS',
+            'status' => 'NEW',
         ]);
     }
 
@@ -333,7 +331,6 @@ class OrderCrudTest extends TestCase
                 'date' => '2026-04-01',
                 'time_from' => '09:00',
                 'time_to' => '11:00',
-                'status' => 'NEW',
             ])
             ->assertForbidden();
     }
@@ -352,10 +349,139 @@ class OrderCrudTest extends TestCase
                 'date' => '2026-04-01',
                 'time_from' => '12:00',
                 'time_to' => '11:00',
-                'status' => 'NOT_VALID',
             ])
             ->assertRedirect(route('dispatcher.orders.create'))
-            ->assertSessionHasErrors(['time_to', 'status']);
+            ->assertSessionHasErrors(['time_to']);
+    }
+
+    public function test_order_status_is_not_manually_set_from_create_or_edit_forms(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        [$client, $address] = $this->createClientAndAddress($organization);
+        $order = Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'address_id' => $address->id,
+            'status' => 'ASSIGNED',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.orders.create'))
+            ->post(route('dispatcher.orders.store'), [
+                'client_id' => $client->id,
+                'address_id' => $address->id,
+                'date' => '2026-04-01',
+                'time_from' => '09:00',
+                'time_to' => '11:00',
+                'status' => 'FAILED',
+            ])
+            ->assertRedirect(route('dispatcher.orders.create'))
+            ->assertSessionHasErrors(['status']);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.orders.edit', $order))
+            ->patch(route('dispatcher.orders.update', $order), [
+                'client_id' => $client->id,
+                'address_id' => $address->id,
+                'date' => '2026-04-02',
+                'time_from' => '10:00',
+                'time_to' => '12:00',
+                'status' => 'COMPLETED',
+            ])
+            ->assertRedirect(route('dispatcher.orders.edit', $order))
+            ->assertSessionHasErrors(['status']);
+    }
+
+    public function test_dispatcher_can_cancel_unstarted_order_and_remove_pending_route_stop(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courierUser = User::factory()->courier($organization->id)->create();
+        Courier::query()->create([
+            'user_id' => $courierUser->id,
+            'on_duty' => true,
+        ]);
+        [$client, $address] = $this->createClientAndAddress($organization);
+        $order = Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'address_id' => $address->id,
+            'status' => 'ASSIGNED',
+            'date' => '2026-04-10',
+            'time_from' => '09:00:00',
+        ]);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courierUser->id,
+            'date' => '2026-04-10',
+            'status' => 'PLANNED',
+        ]);
+        $routeStop = RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $order->id,
+            'seq_no' => 1,
+            'status' => 'PENDING',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->patch(route('dispatcher.orders.cancel', $order))
+            ->assertRedirect(route('dispatcher.orders.index'));
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'CANCELLED',
+        ]);
+        $this->assertDatabaseMissing('route_stops', [
+            'id' => $routeStop->id,
+        ]);
+        $this->assertDatabaseHas('routes', [
+            'id' => $deliveryRoute->id,
+            'status' => 'PLANNED',
+        ]);
+    }
+
+    public function test_order_cancel_and_delete_are_blocked_after_delivery_starts(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courierUser = User::factory()->courier($organization->id)->create();
+        Courier::query()->create([
+            'user_id' => $courierUser->id,
+            'on_duty' => true,
+        ]);
+        [$client, $address] = $this->createClientAndAddress($organization);
+        $order = Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'address_id' => $address->id,
+            'status' => 'IN_PROGRESS',
+        ]);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courierUser->id,
+            'status' => 'IN_PROGRESS',
+        ]);
+        RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $order->id,
+            'seq_no' => 1,
+            'status' => 'COMPLETED',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.orders.index'))
+            ->patch(route('dispatcher.orders.cancel', $order))
+            ->assertRedirect(route('dispatcher.orders.index'))
+            ->assertSessionHasErrors(['order']);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.orders.index'))
+            ->delete(route('dispatcher.orders.destroy', $order))
+            ->assertRedirect(route('dispatcher.orders.index'))
+            ->assertSessionHasErrors(['order']);
     }
 
     /**

@@ -187,6 +187,7 @@ Route::middleware(['auth'])
         Route::post('orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
         Route::patch('orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+        Route::patch('orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
         Route::delete('orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
 
         Route::get('routes', [DeliveryRouteController::class, 'index'])->name('routes.index');

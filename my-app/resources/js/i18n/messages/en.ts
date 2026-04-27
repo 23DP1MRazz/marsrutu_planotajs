@@ -343,9 +343,14 @@ const en = {
         },
         orders: {
             back: 'Back to orders',
+            cancel_confirm: 'Cancel this order?',
+            cancel_order: 'Cancel order',
             create_description: 'Add a new delivery order.',
             create_title: 'Create Order',
+            delete_blocked:
+                'Orders already attached to routes cannot be deleted.',
             delete_confirm: 'Delete this order?',
+            delete_order: 'Delete order',
             description: 'Manage delivery orders for your organization.',
             edit_description: 'Update delivery order details.',
             edit_title: 'Edit Order',

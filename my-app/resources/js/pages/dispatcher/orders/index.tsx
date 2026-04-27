@@ -1,5 +1,6 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,
@@ -53,6 +54,35 @@ type ActiveFilter = {
     value?: string;
 };
 
+type PopupPosition = {
+    top: number;
+    left: number;
+};
+
+type ActionPopup = {
+    id: number;
+    message: string;
+    position?: PopupPosition;
+    visible: boolean;
+};
+
+function popupPositionFromElement(element: HTMLElement): PopupPosition {
+    const rect = element.getBoundingClientRect();
+    const popupWidth = Math.min(320, window.innerWidth - 32);
+    const hasRoomOnRight = window.innerWidth - rect.right >= popupWidth + 16;
+    const left = hasRoomOnRight
+        ? rect.right + 8
+        : Math.max(16, rect.left - popupWidth - 200);
+
+    return {
+        left,
+        top: Math.min(
+            Math.max(40, rect.top + rect.height / 2),
+            window.innerHeight - 40,
+        ),
+    };
+}
+
 export default function DispatcherOrdersIndex({
     orders,
     filters,
@@ -68,7 +98,15 @@ export default function DispatcherOrdersIndex({
         organization_id: filters.organization_id ?? '',
         sort: filters.sort ?? 'date_desc',
     });
+    const actionForm = useForm({});
+    const actionErrors = actionForm.errors as Record<
+        string,
+        string | undefined
+    >;
     const [draftSearch, setDraftSearch] = useState('');
+    const [actionPopup, setActionPopup] = useState<ActionPopup | null>(null);
+    const [lastActionPosition, setLastActionPosition] =
+        useState<PopupPosition | null>(null);
     const searchTerms = splitSearchTerms(filterForm.data.search);
     const liveSearch = joinSearchTerms([
         ...searchTerms,
@@ -97,9 +135,82 @@ export default function DispatcherOrdersIndex({
         url: '/dispatcher/orders',
     });
 
-    const deleteOrder = (orderId: number) => {
+    useEffect(() => {
+        if (!actionPopup) {
+            return;
+        }
+
+        const hideTimeoutId = window.setTimeout(() => {
+            setActionPopup((currentPopup) =>
+                currentPopup?.id === actionPopup.id
+                    ? { ...currentPopup, visible: false }
+                    : currentPopup,
+            );
+            actionForm.clearErrors();
+        }, 1000);
+
+        const removeTimeoutId = window.setTimeout(() => {
+            setActionPopup((currentPopup) =>
+                currentPopup?.id === actionPopup.id ? null : currentPopup,
+            );
+        }, 1250);
+
+        return () => {
+            window.clearTimeout(hideTimeoutId);
+            window.clearTimeout(removeTimeoutId);
+        };
+    }, [actionForm, actionPopup]);
+
+    useEffect(() => {
+        if (!actionErrors.order) {
+            return;
+        }
+
+        setActionPopup({
+            id: Date.now(),
+            message: actionErrors.order,
+            position: lastActionPosition ?? undefined,
+            visible: true,
+        });
+    }, [actionErrors.order, lastActionPosition]);
+
+    const showActionPopup = (message: string, trigger: HTMLElement) => {
+        const position = popupPositionFromElement(trigger);
+
+        setLastActionPosition(position);
+        actionForm.clearErrors();
+        setActionPopup({
+            id: Date.now(),
+            message,
+            position,
+            visible: true,
+        });
+    };
+
+    const deleteOrder = (order: OrderRecord, trigger: HTMLElement) => {
+        if (!order.can_delete) {
+            showActionPopup(t('dispatcher.orders.delete_blocked'), trigger);
+            return;
+        }
+
+        setLastActionPosition(popupPositionFromElement(trigger));
+
         if (window.confirm(t('dispatcher.orders.delete_confirm'))) {
-            router.delete(`/dispatcher/orders/${orderId}`);
+            setActionPopup(null);
+            actionForm.delete(`/dispatcher/orders/${order.id}`, {
+                preserveScroll: true,
+            });
+        }
+    };
+
+    const cancelOrder = (orderId: number, trigger: HTMLElement) => {
+        setLastActionPosition(popupPositionFromElement(trigger));
+
+        if (window.confirm(t('dispatcher.orders.cancel_confirm'))) {
+            setActionPopup(null);
+            actionForm.patch(`/dispatcher/orders/${orderId}/cancel`, {
+                preserveScroll: true,
+            });
         }
     };
 
@@ -459,13 +570,57 @@ export default function DispatcherOrdersIndex({
                                                             <EditIcon />
                                                         </Link>
                                                     </BackofficeIconButton>
+                                                    {order.can_cancel ? (
+                                                        <BackofficeIconButton
+                                                            type="button"
+                                                            onClick={(event) =>
+                                                                cancelOrder(
+                                                                    order.id,
+                                                                    event.currentTarget,
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                actionForm.processing
+                                                            }
+                                                            title={t(
+                                                                'dispatcher.orders.cancel_order',
+                                                            )}
+                                                            aria-label={t(
+                                                                'dispatcher.orders.cancel_order',
+                                                            )}
+                                                        >
+                                                            <XCircle className="h-3.5 w-3.5" />
+                                                        </BackofficeIconButton>
+                                                    ) : null}
                                                     <BackofficeIconButton
                                                         type="button"
                                                         variant="danger"
-                                                        onClick={() =>
+                                                        onClick={(event) =>
                                                             deleteOrder(
-                                                                order.id,
+                                                                order,
+                                                                event.currentTarget,
                                                             )
+                                                        }
+                                                        disabled={
+                                                            actionForm.processing
+                                                        }
+                                                        title={
+                                                            order.can_delete
+                                                                ? t(
+                                                                      'dispatcher.orders.delete_order',
+                                                                  )
+                                                                : t(
+                                                                      'dispatcher.orders.delete_blocked',
+                                                                  )
+                                                        }
+                                                        aria-label={
+                                                            order.can_delete
+                                                                ? t(
+                                                                      'dispatcher.orders.delete_order',
+                                                                  )
+                                                                : t(
+                                                                      'dispatcher.orders.delete_blocked',
+                                                                  )
                                                         }
                                                     >
                                                         <DeleteIcon />
@@ -480,6 +635,35 @@ export default function DispatcherOrdersIndex({
                     )}
                 </BackofficeCard>
             </BackofficePage>
+
+            {actionPopup ? (
+                <div
+                    key={actionPopup.id}
+                    role="status"
+                    aria-live="polite"
+                    style={
+                        actionPopup.position
+                            ? {
+                                  left: actionPopup.position.left,
+                                  top: actionPopup.position.top,
+                              }
+                            : undefined
+                    }
+                    className={`fixed z-[60] max-w-[min(320px,calc(100vw-2rem))] rounded-lg border border-[#fecaca] bg-white px-4 py-3 text-sm font-medium text-[#991b1b] shadow-[0_18px_40px_rgba(17,24,39,0.16)] transition duration-250 ease-out ${
+                        actionPopup.position ? '' : 'top-20 right-4'
+                    } ${
+                        actionPopup.visible
+                            ? actionPopup.position
+                                ? '-translate-y-1/2 opacity-100'
+                                : 'translate-y-0 opacity-100'
+                            : actionPopup.position
+                              ? '-translate-y-[calc(50%+0.25rem)] opacity-0'
+                              : '-translate-y-2 opacity-0'
+                    }`}
+                >
+                    {actionPopup.message}
+                </div>
+            ) : null}
         </AppLayout>
     );
 }

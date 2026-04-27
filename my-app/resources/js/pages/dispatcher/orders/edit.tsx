@@ -24,7 +24,7 @@ import type { BreadcrumbItem } from '@/types';
 
 type EditableOrder = Omit<
     OrderRecord,
-    'updated_at' | 'client_name' | 'address_label'
+    'updated_at' | 'client_name' | 'address_label' | 'can_cancel' | 'can_delete'
 >;
 
 type DispatcherOrdersEditProps = {
@@ -33,7 +33,6 @@ type DispatcherOrdersEditProps = {
     organizations: OrganizationOption[];
     clients: ClientOption[];
     addresses: AddressOption[];
-    statuses: string[];
     canSelectOrganization: boolean;
 };
 
@@ -43,7 +42,6 @@ export default function DispatcherOrdersEdit({
     organizations,
     clients,
     addresses,
-    statuses,
     canSelectOrganization,
 }: DispatcherOrdersEditProps) {
     const { t } = useTranslation();
@@ -65,7 +63,6 @@ export default function DispatcherOrdersEdit({
         date: order.date,
         time_from: order.time_from.slice(0, 5),
         time_to: order.time_to.slice(0, 5),
-        status: order.status,
         notes: order.notes ?? '',
     });
 
@@ -199,7 +196,7 @@ export default function DispatcherOrdersEdit({
                                 </BackofficeField>
                             </div>
 
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 <BackofficeField
                                     label={t('common.fields.date')}
                                     error={form.errors.date}
@@ -255,32 +252,6 @@ export default function DispatcherOrdersEdit({
                                         }
                                         className={backofficeInputClassName}
                                     />
-                                </BackofficeField>
-
-                                <BackofficeField
-                                    label={t('common.fields.status')}
-                                    error={form.errors.status}
-                                >
-                                    <select
-                                        id="status"
-                                        name="status"
-                                        value={form.data.status}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'status',
-                                                event.target.value,
-                                            )
-                                        }
-                                        className={backofficeSelectClassName}
-                                    >
-                                        {statuses.map((status) => (
-                                            <option key={status} value={status}>
-                                                {t(
-                                                    `common.statuses.${status.toLowerCase()}`,
-                                                )}
-                                            </option>
-                                        ))}
-                                    </select>
                                 </BackofficeField>
                             </div>
 

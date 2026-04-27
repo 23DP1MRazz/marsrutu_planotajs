@@ -62,6 +62,10 @@ return [
         'route_stop' => [
             'pending_only' => 'Only pending stops can be removed from a route.',
         ],
+        'order' => [
+            'cancel_blocked' => 'This order cannot be cancelled because delivery has already started or finished.',
+            'delete_blocked' => 'This order cannot be deleted because it is already attached to a route. Cancel it instead when cancellation is allowed.',
+        ],
     ],
 
     'attributes' => [

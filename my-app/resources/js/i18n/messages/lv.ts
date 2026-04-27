@@ -344,9 +344,14 @@ const lv = {
         },
         orders: {
             back: 'Atpakaļ uz pasūtījumiem',
+            cancel_confirm: 'Atcelt šo pasūtījumu?',
+            cancel_order: 'Atcelt pasūtījumu',
             create_description: 'Pievienojiet jaunu piegādes pasūtījumu.',
             create_title: 'Izveidot pasūtījumu',
+            delete_blocked:
+                'Pasūtījumus, kas jau pievienoti maršrutiem, nevar dzēst.',
             delete_confirm: 'Dzēst šo pasūtījumu?',
+            delete_order: 'Dzēst pasūtījumu',
             description: 'Pārvaldiet piegādes pasūtījumus savai organizācijai.',
             edit_description: 'Atjauniniet piegādes pasūtījuma detaļas.',
             edit_title: 'Rediģēt pasūtījumu',

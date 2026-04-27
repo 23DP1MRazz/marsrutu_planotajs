@@ -57,6 +57,8 @@ export type OrderRecord = {
     updated_at: string;
     client_name: string | null;
     address_label: string;
+    can_cancel: boolean;
+    can_delete: boolean;
 };
 
 export type OrderFilters = {
