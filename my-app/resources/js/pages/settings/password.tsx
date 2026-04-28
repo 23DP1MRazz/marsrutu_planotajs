@@ -2,11 +2,13 @@ import { Transition } from '@headlessui/react';
 import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import PasswordController from '@/actions/App/Http/Controllers/Settings/PasswordController';
-import Heading from '@/components/heading';
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import {
+    BackofficeCard,
+    BackofficeCardBody,
+    BackofficeField,
+    backofficeButtonClassName,
+    backofficeInputClassName,
+} from '@/components/backoffice/ui';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
@@ -31,128 +33,135 @@ export default function Password() {
             <h1 className="sr-only">{t('settings.layout.password')}</h1>
 
             <SettingsLayout>
-                <div className="space-y-6">
-                    <Heading
-                        variant="small"
-                        title={t('settings.password.title')}
-                        description={t('settings.password.description')}
-                    />
+                <BackofficeCard>
+                    <BackofficeCardBody className="space-y-6">
+                        <div>
+                            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#111827]">
+                                {t('settings.password.title')}
+                            </h2>
+                            <p className="mt-1 text-sm text-[#6b7280]">
+                                {t('settings.password.description')}
+                            </p>
+                        </div>
+                        <Form
+                            {...PasswordController.update.form()}
+                            options={{
+                                preserveScroll: true,
+                            }}
+                            resetOnError={[
+                                'password',
+                                'password_confirmation',
+                                'current_password',
+                            ]}
+                            resetOnSuccess
+                            onError={(errors) => {
+                                if (errors.password) {
+                                    passwordInput.current?.focus();
+                                }
 
-                    <Form
-                        {...PasswordController.update.form()}
-                        options={{
-                            preserveScroll: true,
-                        }}
-                        resetOnError={[
-                            'password',
-                            'password_confirmation',
-                            'current_password',
-                        ]}
-                        resetOnSuccess
-                        onError={(errors) => {
-                            if (errors.password) {
-                                passwordInput.current?.focus();
-                            }
+                                if (errors.current_password) {
+                                    currentPasswordInput.current?.focus();
+                                }
+                            }}
+                            className="space-y-6"
+                        >
+                            {({ errors, processing, recentlySuccessful }) => (
+                                <>
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        <BackofficeField
+                                            label={t(
+                                                'settings.password.current_password',
+                                            )}
+                                            error={errors.current_password}
+                                        >
+                                            <input
+                                                id="current_password"
+                                                ref={currentPasswordInput}
+                                                name="current_password"
+                                                type="password"
+                                                className={
+                                                    backofficeInputClassName
+                                                }
+                                                autoComplete="current-password"
+                                                placeholder={t(
+                                                    'settings.password.current_password',
+                                                )}
+                                            />
+                                        </BackofficeField>
 
-                            if (errors.current_password) {
-                                currentPasswordInput.current?.focus();
-                            }
-                        }}
-                        className="space-y-6"
-                    >
-                        {({ errors, processing, recentlySuccessful }) => (
-                            <>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="current_password">
-                                        {t(
-                                            'settings.password.current_password',
-                                        )}
-                                    </Label>
+                                        <div className="hidden md:block" />
 
-                                    <Input
-                                        id="current_password"
-                                        ref={currentPasswordInput}
-                                        name="current_password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="current-password"
-                                        placeholder={t(
-                                            'settings.password.current_password',
-                                        )}
-                                    />
+                                        <BackofficeField
+                                            label={t(
+                                                'settings.password.new_password',
+                                            )}
+                                            error={errors.password}
+                                        >
+                                            <input
+                                                id="password"
+                                                ref={passwordInput}
+                                                name="password"
+                                                type="password"
+                                                className={
+                                                    backofficeInputClassName
+                                                }
+                                                autoComplete="new-password"
+                                                placeholder={t(
+                                                    'settings.password.new_password',
+                                                )}
+                                            />
+                                        </BackofficeField>
 
-                                    <InputError
-                                        message={errors.current_password}
-                                    />
-                                </div>
+                                        <BackofficeField
+                                            label={t(
+                                                'settings.password.confirm_password',
+                                            )}
+                                            error={errors.password_confirmation}
+                                        >
+                                            <input
+                                                id="password_confirmation"
+                                                name="password_confirmation"
+                                                type="password"
+                                                className={
+                                                    backofficeInputClassName
+                                                }
+                                                autoComplete="new-password"
+                                                placeholder={t(
+                                                    'settings.password.confirm_password',
+                                                )}
+                                            />
+                                        </BackofficeField>
+                                    </div>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password">
-                                        {t('settings.password.new_password')}
-                                    </Label>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            type="submit"
+                                            disabled={processing}
+                                            data-test="update-password-button"
+                                            className={backofficeButtonClassName(
+                                                'primary',
+                                            )}
+                                        >
+                                            {t('settings.password.save')}
+                                        </button>
 
-                                    <Input
-                                        id="password"
-                                        ref={passwordInput}
-                                        name="password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="new-password"
-                                        placeholder={t(
-                                            'settings.password.new_password',
-                                        )}
-                                    />
-
-                                    <InputError message={errors.password} />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password_confirmation">
-                                        {t(
-                                            'settings.password.confirm_password',
-                                        )}
-                                    </Label>
-
-                                    <Input
-                                        id="password_confirmation"
-                                        name="password_confirmation"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="new-password"
-                                        placeholder={t(
-                                            'settings.password.confirm_password',
-                                        )}
-                                    />
-
-                                    <InputError
-                                        message={errors.password_confirmation}
-                                    />
-                                </div>
-
-                                <div className="flex items-center gap-4">
-                                    <Button
-                                        disabled={processing}
-                                        data-test="update-password-button"
-                                    >
-                                        {t('settings.password.save')}
-                                    </Button>
-
-                                    <Transition
-                                        show={recentlySuccessful}
-                                        enter="transition ease-in-out"
-                                        enterFrom="opacity-0"
-                                        leave="transition ease-in-out"
-                                        leaveTo="opacity-0"
-                                    >
-                                        <p className="text-sm text-neutral-600">
-                                            {t('settings.profile.saved')}
-                                        </p>
-                                    </Transition>
-                                </div>
-                            </>
-                        )}
-                    </Form>
-                </div>
+                                        <Transition
+                                            show={recentlySuccessful}
+                                            enter="transition ease-in-out"
+                                            enterFrom="opacity-0"
+                                            leave="transition ease-in-out"
+                                            leaveTo="opacity-0"
+                                        >
+                                            <p className="text-sm text-neutral-600">
+                                                {t('settings.profile.saved')}
+                                            </p>
+                                        </Transition>
+                                    </div>
+                                </>
+                            )}
+                        </Form>
+                    </BackofficeCardBody>
+                </BackofficeCard>
             </SettingsLayout>
         </AppLayout>
     );

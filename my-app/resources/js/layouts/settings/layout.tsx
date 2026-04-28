@@ -1,14 +1,16 @@
 import { Link, usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import { CourierMobileHeader } from '@/components/courier/mobile-ui';
-import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import {
+    BackofficeCard,
+    BackofficePage,
+    BackofficePageHeader,
+    backofficeButtonClassName,
+} from '@/components/backoffice/ui';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn, toUrl } from '@/lib/utils';
-import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editPassword } from '@/routes/user-password';
 import type { NavItem, SharedData } from '@/types';
@@ -30,20 +32,14 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             href: editPassword(),
             icon: null,
         },
-        {
-            title: t('settings.layout.appearance'),
-            href: editAppearance(),
-            icon: null,
-        },
     ];
 
-    // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {
         return null;
     }
 
     return (
-        <div>
+        <BackofficePage>
             {isCourier && isMobile ? (
                 <CourierMobileHeader
                     title={t('settings.layout.title')}
@@ -53,47 +49,57 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             ) : null}
 
             <div className="px-4 py-6">
-                <Heading
+                <BackofficePageHeader
                     title={t('settings.layout.title')}
                     description={t('settings.layout.description')}
+                    actions={
+                        !isCourier || !isMobile ? (
+                            <Link
+                                href="/dashboard"
+                                className={backofficeButtonClassName('outline')}
+                            >
+                                {t('common.actions.back')}
+                            </Link>
+                        ) : undefined
+                    }
                 />
 
-                <div className="flex flex-col lg:flex-row lg:space-x-12">
-                    <aside className="w-full max-w-xl lg:w-48">
-                        <nav
-                            className="flex flex-col space-y-1 space-x-0"
-                            aria-label={t('settings.layout.title')}
-                        >
-                            {sidebarNavItems.map((item, index) => (
-                                <Button
-                                    key={`${toUrl(item.href)}-${index}`}
-                                    size="sm"
-                                    variant="ghost"
-                                    asChild
-                                    className={cn('w-full justify-start', {
-                                        'bg-muted': isCurrentUrl(item.href),
-                                    })}
-                                >
-                                    <Link href={item.href}>
+                <div className="mt-5 grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
+                    <aside>
+                        <BackofficeCard className="p-3">
+                            <nav
+                                className="flex flex-col gap-1"
+                                aria-label={t('settings.layout.title')}
+                            >
+                                {sidebarNavItems.map((item, index) => (
+                                    <Link
+                                        key={`${toUrl(item.href)}-${index}`}
+                                        href={item.href}
+                                        className={cn(
+                                            'flex h-10 items-center rounded-lg px-3 text-sm font-semibold transition',
+                                            {
+                                                'bg-[#eff6ff] text-[#1d4ed8]':
+                                                    isCurrentUrl(item.href),
+                                                'text-[#6b7280] hover:bg-[#f9fafb] hover:text-[#111827]':
+                                                    !isCurrentUrl(item.href),
+                                            },
+                                        )}
+                                    >
                                         {item.icon && (
                                             <item.icon className="h-4 w-4" />
                                         )}
                                         {item.title}
                                     </Link>
-                                </Button>
-                            ))}
-                        </nav>
+                                ))}
+                            </nav>
+                        </BackofficeCard>
                     </aside>
 
-                    <Separator className="my-6 lg:hidden" />
-
-                    <div className="flex-1 md:max-w-2xl">
-                        <section className="max-w-xl space-y-12">
-                            {children}
-                        </section>
+                    <div className="min-w-0">
+                        <section className="space-y-5">{children}</section>
                     </div>
                 </div>
             </div>
-        </div>
+        </BackofficePage>
     );
 }
