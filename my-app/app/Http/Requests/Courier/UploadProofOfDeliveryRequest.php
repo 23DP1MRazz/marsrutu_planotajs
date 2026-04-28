@@ -34,19 +34,11 @@ class UploadProofOfDeliveryRequest extends FormRequest
         $validator->after(function (Validator $validator): void {
             /** @var RouteStop $routeStop */
             $routeStop = $this->route('routeStop');
-            $routeStop->loadMissing('proofOfDelivery');
 
             if (! in_array($routeStop->status, ['COMPLETED', 'FAILED'], true)) {
                 $validator->errors()->add(
                     'file',
                     __('validation.custom.file.proof_status'),
-                );
-            }
-
-            if ($routeStop->proofOfDelivery !== null) {
-                $validator->errors()->add(
-                    'file',
-                    __('validation.custom.file.proof_exists'),
                 );
             }
         });

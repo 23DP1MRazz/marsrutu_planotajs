@@ -175,13 +175,32 @@ class CourierRouteController extends Controller
         $file = $request->file('file');
         $path = $file->store('proof-of-delivery', 'public');
 
-        ProofOfDelivery::query()->create([
-            'organization_id' => $routeStop->organization_id,
-            'route_stop_id' => $routeStop->id,
-            'type' => 'PHOTO',
-            'file_url' => Storage::disk('public')->url($path),
-            'taken_at' => Carbon::now(),
-        ]);
+        DB::transaction(function () use ($routeStop, $path): void {
+            $existingProof = $routeStop->proofOfDelivery;
+
+            if ($existingProof !== null) {
+                $existingPath = $this->storagePath($existingProof->file_url);
+
+                if ($existingPath !== null && Storage::disk('public')->exists($existingPath)) {
+                    Storage::disk('public')->delete($existingPath);
+                }
+
+                $existingProof->update([
+                    'file_url' => Storage::disk('public')->url($path),
+                    'taken_at' => Carbon::now(),
+                ]);
+
+                return;
+            }
+
+            ProofOfDelivery::query()->create([
+                'organization_id' => $routeStop->organization_id,
+                'route_stop_id' => $routeStop->id,
+                'type' => 'PHOTO',
+                'file_url' => Storage::disk('public')->url($path),
+                'taken_at' => Carbon::now(),
+            ]);
+        });
 
         return to_route('courier.route.page');
     }
@@ -584,6 +603,10 @@ class CourierRouteController extends Controller
                 'fail_reason' => null,
             ]);
 
+            $routeStop->order?->update([
+                'status' => 'IN_PROGRESS',
+            ]);
+
             return;
         }
 
@@ -605,7 +628,7 @@ class CourierRouteController extends Controller
         $routeStop->update([
             'status' => 'FAILED',
             'arrived_at' => $routeStop->arrived_at ?? $now,
-            'completed_at' => null,
+            'completed_at' => $now,
             'fail_reason' => $failReason,
         ]);
 
@@ -620,7 +643,9 @@ class CourierRouteController extends Controller
 
         $statuses = $deliveryRoute->routeStops->pluck('status');
 
-        if ($statuses->isNotEmpty() && $statuses->every(fn (string $status) => $status === 'COMPLETED')) {
+        if ($statuses->isNotEmpty() && $statuses->every(
+            fn (string $status) => in_array($status, ['COMPLETED', 'FAILED'], true),
+        )) {
             $deliveryRoute->update([
                 'status' => 'DONE',
             ]);
@@ -639,6 +664,21 @@ class CourierRouteController extends Controller
         $deliveryRoute->update([
             'status' => 'PLANNED',
         ]);
+    }
+
+    private function storagePath(string $fileUrl): ?string
+    {
+        $path = parse_url($fileUrl, PHP_URL_PATH);
+
+        if (is_string($path) && str_starts_with($path, '/storage/')) {
+            return substr($path, strlen('/storage/'));
+        }
+
+        if (str_starts_with($fileUrl, '/storage/')) {
+            return substr($fileUrl, strlen('/storage/'));
+        }
+
+        return $fileUrl !== '' ? ltrim($fileUrl, '/') : null;
     }
 
     private function authorizeCourierAccess(Request $request): void

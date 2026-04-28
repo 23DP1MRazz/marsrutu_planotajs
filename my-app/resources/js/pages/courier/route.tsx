@@ -309,7 +309,7 @@ export default function CourierRoutePage({
                                 <BackofficeStatCard
                                     label={t('common.fields.date')}
                                     value={formatShortDate(deliveryRoute.date)}
-                                    meta="Scheduled route date"
+                                    meta={t('common.fields.date')}
                                 />
                                 <BackofficeStatCard
                                     label={t('courier.dashboard.route_status')}
@@ -321,7 +321,7 @@ export default function CourierRoutePage({
                                 <BackofficeStatCard
                                     label={t('courier.dashboard.total_stops')}
                                     value={stops.length}
-                                    meta={`${completedStopsCount} completed`}
+                                    meta={`${completedStopsCount} ${t('common.statuses.completed').toLowerCase()}`}
                                 />
                             </div>
 
@@ -375,7 +375,11 @@ export default function CourierRoutePage({
                                                 </div>
                                             </div>
                                             <BackofficeStatusBadge
-                                                status={stop.status}
+                                                status={
+                                                    stop.status === 'ARRIVED'
+                                                        ? 'IN_PROGRESS'
+                                                        : stop.status
+                                                }
                                             />
                                         </div>
 
@@ -389,7 +393,7 @@ export default function CourierRoutePage({
                                                     'sm',
                                                 )}
                                             >
-                                                Google Maps
+                                                {t('courier.stop.google_maps')}
                                             </a>
                                             <a
                                                 href={stop.waze_url}
@@ -400,13 +404,12 @@ export default function CourierRoutePage({
                                                     'sm',
                                                 )}
                                             >
-                                                Waze
+                                                {t('courier.stop.waze')}
                                             </a>
-                                            {!readOnly &&
-                                                (stop.status === 'PENDING' ||
-                                                    stop.status ===
-                                                        'ARRIVED') && (
-                                                    <>
+                                            {!readOnly ? (
+                                                <>
+                                                    {stop.status !==
+                                                    'ARRIVED' ? (
                                                         <button
                                                             type="button"
                                                             onClick={() =>
@@ -420,27 +423,35 @@ export default function CourierRoutePage({
                                                                 'sm',
                                                             )}
                                                         >
-                                                            {t(
-                                                                'courier.stop.arrived',
-                                                            )}
+                                                            {stop.status ===
+                                                            'PENDING'
+                                                                ? t(
+                                                                      'courier.stop.start_handling',
+                                                                  )
+                                                                : t(
+                                                                      'courier.stop.reopen',
+                                                                  )}
                                                         </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                updateStopStatus(
-                                                                    stop.id,
-                                                                    'COMPLETED',
-                                                                )
-                                                            }
-                                                            className={backofficeButtonClassName(
-                                                                'primary',
-                                                                'sm',
-                                                            )}
-                                                        >
-                                                            Mark as Delivered
-                                                        </button>
-                                                    </>
-                                                )}
+                                                    ) : null}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            updateStopStatus(
+                                                                stop.id,
+                                                                'COMPLETED',
+                                                            )
+                                                        }
+                                                        className={backofficeButtonClassName(
+                                                            'primary',
+                                                            'sm',
+                                                        )}
+                                                    >
+                                                        {t(
+                                                            'courier.stop.mark_delivered',
+                                                        )}
+                                                    </button>
+                                                </>
+                                            ) : null}
                                         </div>
                                     </BackofficeCard>
                                 ))}
@@ -596,15 +607,15 @@ export default function CourierRoutePage({
                             );
                             const isExpanded =
                                 expandedStopIds[stop.id] ?? false;
-                            const canChangeStatus =
+                            const canChangeStatus = !readOnly;
+                            const canReopenStop =
                                 !readOnly &&
-                                (stop.status === 'PENDING' ||
-                                    stop.status === 'ARRIVED');
+                                (stop.status === 'COMPLETED' ||
+                                    stop.status === 'FAILED');
                             const canUploadProof =
                                 !readOnly &&
                                 (stop.status === 'COMPLETED' ||
-                                    stop.status === 'FAILED') &&
-                                stop.proof_view_url === null;
+                                    stop.status === 'FAILED');
 
                             return (
                                 <section
@@ -683,7 +694,9 @@ export default function CourierRoutePage({
                                                         </div>
                                                         <div className="min-w-0 flex-1">
                                                             <div className="text-xs text-[#6b7280]">
-                                                                Delivered at
+                                                                {t(
+                                                                    'courier.stop.delivered_at',
+                                                                )}
                                                             </div>
                                                             <div className="text-sm font-semibold text-[#111827]">
                                                                 {formatClockTime(
@@ -700,23 +713,276 @@ export default function CourierRoutePage({
                                                                 rel="noreferrer"
                                                                 className="text-xs font-semibold text-[#2563eb]"
                                                             >
-                                                                View proof →
+                                                                {t(
+                                                                    'courier.stop.view_proof',
+                                                                )}{' '}
+                                                                →
                                                             </a>
                                                         ) : null}
                                                     </div>
+                                                    {!readOnly ? (
+                                                        <>
+                                                            <div className="mx-4 h-px bg-[#e5e7eb]" />
+                                                            <div className="flex flex-col gap-2 px-4 py-3.5">
+                                                                {canReopenStop ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={
+                                                                            statusForm.processing
+                                                                        }
+                                                                        onClick={() =>
+                                                                            updateStopStatus(
+                                                                                stop.id,
+                                                                                'ARRIVED',
+                                                                            )
+                                                                        }
+                                                                        className="flex h-11 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-[#bfdbfe] bg-[#eff6ff] text-sm font-semibold text-[#1d4ed8] disabled:opacity-50"
+                                                                    >
+                                                                        <CheckCircle2 className="h-4 w-4" />
+                                                                        {t(
+                                                                            'courier.stop.reopen',
+                                                                        )}
+                                                                    </button>
+                                                                ) : null}
+                                                                <div className="rounded-[10px] border-[1.5px] border-dashed border-[#d1d5db] bg-[#f9fafb] px-4 py-3">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#eff6ff] text-[#2563eb]">
+                                                                            <Camera className="h-4 w-4" />
+                                                                        </div>
+                                                                        <div className="min-w-0 flex-1">
+                                                                            <div className="text-sm font-semibold text-[#111827]">
+                                                                                {t(
+                                                                                    'courier.stop.upload_proof_photo',
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="text-xs text-[#6b7280]">
+                                                                                {t(
+                                                                                    'courier.stop.take_or_choose_photo',
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="mt-3 flex flex-col gap-2">
+                                                                        <input
+                                                                            type="file"
+                                                                            accept="image/png,image/jpeg,image/webp"
+                                                                            capture="environment"
+                                                                            onChange={(
+                                                                                event,
+                                                                            ) =>
+                                                                                setSelectedProofFiles(
+                                                                                    (
+                                                                                        currentFiles,
+                                                                                    ) => ({
+                                                                                        ...currentFiles,
+                                                                                        [stop.id]:
+                                                                                            event
+                                                                                                .target
+                                                                                                .files?.[0] ??
+                                                                                            null,
+                                                                                    }),
+                                                                                )
+                                                                            }
+                                                                            className="block w-full text-xs text-[#6b7280] file:mr-3 file:rounded-lg file:border-0 file:bg-[#2563eb] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white"
+                                                                        />
+                                                                        {proofForm
+                                                                            .errors
+                                                                            .file ? (
+                                                                            <p className="text-sm text-[#dc2626]">
+                                                                                {
+                                                                                    proofForm
+                                                                                        .errors
+                                                                                        .file
+                                                                                }
+                                                                            </p>
+                                                                        ) : null}
+                                                                        {selectedProofFiles[
+                                                                            stop
+                                                                                .id
+                                                                        ] ? (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    uploadProof(
+                                                                                        stop.id,
+                                                                                    )
+                                                                                }
+                                                                                disabled={
+                                                                                    proofForm.processing
+                                                                                }
+                                                                                className={backofficeButtonClassName(
+                                                                                    'primary',
+                                                                                    'sm',
+                                                                                )}
+                                                                            >
+                                                                                {stop.proof_view_url
+                                                                                    ? t(
+                                                                                          'courier.stop.upload_proof_replace',
+                                                                                      )
+                                                                                    : t(
+                                                                                          'courier.stop.upload_proof',
+                                                                                      )}
+                                                                            </button>
+                                                                        ) : null}
+                                                                        {stop.proof_view_url ? (
+                                                                            <a
+                                                                                href={
+                                                                                    stop.proof_view_url
+                                                                                }
+                                                                                target="_blank"
+                                                                                rel="noreferrer"
+                                                                                className="text-xs font-semibold text-[#2563eb]"
+                                                                            >
+                                                                                {t(
+                                                                                    'courier.stop.view_proof',
+                                                                                )}{' '}
+                                                                                →
+                                                                            </a>
+                                                                        ) : null}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    ) : null}
                                                 </>
                                             ) : stop.status === 'FAILED' ? (
-                                                <div className="bg-[#fef2f2] px-4 py-3.5">
-                                                    <div className="flex items-start gap-2 text-[13px] font-medium text-[#dc2626]">
-                                                        <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                                                        <span>
-                                                            {stop.fail_reason ??
-                                                                t(
-                                                                    'courier.stop.fail_reason',
-                                                                )}
-                                                        </span>
+                                                <>
+                                                    <div className="bg-[#fef2f2] px-4 py-3.5">
+                                                        <div className="flex items-start gap-2 text-[13px] font-medium text-[#dc2626]">
+                                                            <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                                            <span>
+                                                                {stop.fail_reason ??
+                                                                    t(
+                                                                        'courier.stop.fail_reason',
+                                                                    )}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                    {!readOnly ? (
+                                                        <>
+                                                            <div className="mx-4 h-px bg-[#e5e7eb]" />
+                                                            <div className="flex flex-col gap-2 px-4 py-3.5">
+                                                                {canReopenStop ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={
+                                                                            statusForm.processing
+                                                                        }
+                                                                        onClick={() =>
+                                                                            updateStopStatus(
+                                                                                stop.id,
+                                                                                'ARRIVED',
+                                                                            )
+                                                                        }
+                                                                        className="flex h-11 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-[#bfdbfe] bg-[#eff6ff] text-sm font-semibold text-[#1d4ed8] disabled:opacity-50"
+                                                                    >
+                                                                        <CheckCircle2 className="h-4 w-4" />
+                                                                        {t(
+                                                                            'courier.stop.reopen',
+                                                                        )}
+                                                                    </button>
+                                                                ) : null}
+                                                                <div className="rounded-[10px] border-[1.5px] border-dashed border-[#d1d5db] bg-[#f9fafb] px-4 py-3">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#eff6ff] text-[#2563eb]">
+                                                                            <Camera className="h-4 w-4" />
+                                                                        </div>
+                                                                        <div className="min-w-0 flex-1">
+                                                                            <div className="text-sm font-semibold text-[#111827]">
+                                                                                {t(
+                                                                                    'courier.stop.upload_proof_photo',
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="text-xs text-[#6b7280]">
+                                                                                {t(
+                                                                                    'courier.stop.take_or_choose_photo',
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="mt-3 flex flex-col gap-2">
+                                                                        <input
+                                                                            type="file"
+                                                                            accept="image/png,image/jpeg,image/webp"
+                                                                            capture="environment"
+                                                                            onChange={(
+                                                                                event,
+                                                                            ) =>
+                                                                                setSelectedProofFiles(
+                                                                                    (
+                                                                                        currentFiles,
+                                                                                    ) => ({
+                                                                                        ...currentFiles,
+                                                                                        [stop.id]:
+                                                                                            event
+                                                                                                .target
+                                                                                                .files?.[0] ??
+                                                                                            null,
+                                                                                    }),
+                                                                                )
+                                                                            }
+                                                                            className="block w-full text-xs text-[#6b7280] file:mr-3 file:rounded-lg file:border-0 file:bg-[#2563eb] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white"
+                                                                        />
+                                                                        {proofForm
+                                                                            .errors
+                                                                            .file ? (
+                                                                            <p className="text-sm text-[#dc2626]">
+                                                                                {
+                                                                                    proofForm
+                                                                                        .errors
+                                                                                        .file
+                                                                                }
+                                                                            </p>
+                                                                        ) : null}
+                                                                        {selectedProofFiles[
+                                                                            stop
+                                                                                .id
+                                                                        ] ? (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    uploadProof(
+                                                                                        stop.id,
+                                                                                    )
+                                                                                }
+                                                                                disabled={
+                                                                                    proofForm.processing
+                                                                                }
+                                                                                className={backofficeButtonClassName(
+                                                                                    'primary',
+                                                                                    'sm',
+                                                                                )}
+                                                                            >
+                                                                                {stop.proof_view_url
+                                                                                    ? t(
+                                                                                          'courier.stop.upload_proof_replace',
+                                                                                      )
+                                                                                    : t(
+                                                                                          'courier.stop.upload_proof',
+                                                                                      )}
+                                                                            </button>
+                                                                        ) : null}
+                                                                        {stop.proof_view_url ? (
+                                                                            <a
+                                                                                href={
+                                                                                    stop.proof_view_url
+                                                                                }
+                                                                                target="_blank"
+                                                                                rel="noreferrer"
+                                                                                className="text-xs font-semibold text-[#2563eb]"
+                                                                            >
+                                                                                {t(
+                                                                                    'courier.stop.view_proof',
+                                                                                )}{' '}
+                                                                                →
+                                                                            </a>
+                                                                        ) : null}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    ) : null}
+                                                </>
                                             ) : (
                                                 <>
                                                     <div className="grid grid-cols-2 gap-2 px-4 py-3">
@@ -729,7 +995,9 @@ export default function CourierRoutePage({
                                                             className="flex h-10 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-[#4285f4] bg-[#f0f6ff] text-[13px] font-semibold text-[#1a73e8]"
                                                         >
                                                             <MapPin className="h-3.5 w-3.5" />
-                                                            Google Maps
+                                                            {t(
+                                                                'courier.stop.google_maps',
+                                                            )}
                                                         </a>
                                                         <a
                                                             href={stop.waze_url}
@@ -738,11 +1006,33 @@ export default function CourierRoutePage({
                                                             className="flex h-10 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-[#6cd5f5] bg-[#edfaff] text-[13px] font-semibold text-[#0a6eb4]"
                                                         >
                                                             <MapPin className="h-3.5 w-3.5" />
-                                                            Waze
+                                                            {t(
+                                                                'courier.stop.waze',
+                                                            )}
                                                         </a>
                                                     </div>
                                                     <div className="mx-4 h-px bg-[#e5e7eb]" />
                                                     <div className="flex flex-col gap-2 px-4 py-3.5">
+                                                        {canReopenStop ? (
+                                                            <button
+                                                                type="button"
+                                                                disabled={
+                                                                    statusForm.processing
+                                                                }
+                                                                onClick={() =>
+                                                                    updateStopStatus(
+                                                                        stop.id,
+                                                                        'ARRIVED',
+                                                                    )
+                                                                }
+                                                                className="flex h-11 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-[#bfdbfe] bg-[#eff6ff] text-sm font-semibold text-[#1d4ed8] disabled:opacity-50"
+                                                            >
+                                                                <CheckCircle2 className="h-4 w-4" />
+                                                                {t(
+                                                                    'courier.stop.reopen',
+                                                                )}
+                                                            </button>
+                                                        ) : null}
                                                         <div className="grid grid-cols-2 gap-2">
                                                             <button
                                                                 type="button"
@@ -759,9 +1049,14 @@ export default function CourierRoutePage({
                                                                 className="flex h-11 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-[#fde68a] bg-[#fffbeb] text-sm font-semibold text-[#d97706] disabled:opacity-50"
                                                             >
                                                                 <MapPin className="h-3.5 w-3.5" />
-                                                                {t(
-                                                                    'courier.stop.arrived',
-                                                                )}
+                                                                {stop.status ===
+                                                                'PENDING'
+                                                                    ? t(
+                                                                          'courier.stop.start_handling',
+                                                                      )
+                                                                    : t(
+                                                                          'courier.stop.arrived',
+                                                                      )}
                                                             </button>
                                                             <button
                                                                 type="button"
@@ -800,7 +1095,9 @@ export default function CourierRoutePage({
                                                             className="flex h-12 items-center justify-center gap-2 rounded-[10px] bg-[#16a34a] text-[15px] font-semibold text-white shadow-[0_4px_14px_rgba(22,163,74,0.30)] disabled:opacity-50"
                                                         >
                                                             <CheckCircle2 className="h-4 w-4" />
-                                                            Mark as Delivered
+                                                            {t(
+                                                                'courier.stop.mark_delivered',
+                                                            )}
                                                         </button>
 
                                                         {failedStopId ===
@@ -829,7 +1126,9 @@ export default function CourierRoutePage({
                                                                             }),
                                                                         )
                                                                     }
-                                                                    placeholder="Describe reason for failure..."
+                                                                    placeholder={t(
+                                                                        'courier.stop.failure_placeholder',
+                                                                    )}
                                                                     className="h-[42px] rounded-[10px] border-[1.5px] border-[#fecaca] bg-[#fef2f2] px-3.5 text-sm text-[#111827] outline-none placeholder:text-[#f87171] focus:border-[#dc2626]"
                                                                 />
                                                                 {statusForm
@@ -862,8 +1161,9 @@ export default function CourierRoutePage({
                                                                         }
                                                                         className="h-11 rounded-[10px] bg-[#dc2626] text-sm font-semibold text-white shadow-[0_4px_12px_rgba(220,38,38,0.30)] disabled:opacity-50"
                                                                     >
-                                                                        Confirm
-                                                                        Failed
+                                                                        {t(
+                                                                            'courier.stop.confirm_failed',
+                                                                        )}
                                                                     </button>
                                                                     <button
                                                                         type="button"
@@ -902,8 +1202,12 @@ export default function CourierRoutePage({
                                                                     </div>
                                                                     <div className="text-xs text-[#6b7280]">
                                                                         {canUploadProof
-                                                                            ? 'Take or choose a photo'
-                                                                            : 'Available after the stop is completed or failed'}
+                                                                            ? t(
+                                                                                  'courier.stop.take_or_choose_photo',
+                                                                              )
+                                                                            : t(
+                                                                                  'courier.stop.upload_proof_ready_after',
+                                                                              )}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -913,6 +1217,7 @@ export default function CourierRoutePage({
                                                                     <input
                                                                         type="file"
                                                                         accept="image/png,image/jpeg,image/webp"
+                                                                        capture="environment"
                                                                         onChange={(
                                                                             event,
                                                                         ) =>
@@ -960,10 +1265,29 @@ export default function CourierRoutePage({
                                                                                 'sm',
                                                                             )}
                                                                         >
-                                                                            {t(
-                                                                                'courier.stop.upload_proof',
-                                                                            )}
+                                                                            {stop.proof_view_url
+                                                                                ? t(
+                                                                                      'courier.stop.upload_proof_replace',
+                                                                                  )
+                                                                                : t(
+                                                                                      'courier.stop.upload_proof',
+                                                                                  )}
                                                                         </button>
+                                                                    ) : null}
+                                                                    {stop.proof_view_url ? (
+                                                                        <a
+                                                                            href={
+                                                                                stop.proof_view_url
+                                                                            }
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="text-xs font-semibold text-[#2563eb]"
+                                                                        >
+                                                                            {t(
+                                                                                'courier.stop.view_proof',
+                                                                            )}{' '}
+                                                                            →
+                                                                        </a>
                                                                     ) : null}
                                                                 </div>
                                                             ) : stop.proof_view_url ? (
@@ -976,8 +1300,10 @@ export default function CourierRoutePage({
                                                                         rel="noreferrer"
                                                                         className="text-xs font-semibold text-[#2563eb]"
                                                                     >
-                                                                        View
-                                                                        proof →
+                                                                        {t(
+                                                                            'courier.stop.view_proof',
+                                                                        )}{' '}
+                                                                        →
                                                                     </a>
                                                                 </div>
                                                             ) : null}

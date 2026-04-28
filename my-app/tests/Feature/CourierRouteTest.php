@@ -134,6 +134,11 @@ class CourierRouteTest extends TestCase
             'status' => 'ARRIVED',
         ]);
 
+        $this->assertDatabaseHas('orders', [
+            'id' => $firstStop->order_id,
+            'status' => 'IN_PROGRESS',
+        ]);
+
         $this->assertDatabaseHas('routes', [
             'id' => $deliveryRoute->id,
             'status' => 'IN_PROGRESS',
@@ -187,7 +192,7 @@ class CourierRouteTest extends TestCase
             ->assertSessionHasErrors(['fail_reason']);
     }
 
-    public function test_courier_can_fail_stop_with_reason_and_route_stays_in_progress(): void
+    public function test_courier_can_fail_stop_with_reason_and_route_finishes_when_it_is_last_stop(): void
     {
         $organization = Organization::factory()->create();
         $courier = $this->createCourier($organization);
@@ -219,7 +224,45 @@ class CourierRouteTest extends TestCase
 
         $this->assertDatabaseHas('routes', [
             'id' => $deliveryRoute->id,
-            'status' => 'IN_PROGRESS',
+            'status' => 'DONE',
+        ]);
+    }
+
+    public function test_route_is_marked_done_when_remaining_stops_are_failed_or_completed(): void
+    {
+        $organization = Organization::factory()->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+            'status' => 'PLANNED',
+        ]);
+        $completedStop = $this->createRouteStop($organization, $deliveryRoute, [
+            'seq_no' => 1,
+            'status' => 'PENDING',
+        ]);
+        $failedStop = $this->createRouteStop($organization, $deliveryRoute, [
+            'seq_no' => 2,
+            'status' => 'PENDING',
+        ]);
+
+        $this->actingAs($courier)
+            ->patch(route('courier.stops.update', $completedStop), [
+                'status' => 'COMPLETED',
+            ])
+            ->assertRedirect(route('courier.route.page'));
+
+        $this->actingAs($courier)
+            ->patch(route('courier.stops.update', $failedStop), [
+                'status' => 'FAILED',
+                'fail_reason' => 'Nobody answered',
+            ])
+            ->assertRedirect(route('courier.route.page'));
+
+        $this->assertDatabaseHas('routes', [
+            'id' => $deliveryRoute->id,
+            'status' => 'DONE',
         ]);
     }
 
@@ -449,7 +492,7 @@ class CourierRouteTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_courier_cannot_upload_duplicate_proof_for_same_stop(): void
+    public function test_courier_can_replace_existing_proof_for_same_stop(): void
     {
         Storage::fake('public');
 
@@ -464,21 +507,29 @@ class CourierRouteTest extends TestCase
             'status' => 'COMPLETED',
         ]);
 
-        ProofOfDelivery::query()->create([
+        $existingPath = UploadedFile::fake()
+            ->image('existing.jpg')
+            ->store('proof-of-delivery', 'public');
+
+        $proof = ProofOfDelivery::query()->create([
             'organization_id' => $organization->id,
             'route_stop_id' => $stop->id,
             'type' => 'PHOTO',
-            'file_url' => '/storage/proof-of-delivery/existing.jpg',
+            'file_url' => Storage::disk('public')->url($existingPath),
             'taken_at' => '2026-04-15 10:00:00',
         ]);
 
         $this->actingAs($courier)
-            ->from(route('dashboard'))
             ->post(route('courier.stops.proof.store', $stop), [
                 'file' => UploadedFile::fake()->image('proof.jpg'),
             ])
-            ->assertRedirect(route('dashboard'))
-            ->assertSessionHasErrors(['file']);
+            ->assertRedirect(route('courier.route.page'));
+
+        $proof->refresh();
+
+        $this->assertStringStartsWith('/storage/proof-of-delivery/', $proof->file_url);
+        $this->assertNotSame(Storage::disk('public')->url($existingPath), $proof->file_url);
+        Storage::disk('public')->assertMissing($existingPath);
     }
 
     public function test_invalid_proof_file_is_rejected(): void
