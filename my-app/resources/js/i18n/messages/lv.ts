@@ -76,8 +76,12 @@ const lv = {
             clear: 'Notīrīt',
             copy_code: 'Kopēt kodu',
             copy_link: 'Kopēt saiti',
+            delete: 'Dzēst',
             save: 'Saglabāt',
             search: 'Meklēt',
+        },
+        dialogs: {
+            confirm_title: 'Lūdzu, apstipriniet',
         },
         app_name: 'Maršrutu plānotājs',
         fields: {

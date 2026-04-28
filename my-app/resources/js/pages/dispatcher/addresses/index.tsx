@@ -13,6 +13,7 @@ import {
     backofficeButtonClassName,
     backofficeInputClassName,
 } from '@/components/backoffice/ui';
+import ConfirmActionDialog from '@/components/confirm-action-dialog';
 import { useLiveFiltering } from '@/hooks/use-live-filtering';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
@@ -60,6 +61,9 @@ export default function DispatcherAddressesIndex({
     const [actionPopup, setActionPopup] = useState<ActionPopup | null>(null);
     const [lastActionPosition, setLastActionPosition] =
         useState<PopupPosition | null>(null);
+    const [pendingDeleteAddressId, setPendingDeleteAddressId] = useState<
+        number | null
+    >(null);
     const searchTerms = splitSearchTerms(filterForm.data.search);
     const liveSearch = joinSearchTerms([
         ...searchTerms,
@@ -127,13 +131,7 @@ export default function DispatcherAddressesIndex({
 
     const deleteAddress = (addressId: number, trigger: HTMLElement) => {
         setLastActionPosition(popupPositionFromElement(trigger));
-
-        if (window.confirm(t('dispatcher.addresses.delete_confirm'))) {
-            setActionPopup(null);
-            actionForm.delete(`/dispatcher/addresses/${addressId}`, {
-                preserveScroll: true,
-            });
-        }
+        setPendingDeleteAddressId(addressId);
     };
 
     const clearFilters = () => {
@@ -369,6 +367,32 @@ export default function DispatcherAddressesIndex({
                     {actionPopup.message}
                 </div>
             ) : null}
+
+            <ConfirmActionDialog
+                open={pendingDeleteAddressId !== null}
+                description={t('dispatcher.addresses.delete_confirm')}
+                confirmLabel={t('common.actions.delete')}
+                processing={actionForm.processing}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setPendingDeleteAddressId(null);
+                    }
+                }}
+                onConfirm={() => {
+                    if (pendingDeleteAddressId === null) {
+                        return;
+                    }
+
+                    setActionPopup(null);
+                    actionForm.delete(
+                        `/dispatcher/addresses/${pendingDeleteAddressId}`,
+                        {
+                            preserveScroll: true,
+                            onFinish: () => setPendingDeleteAddressId(null),
+                        },
+                    );
+                }}
+            />
         </AppLayout>
     );
 }

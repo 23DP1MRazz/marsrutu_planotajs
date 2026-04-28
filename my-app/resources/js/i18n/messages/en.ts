@@ -74,8 +74,12 @@ const en = {
             clear: 'Clear',
             copy_code: 'Copy code',
             copy_link: 'Copy link',
+            delete: 'Delete',
             save: 'Save',
             search: 'Search',
+        },
+        dialogs: {
+            confirm_title: 'Please confirm',
         },
         app_name: 'Maršrutu plānotājs',
         fields: {

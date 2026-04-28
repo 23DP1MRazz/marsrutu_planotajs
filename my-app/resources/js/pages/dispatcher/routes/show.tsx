@@ -14,6 +14,7 @@ import {
     BackofficeStatusBadge,
     backofficeButtonClassName,
 } from '@/components/backoffice/ui';
+import ConfirmActionDialog from '@/components/confirm-action-dialog';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
@@ -43,6 +44,8 @@ export default function DispatcherRoutesShow({
     const removeStopForm = useForm({
         route_stop: '',
     });
+    const [pendingRemoveStop, setPendingRemoveStop] =
+        useState<RouteStopRecord | null>(null);
 
     useEffect(() => {
         setOrderedStops(stops);
@@ -148,23 +151,7 @@ export default function DispatcherRoutesShow({
         if (!stop.can_remove) {
             return;
         }
-
-        const confirmed = window.confirm(
-            t('dispatcher.routes.remove_confirm', {
-                number: stop.seq_no,
-            }),
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
-        removeStopForm.delete(
-            `/dispatcher/routes/${deliveryRoute.id}/stops/${stop.id}`,
-            {
-                preserveScroll: true,
-            },
-        );
+        setPendingRemoveStop(stop);
     };
 
     return (
@@ -428,6 +415,33 @@ export default function DispatcherRoutesShow({
                     </BackofficeCardBody>
                 </BackofficeCard>
             </BackofficePage>
+
+            <ConfirmActionDialog
+                open={pendingRemoveStop !== null}
+                description={t('dispatcher.routes.remove_confirm', {
+                    number: pendingRemoveStop?.seq_no ?? '',
+                })}
+                confirmLabel={t('dispatcher.routes.remove')}
+                processing={removeStopForm.processing}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setPendingRemoveStop(null);
+                    }
+                }}
+                onConfirm={() => {
+                    if (!pendingRemoveStop) {
+                        return;
+                    }
+
+                    removeStopForm.delete(
+                        `/dispatcher/routes/${deliveryRoute.id}/stops/${pendingRemoveStop.id}`,
+                        {
+                            preserveScroll: true,
+                            onFinish: () => setPendingRemoveStop(null),
+                        },
+                    );
+                }}
+            />
         </AppLayout>
     );
 }

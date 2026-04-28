@@ -13,6 +13,7 @@ import {
     backofficeButtonClassName,
     backofficeInputClassName,
 } from '@/components/backoffice/ui';
+import ConfirmActionDialog from '@/components/confirm-action-dialog';
 import { useLiveFiltering } from '@/hooks/use-live-filtering';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
@@ -60,6 +61,9 @@ export default function DispatcherClientsIndex({
     const [actionPopup, setActionPopup] = useState<ActionPopup | null>(null);
     const [lastActionPosition, setLastActionPosition] =
         useState<PopupPosition | null>(null);
+    const [pendingDeleteClientId, setPendingDeleteClientId] = useState<
+        number | null
+    >(null);
     const searchTerms = splitSearchTerms(filterForm.data.search);
     const liveSearch = joinSearchTerms([
         ...searchTerms,
@@ -125,13 +129,7 @@ export default function DispatcherClientsIndex({
 
     const deleteClient = (clientId: number, trigger: HTMLElement) => {
         setLastActionPosition(popupPositionFromElement(trigger));
-
-        if (window.confirm(t('dispatcher.clients.delete_confirm'))) {
-            setActionPopup(null);
-            actionForm.delete(`/dispatcher/clients/${clientId}`, {
-                preserveScroll: true,
-            });
-        }
+        setPendingDeleteClientId(clientId);
     };
 
     const clearFilters = () => {
@@ -360,6 +358,32 @@ export default function DispatcherClientsIndex({
                     {actionPopup.message}
                 </div>
             ) : null}
+
+            <ConfirmActionDialog
+                open={pendingDeleteClientId !== null}
+                description={t('dispatcher.clients.delete_confirm')}
+                confirmLabel={t('common.actions.delete')}
+                processing={actionForm.processing}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setPendingDeleteClientId(null);
+                    }
+                }}
+                onConfirm={() => {
+                    if (pendingDeleteClientId === null) {
+                        return;
+                    }
+
+                    setActionPopup(null);
+                    actionForm.delete(
+                        `/dispatcher/clients/${pendingDeleteClientId}`,
+                        {
+                            preserveScroll: true,
+                            onFinish: () => setPendingDeleteClientId(null),
+                        },
+                    );
+                }}
+            />
         </AppLayout>
     );
 }

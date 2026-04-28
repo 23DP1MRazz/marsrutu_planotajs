@@ -433,23 +433,27 @@ export default function CourierRoutePage({
                                                                   )}
                                                         </button>
                                                     ) : null}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            updateStopStatus(
-                                                                stop.id,
-                                                                'COMPLETED',
-                                                            )
-                                                        }
-                                                        className={backofficeButtonClassName(
-                                                            'primary',
-                                                            'sm',
-                                                        )}
-                                                    >
-                                                        {t(
-                                                            'courier.stop.mark_delivered',
-                                                        )}
-                                                    </button>
+                                                    {stop.status !==
+                                                        'COMPLETED' &&
+                                                    stop.status !== 'FAILED' ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                updateStopStatus(
+                                                                    stop.id,
+                                                                    'COMPLETED',
+                                                                )
+                                                            }
+                                                            className={backofficeButtonClassName(
+                                                                'primary',
+                                                                'sm',
+                                                            )}
+                                                        >
+                                                            {t(
+                                                                'courier.stop.mark_delivered',
+                                                            )}
+                                                        </button>
+                                                    ) : null}
                                                 </>
                                             ) : null}
                                         </div>

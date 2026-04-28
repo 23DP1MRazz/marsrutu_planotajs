@@ -16,6 +16,7 @@ import {
     backofficeInputClassName,
     backofficeSelectClassName,
 } from '@/components/backoffice/ui';
+import ConfirmActionDialog from '@/components/confirm-action-dialog';
 import { useLiveFiltering } from '@/hooks/use-live-filtering';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
@@ -83,6 +84,10 @@ export default function DispatcherOrdersIndex({
     const [actionPopup, setActionPopup] = useState<ActionPopup | null>(null);
     const [lastActionPosition, setLastActionPosition] =
         useState<PopupPosition | null>(null);
+    const [pendingAction, setPendingAction] = useState<{
+        kind: 'delete' | 'cancel';
+        orderId: number;
+    } | null>(null);
     const searchTerms = splitSearchTerms(filterForm.data.search);
     const liveSearch = joinSearchTerms([
         ...searchTerms,
@@ -170,24 +175,18 @@ export default function DispatcherOrdersIndex({
         }
 
         setLastActionPosition(popupPositionFromElement(trigger));
-
-        if (window.confirm(t('dispatcher.orders.delete_confirm'))) {
-            setActionPopup(null);
-            actionForm.delete(`/dispatcher/orders/${order.id}`, {
-                preserveScroll: true,
-            });
-        }
+        setPendingAction({
+            kind: 'delete',
+            orderId: order.id,
+        });
     };
 
     const cancelOrder = (orderId: number, trigger: HTMLElement) => {
         setLastActionPosition(popupPositionFromElement(trigger));
-
-        if (window.confirm(t('dispatcher.orders.cancel_confirm'))) {
-            setActionPopup(null);
-            actionForm.patch(`/dispatcher/orders/${orderId}/cancel`, {
-                preserveScroll: true,
-            });
-        }
+        setPendingAction({
+            kind: 'cancel',
+            orderId,
+        });
     };
 
     const clearFilters = () => {
@@ -640,6 +639,53 @@ export default function DispatcherOrdersIndex({
                     {actionPopup.message}
                 </div>
             ) : null}
+
+            <ConfirmActionDialog
+                open={pendingAction !== null}
+                description={
+                    pendingAction?.kind === 'cancel'
+                        ? t('dispatcher.orders.cancel_confirm')
+                        : t('dispatcher.orders.delete_confirm')
+                }
+                confirmLabel={
+                    pendingAction?.kind === 'cancel'
+                        ? t('dispatcher.orders.cancel_order')
+                        : t('dispatcher.orders.delete_order')
+                }
+                processing={actionForm.processing}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setPendingAction(null);
+                    }
+                }}
+                onConfirm={() => {
+                    if (!pendingAction) {
+                        return;
+                    }
+
+                    setActionPopup(null);
+
+                    if (pendingAction.kind === 'cancel') {
+                        actionForm.patch(
+                            `/dispatcher/orders/${pendingAction.orderId}/cancel`,
+                            {
+                                preserveScroll: true,
+                                onFinish: () => setPendingAction(null),
+                            },
+                        );
+
+                        return;
+                    }
+
+                    actionForm.delete(
+                        `/dispatcher/orders/${pendingAction.orderId}`,
+                        {
+                            preserveScroll: true,
+                            onFinish: () => setPendingAction(null),
+                        },
+                    );
+                }}
+            />
         </AppLayout>
     );
 }
