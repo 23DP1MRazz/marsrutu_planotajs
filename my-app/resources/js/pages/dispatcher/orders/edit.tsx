@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import { Head, useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,
@@ -65,6 +66,51 @@ export default function DispatcherOrdersEdit({
         time_to: order.time_to.slice(0, 5),
         notes: order.notes ?? '',
     });
+    const selectedOrganizationId = Number(
+        canSelectOrganization
+            ? form.data.organization_id
+            : order.organization_id,
+    );
+    const visibleClients =
+        canSelectOrganization && selectedOrganizationId > 0
+            ? clients.filter(
+                  (client) => client.organization_id === selectedOrganizationId,
+              )
+            : clients;
+    const visibleAddresses =
+        canSelectOrganization && selectedOrganizationId > 0
+            ? addresses.filter(
+                  (address) =>
+                      address.organization_id === selectedOrganizationId,
+              )
+            : addresses;
+
+    useEffect(() => {
+        if (
+            !visibleClients.some(
+                (client) => String(client.id) === form.data.client_id,
+            )
+        ) {
+            form.setData('client_id', visibleClients[0]?.id?.toString() ?? '');
+        }
+
+        if (
+            !visibleAddresses.some(
+                (address) => String(address.id) === form.data.address_id,
+            )
+        ) {
+            form.setData(
+                'address_id',
+                visibleAddresses[0]?.id?.toString() ?? '',
+            );
+        }
+    }, [
+        form,
+        form.data.address_id,
+        form.data.client_id,
+        visibleAddresses,
+        visibleClients,
+    ]);
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -152,7 +198,7 @@ export default function DispatcherOrdersEdit({
                                                 'dispatcher.orders.select_client',
                                             )}
                                         </option>
-                                        {clients.map((client) => (
+                                        {visibleClients.map((client) => (
                                             <option
                                                 key={client.id}
                                                 value={client.id}
@@ -184,7 +230,7 @@ export default function DispatcherOrdersEdit({
                                                 'dispatcher.orders.select_address',
                                             )}
                                         </option>
-                                        {addresses.map((address) => (
+                                        {visibleAddresses.map((address) => (
                                             <option
                                                 key={address.id}
                                                 value={address.id}

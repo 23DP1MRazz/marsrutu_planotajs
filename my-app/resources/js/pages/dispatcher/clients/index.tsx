@@ -1,5 +1,5 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,
@@ -16,6 +16,11 @@ import {
 import { useLiveFiltering } from '@/hooks/use-live-filtering';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
+import {
+    type ActionPopup,
+    type PopupPosition,
+    popupPositionFromElement,
+} from '@/lib/action-popup';
 import type { ClientFilters, ClientRecord } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
 
@@ -46,7 +51,15 @@ export default function DispatcherClientsIndex({
         search: filters.search ?? '',
         sort: filters.sort ?? 'name_asc',
     });
+    const actionForm = useForm({});
+    const actionErrors = actionForm.errors as Record<
+        string,
+        string | undefined
+    >;
     const [draftSearch, setDraftSearch] = useState('');
+    const [actionPopup, setActionPopup] = useState<ActionPopup | null>(null);
+    const [lastActionPosition, setLastActionPosition] =
+        useState<PopupPosition | null>(null);
     const searchTerms = splitSearchTerms(filterForm.data.search);
     const liveSearch = joinSearchTerms([
         ...searchTerms,
@@ -71,9 +84,53 @@ export default function DispatcherClientsIndex({
         url: '/dispatcher/clients',
     });
 
-    const deleteClient = (clientId: number) => {
+    useEffect(() => {
+        if (!actionPopup) {
+            return;
+        }
+
+        const hideTimeoutId = window.setTimeout(() => {
+            setActionPopup((currentPopup) =>
+                currentPopup?.id === actionPopup.id
+                    ? { ...currentPopup, visible: false }
+                    : currentPopup,
+            );
+            actionForm.clearErrors();
+        }, 1000);
+
+        const removeTimeoutId = window.setTimeout(() => {
+            setActionPopup((currentPopup) =>
+                currentPopup?.id === actionPopup.id ? null : currentPopup,
+            );
+        }, 1250);
+
+        return () => {
+            window.clearTimeout(hideTimeoutId);
+            window.clearTimeout(removeTimeoutId);
+        };
+    }, [actionForm, actionPopup]);
+
+    useEffect(() => {
+        if (!actionErrors.client) {
+            return;
+        }
+
+        setActionPopup({
+            id: Date.now(),
+            message: actionErrors.client,
+            position: lastActionPosition ?? undefined,
+            visible: true,
+        });
+    }, [actionErrors.client, lastActionPosition]);
+
+    const deleteClient = (clientId: number, trigger: HTMLElement) => {
+        setLastActionPosition(popupPositionFromElement(trigger));
+
         if (window.confirm(t('dispatcher.clients.delete_confirm'))) {
-            router.delete(`/dispatcher/clients/${clientId}`);
+            setActionPopup(null);
+            actionForm.delete(`/dispatcher/clients/${clientId}`, {
+                preserveScroll: true,
+            });
         }
     };
 
@@ -255,9 +312,10 @@ export default function DispatcherClientsIndex({
                                                     <BackofficeIconButton
                                                         type="button"
                                                         variant="danger"
-                                                        onClick={() =>
+                                                        onClick={(event) =>
                                                             deleteClient(
                                                                 client.id,
+                                                                event.currentTarget,
                                                             )
                                                         }
                                                     >
@@ -273,6 +331,35 @@ export default function DispatcherClientsIndex({
                     )}
                 </BackofficeCard>
             </BackofficePage>
+
+            {actionPopup ? (
+                <div
+                    key={actionPopup.id}
+                    role="status"
+                    aria-live="polite"
+                    style={
+                        actionPopup.position
+                            ? {
+                                  left: actionPopup.position.left,
+                                  top: actionPopup.position.top,
+                              }
+                            : undefined
+                    }
+                    className={`fixed z-[60] max-w-[min(320px,calc(100vw-2rem))] rounded-lg border border-[#fecaca] bg-white px-4 py-3 text-sm font-medium text-[#991b1b] shadow-[0_18px_40px_rgba(17,24,39,0.16)] transition duration-250 ease-out ${
+                        actionPopup.position ? '' : 'top-20 right-4'
+                    } ${
+                        actionPopup.visible
+                            ? actionPopup.position
+                                ? '-translate-y-1/2 opacity-100'
+                                : 'translate-y-0 opacity-100'
+                            : actionPopup.position
+                              ? '-translate-y-[calc(50%+0.25rem)] opacity-0'
+                              : '-translate-y-2 opacity-0'
+                    }`}
+                >
+                    {actionPopup.message}
+                </div>
+            ) : null}
         </AppLayout>
     );
 }

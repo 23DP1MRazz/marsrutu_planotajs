@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Address;
+use App\Models\Client;
+use App\Models\Order;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -291,5 +293,25 @@ class AddressCrudTest extends TestCase
             ])
             ->assertRedirect(route('dispatcher.addresses.create'))
             ->assertSessionHasErrors(['lng']);
+    }
+
+    public function test_address_delete_shows_validation_error_when_orders_exist(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $address = Address::factory()->create(['organization_id' => $organization->id]);
+        $client = Client::factory()->create(['organization_id' => $organization->id]);
+
+        Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'address_id' => $address->id,
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.addresses.index'))
+            ->delete(route('dispatcher.addresses.destroy', $address))
+            ->assertRedirect(route('dispatcher.addresses.index'))
+            ->assertSessionHasErrors(['address']);
     }
 }

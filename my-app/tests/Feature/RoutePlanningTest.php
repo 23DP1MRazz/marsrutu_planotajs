@@ -94,8 +94,8 @@ class RoutePlanningTest extends TestCase
             'courier_user_id' => $courier->id,
             'date' => '2026-04-15',
         ]);
-        $existingOrder = $this->createOrder($organization);
-        $newOrder = $this->createOrder($organization);
+        $existingOrder = $this->createOrder($organization, ['date' => '2026-04-15']);
+        $newOrder = $this->createOrder($organization, ['date' => '2026-04-15']);
 
         RouteStop::factory()->create([
             'organization_id' => $organization->id,
@@ -132,7 +132,10 @@ class RoutePlanningTest extends TestCase
             'courier_user_id' => $courier->id,
             'date' => '2026-04-15',
         ]);
-        $pendingOrder = $this->createOrder($organization, ['status' => 'PENDING']);
+        $pendingOrder = $this->createOrder($organization, [
+            'status' => 'PENDING',
+            'date' => '2026-04-15',
+        ]);
 
         $this->actingAs($dispatcher)
             ->post(route('dispatcher.routes.orders.store', $deliveryRoute), [
@@ -179,7 +182,10 @@ class RoutePlanningTest extends TestCase
         $organization = Organization::factory()->create();
         $dispatcher = User::factory()->dispatcher($organization->id)->create();
         $courier = $this->createCourier($organization);
-        $pendingOrder = $this->createOrder($organization, ['status' => 'PENDING']);
+        $pendingOrder = $this->createOrder($organization, [
+            'status' => 'PENDING',
+            'date' => '2026-04-15',
+        ]);
 
         $this->actingAs($dispatcher)
             ->post(route('dispatcher.routes.store'), [
@@ -252,6 +258,49 @@ class RoutePlanningTest extends TestCase
             ])
             ->assertRedirect(route('dispatcher.routes.create'))
             ->assertSessionHasErrors(['order_ids.0']);
+    }
+
+    public function test_route_creation_rejects_orders_from_different_date(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $order = $this->createOrder($organization, [
+            'date' => '2026-04-16',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.routes.create'))
+            ->post(route('dispatcher.routes.store'), [
+                'courier_user_id' => $courier->id,
+                'date' => '2026-04-15',
+                'order_ids' => [$order->id],
+            ])
+            ->assertRedirect(route('dispatcher.routes.create'))
+            ->assertSessionHasErrors(['order_ids']);
+    }
+
+    public function test_assigning_orders_to_existing_route_rejects_different_order_date(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => '2026-04-15',
+        ]);
+        $order = $this->createOrder($organization, [
+            'date' => '2026-04-16',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.routes.show', $deliveryRoute))
+            ->post(route('dispatcher.routes.orders.store', $deliveryRoute), [
+                'order_ids' => [$order->id],
+            ])
+            ->assertRedirect(route('dispatcher.routes.show', $deliveryRoute))
+            ->assertSessionHasErrors(['order_ids']);
     }
 
     public function test_route_pages_are_scoped_to_dispatcher_organization(): void

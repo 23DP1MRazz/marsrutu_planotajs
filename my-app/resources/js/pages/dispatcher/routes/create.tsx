@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import { Head, useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,
@@ -47,6 +48,51 @@ export default function DispatcherRoutesCreate({
         date: todayDate,
         order_ids: [] as number[],
     });
+    const selectedOrganizationId = Number(form.data.organization_id || 0);
+    const visibleCouriers =
+        canSelectOrganization && selectedOrganizationId > 0
+            ? couriers.filter(
+                  (courier) =>
+                      courier.organization_id === selectedOrganizationId,
+              )
+            : couriers;
+    const organizationOrders =
+        canSelectOrganization && selectedOrganizationId > 0
+            ? orders.filter(
+                  (order) => order.organization_id === selectedOrganizationId,
+              )
+            : orders;
+    const visibleOrders = organizationOrders.filter(
+        (order) => order.date === form.data.date,
+    );
+
+    useEffect(() => {
+        if (
+            !visibleCouriers.some(
+                (courier) => String(courier.id) === form.data.courier_user_id,
+            )
+        ) {
+            form.setData(
+                'courier_user_id',
+                visibleCouriers[0]?.id?.toString() ?? '',
+            );
+        }
+
+        const visibleOrderIds = new Set(visibleOrders.map((order) => order.id));
+        const nextOrderIds = form.data.order_ids.filter((orderId) =>
+            visibleOrderIds.has(orderId),
+        );
+
+        if (nextOrderIds.length !== form.data.order_ids.length) {
+            form.setData('order_ids', nextOrderIds);
+        }
+    }, [
+        form,
+        form.data.courier_user_id,
+        form.data.order_ids,
+        visibleCouriers,
+        visibleOrders,
+    ]);
 
     const toggleOrder = (orderId: number) => {
         form.setData(
@@ -151,7 +197,7 @@ export default function DispatcherRoutesCreate({
                                                 'dispatcher.routes.select_courier',
                                             )}
                                         </option>
-                                        {couriers.map((courier) => (
+                                        {visibleCouriers.map((courier) => (
                                             <option
                                                 key={courier.id}
                                                 value={courier.id}
@@ -193,7 +239,7 @@ export default function DispatcherRoutesCreate({
                                     </p>
                                 </div>
 
-                                {orders.length === 0 ? (
+                                {visibleOrders.length === 0 ? (
                                     <BackofficeInfoNote>
                                         {t(
                                             'dispatcher.routes.unassigned_empty',
@@ -201,7 +247,7 @@ export default function DispatcherRoutesCreate({
                                     </BackofficeInfoNote>
                                 ) : (
                                     <div className="space-y-2">
-                                        {orders.map((order) => (
+                                        {visibleOrders.map((order) => (
                                             <label
                                                 key={order.id}
                                                 className="flex items-start gap-3 rounded-lg border border-[#e5e7eb] px-4 py-3 text-sm transition hover:bg-[#f9fafb]"

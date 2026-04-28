@@ -10,8 +10,10 @@ use App\Models\Address;
 use App\Models\Organization;
 use App\Services\Geocoding\NominatimGeocoder;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -106,7 +108,13 @@ class AddressController extends Controller
         $this->authorizeDispatcherAccess($request);
         $this->authorize('delete', $address);
 
-        $address->delete();
+        try {
+            $address->delete();
+        } catch (QueryException) {
+            throw ValidationException::withMessages([
+                'address' => __('validation.custom.address.delete_blocked'),
+            ]);
+        }
 
         return to_route('dispatcher.addresses.index');
     }

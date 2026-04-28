@@ -48,13 +48,25 @@ return [
         'organization_id' => [
             'required_for_role' => 'Organizācija ir obligāta.',
         ],
+        'phone' => [
+            'incorrect' => 'Nepareizs tālruņa numurs.',
+        ],
         'role' => [
             'last_admin' => 'Jāpaliek vismaz vienam administratoram.',
             'courier_routes_exist' => 'Šim kurjeram nevar mainīt lomu vai organizāciju, kamēr pastāv piešķirti maršruti.',
         ],
+        'client' => [
+            'delete_blocked' => 'Šo klientu nevar dzēst, jo tas tiek izmantots esošajos pasūtījumos.',
+        ],
+        'address' => [
+            'delete_blocked' => 'Šo adresi nevar dzēst, jo tā tiek izmantota esošajos pasūtījumos.',
+        ],
         'file' => [
             'proof_status' => 'Piegādes pierādījumu var augšupielādēt tikai pabeigtām vai neveiksmīgām pieturām.',
             'proof_exists' => 'Šai pieturai piegādes pierādījums jau ir augšupielādēts.',
+        ],
+        'order_ids' => [
+            'route_date_match' => 'Pasūtījumus maršrutam var piešķirt tikai tajā pašā datumā.',
         ],
         'stop_ids' => [
             'complete_route' => 'Pieturu secībā jāiekļauj katra šī maršruta pietura tieši vienu reizi.',
@@ -64,7 +76,9 @@ return [
         ],
         'order' => [
             'cancel_blocked' => 'Šo pasūtījumu nevar atcelt, jo piegāde jau ir sākta vai pabeigta.',
+            'date_must_match_route' => 'Pasūtījuma datumam jāsakrīt ar piešķirtā maršruta datumu.',
             'delete_blocked' => 'Šo pasūtījumu nevar dzēst, jo tas jau ir pievienots maršrutam. Atceliet to, ja atcelšana ir atļauta.',
+            'organization_locked' => 'Organizāciju nevar mainīt, kamēr pasūtījums ir pievienots maršrutam.',
         ],
     ],
 

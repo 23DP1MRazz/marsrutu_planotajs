@@ -20,6 +20,11 @@ import { useLiveFiltering } from '@/hooks/use-live-filtering';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
+import {
+    type ActionPopup,
+    type PopupPosition,
+    popupPositionFromElement,
+} from '@/lib/action-popup';
 import type {
     OrderFilters,
     OrderRecord,
@@ -53,35 +58,6 @@ type ActiveFilter = {
     label: string;
     value?: string;
 };
-
-type PopupPosition = {
-    top: number;
-    left: number;
-};
-
-type ActionPopup = {
-    id: number;
-    message: string;
-    position?: PopupPosition;
-    visible: boolean;
-};
-
-function popupPositionFromElement(element: HTMLElement): PopupPosition {
-    const rect = element.getBoundingClientRect();
-    const popupWidth = Math.min(320, window.innerWidth - 32);
-    const hasRoomOnRight = window.innerWidth - rect.right >= popupWidth + 16;
-    const left = hasRoomOnRight
-        ? rect.right + 8
-        : Math.max(16, rect.left - popupWidth - 200);
-
-    return {
-        left,
-        top: Math.min(
-            Math.max(40, rect.top + rect.height / 2),
-            window.innerHeight - 40,
-        ),
-    };
-}
 
 export default function DispatcherOrdersIndex({
     orders,

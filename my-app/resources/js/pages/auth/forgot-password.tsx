@@ -30,7 +30,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 </div>
             )}
 
-            <Form {...email.form()} className="auth-form">
+            <Form {...email()} className="auth-form">
                 {({ processing, errors }) => (
                     <>
                         <div className="auth-field">

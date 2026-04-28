@@ -258,6 +258,27 @@ class OrderCrudTest extends TestCase
             ->assertSessionHasErrors(['client_id', 'address_id']);
     }
 
+    public function test_admin_cannot_create_order_with_client_or_address_from_different_selected_organization(): void
+    {
+        $organizationA = Organization::factory()->create();
+        $organizationB = Organization::factory()->create();
+        $admin = User::factory()->admin()->create();
+        [$clientB, $addressB] = $this->createClientAndAddress($organizationB);
+
+        $this->actingAs($admin)
+            ->from(route('dispatcher.orders.create'))
+            ->post(route('dispatcher.orders.store'), [
+                'organization_id' => $organizationA->id,
+                'client_id' => $clientB->id,
+                'address_id' => $addressB->id,
+                'date' => '2026-04-01',
+                'time_from' => '09:00',
+                'time_to' => '11:00',
+            ])
+            ->assertRedirect(route('dispatcher.orders.create'))
+            ->assertSessionHasErrors(['client_id', 'address_id']);
+    }
+
     public function test_admin_can_manage_orders_for_any_organization(): void
     {
         $organizationA = Organization::factory()->create();
@@ -482,6 +503,52 @@ class OrderCrudTest extends TestCase
             ->delete(route('dispatcher.orders.destroy', $order))
             ->assertRedirect(route('dispatcher.orders.index'))
             ->assertSessionHasErrors(['order']);
+    }
+
+    public function test_assigned_order_date_must_match_route_date_when_updating(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courierUser = User::factory()->courier($organization->id)->create();
+        Courier::query()->create([
+            'user_id' => $courierUser->id,
+            'on_duty' => true,
+        ]);
+        [$client, $address] = $this->createClientAndAddress($organization);
+        $order = Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'address_id' => $address->id,
+            'status' => 'ASSIGNED',
+            'date' => '2026-04-10',
+            'time_from' => '09:00:00',
+            'time_to' => '11:00:00',
+        ]);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courierUser->id,
+            'date' => '2026-04-10',
+            'status' => 'PLANNED',
+        ]);
+        RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $order->id,
+            'seq_no' => 1,
+            'status' => 'PENDING',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.orders.edit', $order))
+            ->patch(route('dispatcher.orders.update', $order), [
+                'client_id' => $client->id,
+                'address_id' => $address->id,
+                'date' => '2026-04-11',
+                'time_from' => '10:00',
+                'time_to' => '12:00',
+            ])
+            ->assertRedirect(route('dispatcher.orders.edit', $order))
+            ->assertSessionHasErrors(['date']);
     }
 
     /**

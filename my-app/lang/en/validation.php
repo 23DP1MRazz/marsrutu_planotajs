@@ -48,13 +48,25 @@ return [
         'organization_id' => [
             'required_for_role' => 'The organization field is required.',
         ],
+        'phone' => [
+            'incorrect' => 'Incorrect phone number.',
+        ],
         'role' => [
             'last_admin' => 'At least one admin user must remain.',
             'courier_routes_exist' => 'This courier cannot change role or organization while assigned routes exist.',
         ],
+        'client' => [
+            'delete_blocked' => 'This client cannot be deleted because it is used by existing orders.',
+        ],
+        'address' => [
+            'delete_blocked' => 'This address cannot be deleted because it is used by existing orders.',
+        ],
         'file' => [
             'proof_status' => 'Proof of delivery can only be uploaded for completed or failed stops.',
             'proof_exists' => 'Proof of delivery has already been uploaded for this stop.',
+        ],
+        'order_ids' => [
+            'route_date_match' => 'Orders can only be assigned to a route on the same date.',
         ],
         'stop_ids' => [
             'complete_route' => 'The stop order must include every stop from this route exactly once.',
@@ -64,7 +76,9 @@ return [
         ],
         'order' => [
             'cancel_blocked' => 'This order cannot be cancelled because delivery has already started or finished.',
+            'date_must_match_route' => 'The order date must match the assigned route date.',
             'delete_blocked' => 'This order cannot be deleted because it is already attached to a route. Cancel it instead when cancellation is allowed.',
+            'organization_locked' => 'The organization cannot be changed while the order is attached to a route.',
         ],
     ],
 

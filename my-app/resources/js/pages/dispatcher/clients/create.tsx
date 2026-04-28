@@ -134,7 +134,10 @@ export default function DispatcherClientsCreate({
                                     <input
                                         id="phone"
                                         name="phone"
-                                        type="text"
+                                        type="tel"
+                                        inputMode="numeric"
+                                        maxLength={8}
+                                        pattern="2[0-9]{7}"
                                         value={form.data.phone}
                                         onChange={(event) =>
                                             form.setData(

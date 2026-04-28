@@ -43,7 +43,7 @@ export default function Profile() {
                             </p>
                         </div>
                         <Form
-                            {...ProfileController.update.form()}
+                            {...ProfileController.update()}
                             options={{
                                 preserveScroll: true,
                             }}

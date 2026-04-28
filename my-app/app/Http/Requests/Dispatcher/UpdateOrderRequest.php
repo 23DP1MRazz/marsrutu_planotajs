@@ -6,6 +6,7 @@ use App\Http\Requests\Concerns\LocalizesValidationAttributes;
 use App\Models\Order;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateOrderRequest extends FormRequest
 {
@@ -47,6 +48,40 @@ class UpdateOrderRequest extends FormRequest
             'time_to' => ['required', 'date_format:H:i', 'after:time_from'],
             'status' => ['prohibited'],
             'notes' => ['nullable', 'string', 'max:500'],
+        ];
+    }
+
+    /**
+     * @return array<int, \Closure(\Illuminate\Validation\Validator): void>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                /** @var Order $order */
+                $order = $this->route('order');
+                $order->loadMissing('routeStops.route:id,date');
+
+                if (
+                    $this->user()?->isAdmin()
+                    && $order->routeStops->isNotEmpty()
+                    && (int) $this->input('organization_id') !== (int) $order->organization_id
+                ) {
+                    $validator->errors()->add(
+                        'organization_id',
+                        __('validation.custom.order.organization_locked'),
+                    );
+                }
+
+                $routeDate = $order->routeStops->first()?->route?->date;
+
+                if ($routeDate !== null && $this->input('date') !== $routeDate) {
+                    $validator->errors()->add(
+                        'date',
+                        __('validation.custom.order.date_must_match_route'),
+                    );
+                }
+            },
         ];
     }
 

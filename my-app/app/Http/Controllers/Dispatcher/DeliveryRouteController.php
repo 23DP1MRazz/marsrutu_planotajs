@@ -224,7 +224,10 @@ class DeliveryRouteController extends Controller
                 'lat' => $routeStop->order?->address?->lat,
                 'lng' => $routeStop->order?->address?->lng,
             ]),
-            'availableOrders' => $this->unassignedOrdersForOrganization($deliveryRoute->organization_id),
+            'availableOrders' => $this->unassignedOrdersForOrganization(
+                $deliveryRoute->organization_id,
+                $deliveryRoute->date,
+            ),
         ]);
     }
 
@@ -496,13 +499,17 @@ class DeliveryRouteController extends Controller
     /**
      * @return \Illuminate\Support\Collection<int, array{id: int, organization_id: int, client_name: string|null, address_label: string, date: string, time_from: string, time_to: string}>
      */
-    private function unassignedOrdersForOrganization(int $organizationId)
+    private function unassignedOrdersForOrganization(int $organizationId, ?string $routeDate = null)
     {
         return Order::query()
             ->with(['client:id,name', 'address:id,city,street'])
             ->where('organization_id', $organizationId)
             ->whereIn('status', self::ASSIGNABLE_ORDER_STATUSES)
             ->whereDoesntHave('routeStops')
+            ->when(
+                $routeDate !== null,
+                fn (Builder $query) => $query->whereDate('date', $routeDate),
+            )
             ->orderBy('date')
             ->orderBy('time_from')
             ->get(['id', 'organization_id', 'client_id', 'address_id', 'date', 'time_from', 'time_to'])

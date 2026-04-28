@@ -3,12 +3,14 @@
 namespace App\Http\Requests\Dispatcher;
 
 use App\Http\Requests\Concerns\LocalizesValidationAttributes;
+use App\Http\Requests\Dispatcher\Concerns\HasPhoneValidation;
 use App\Models\Client;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateClientRequest extends FormRequest
 {
+    use HasPhoneValidation;
     use LocalizesValidationAttributes;
 
     /**
@@ -36,7 +38,15 @@ class UpdateClientRequest extends FormRequest
         return [
             'organization_id' => $organizationRules,
             'name' => ['required', 'string', 'max:100'],
-            'phone' => ['required', 'string', 'max:32'],
+            'phone' => $this->phoneRules(),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return $this->phoneMessages();
     }
 }

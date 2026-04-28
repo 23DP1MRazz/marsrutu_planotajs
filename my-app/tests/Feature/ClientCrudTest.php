@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
 use App\Models\Client;
+use App\Models\Order;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -103,6 +105,51 @@ class ClientCrudTest extends TestCase
         $this->assertDatabaseMissing('clients', [
             'id' => $client->id,
         ]);
+    }
+
+    public function test_client_phone_must_start_with_2_and_have_exactly_eight_digits(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $client = Client::factory()->create(['organization_id' => $organization->id]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.clients.create'))
+            ->post(route('dispatcher.clients.store'), [
+                'name' => 'Client A',
+                'phone' => '12345678',
+            ])
+            ->assertRedirect(route('dispatcher.clients.create'))
+            ->assertSessionHasErrors(['phone']);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.clients.edit', $client))
+            ->patch(route('dispatcher.clients.update', $client), [
+                'name' => 'Client B',
+                'phone' => '2000123',
+            ])
+            ->assertRedirect(route('dispatcher.clients.edit', $client))
+            ->assertSessionHasErrors(['phone']);
+    }
+
+    public function test_client_delete_shows_validation_error_when_orders_exist(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $client = Client::factory()->create(['organization_id' => $organization->id]);
+        $address = Address::factory()->create(['organization_id' => $organization->id]);
+
+        Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'address_id' => $address->id,
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->from(route('dispatcher.clients.index'))
+            ->delete(route('dispatcher.clients.destroy', $client))
+            ->assertRedirect(route('dispatcher.clients.index'))
+            ->assertSessionHasErrors(['client']);
     }
 
     public function test_dispatcher_cannot_manage_other_organization_client(): void

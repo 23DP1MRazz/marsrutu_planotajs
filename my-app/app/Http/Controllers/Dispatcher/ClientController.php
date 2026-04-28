@@ -9,8 +9,10 @@ use App\Http\Requests\Dispatcher\UpdateClientRequest;
 use App\Models\Client;
 use App\Models\Organization;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -96,7 +98,13 @@ class ClientController extends Controller
         $this->authorizeDispatcherAccess($request);
         $this->authorize('delete', $client);
 
-        $client->delete();
+        try {
+            $client->delete();
+        } catch (QueryException) {
+            throw ValidationException::withMessages([
+                'client' => __('validation.custom.client.delete_blocked'),
+            ]);
+        }
 
         return to_route('dispatcher.clients.index');
     }

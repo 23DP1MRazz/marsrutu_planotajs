@@ -232,6 +232,16 @@ class OrderController extends Controller
             'notes' => $data['notes'] ?? null,
         ]);
 
+        $order->load('routeStops');
+
+        foreach ($order->routeStops as $routeStop) {
+            $routeStop->update([
+                'planned_eta' => $order->date && $order->time_from
+                    ? Carbon::parse($order->date.' '.$order->time_from)
+                    : null,
+            ]);
+        }
+
         return to_route('dispatcher.orders.index');
     }
 

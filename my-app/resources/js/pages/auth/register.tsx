@@ -34,7 +34,7 @@ export default function Register() {
         >
             <Head title={t('auth.register.title')} />
             <Form
-                {...store.form()}
+                {...store()}
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
                 className="auth-form"
