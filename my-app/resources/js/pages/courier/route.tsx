@@ -35,6 +35,8 @@ import type {
 } from '@/types/courier';
 import type { SharedData } from '@/types';
 
+const maxProofFileSizeInBytes = 5 * 1024 * 1024;
+
 type CourierRoutePageProps = {
     deliveryRoute: CourierRouteRecord | null;
     stops: CourierRouteStopRecord[];
@@ -267,6 +269,24 @@ export default function CourierRoutePage({
                 proofForm.reset();
             },
         });
+    };
+
+    const handleProofFileChange = (stopId: number, file: File | null) => {
+        if (file && file.size > maxProofFileSizeInBytes) {
+            setSelectedProofFiles((currentFiles) => ({
+                ...currentFiles,
+                [stopId]: null,
+            }));
+            proofForm.setError('file', t('courier.stop.proof_file_too_large'));
+
+            return;
+        }
+
+        proofForm.clearErrors('file');
+        setSelectedProofFiles((currentFiles) => ({
+            ...currentFiles,
+            [stopId]: file,
+        }));
     };
 
     if (!isMobile) {
@@ -774,17 +794,12 @@ export default function CourierRoutePage({
                                                                             onChange={(
                                                                                 event,
                                                                             ) =>
-                                                                                setSelectedProofFiles(
-                                                                                    (
-                                                                                        currentFiles,
-                                                                                    ) => ({
-                                                                                        ...currentFiles,
-                                                                                        [stop.id]:
-                                                                                            event
-                                                                                                .target
-                                                                                                .files?.[0] ??
-                                                                                            null,
-                                                                                    }),
+                                                                                handleProofFileChange(
+                                                                                    stop.id,
+                                                                                    event
+                                                                                        .target
+                                                                                        .files?.[0] ??
+                                                                                        null,
                                                                                 )
                                                                             }
                                                                             className="block w-full text-xs text-[#6b7280] file:mr-3 file:rounded-lg file:border-0 file:bg-[#2563eb] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white"
@@ -912,17 +927,12 @@ export default function CourierRoutePage({
                                                                             onChange={(
                                                                                 event,
                                                                             ) =>
-                                                                                setSelectedProofFiles(
-                                                                                    (
-                                                                                        currentFiles,
-                                                                                    ) => ({
-                                                                                        ...currentFiles,
-                                                                                        [stop.id]:
-                                                                                            event
-                                                                                                .target
-                                                                                                .files?.[0] ??
-                                                                                            null,
-                                                                                    }),
+                                                                                handleProofFileChange(
+                                                                                    stop.id,
+                                                                                    event
+                                                                                        .target
+                                                                                        .files?.[0] ??
+                                                                                        null,
                                                                                 )
                                                                             }
                                                                             className="block w-full text-xs text-[#6b7280] file:mr-3 file:rounded-lg file:border-0 file:bg-[#2563eb] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white"
@@ -1225,17 +1235,12 @@ export default function CourierRoutePage({
                                                                         onChange={(
                                                                             event,
                                                                         ) =>
-                                                                            setSelectedProofFiles(
-                                                                                (
-                                                                                    currentFiles,
-                                                                                ) => ({
-                                                                                    ...currentFiles,
-                                                                                    [stop.id]:
-                                                                                        event
-                                                                                            .target
-                                                                                            .files?.[0] ??
-                                                                                        null,
-                                                                                }),
+                                                                            handleProofFileChange(
+                                                                                stop.id,
+                                                                                event
+                                                                                    .target
+                                                                                    .files?.[0] ??
+                                                                                    null,
                                                                             )
                                                                         }
                                                                         className="block w-full text-xs text-[#6b7280] file:mr-3 file:rounded-lg file:border-0 file:bg-[#2563eb] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white"

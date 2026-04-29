@@ -64,6 +64,7 @@ return [
         'file' => [
             'proof_status' => 'Piegādes pierādījumu var augšupielādēt tikai pabeigtām vai neveiksmīgām pieturām.',
             'proof_exists' => 'Šai pieturai piegādes pierādījums jau ir augšupielādēts.',
+            'too_large' => 'Piegādes pierādījuma fails ir pārāk liels. Maksimālais izmērs ir 5 MB.',
         ],
         'order_ids' => [
             'route_date_match' => 'Pasūtījumus maršrutam var piešķirt tikai tajā pašā datumā.',

@@ -64,6 +64,7 @@ return [
         'file' => [
             'proof_status' => 'Proof of delivery can only be uploaded for completed or failed stops.',
             'proof_exists' => 'Proof of delivery has already been uploaded for this stop.',
+            'too_large' => 'Proof file is too large. Maximum size is 5 MB.',
         ],
         'order_ids' => [
             'route_date_match' => 'Orders can only be assigned to a route on the same date.',

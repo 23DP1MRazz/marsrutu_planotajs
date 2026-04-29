@@ -479,6 +479,8 @@ const en = {
             start_handling: 'Start handling',
             stop_number: 'Stop :number',
             take_or_choose_photo: 'Take or choose a photo',
+            proof_file_too_large:
+                'Proof file is too large. Maximum size is 5 MB.',
             upload_proof: 'Upload proof',
             upload_proof_replace: 'Replace proof',
             upload_proof_photo: 'Upload proof photo',

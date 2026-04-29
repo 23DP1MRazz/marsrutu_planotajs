@@ -482,6 +482,8 @@ const lv = {
             start_handling: 'Sākt apstrādi',
             stop_number: 'Pietura :number',
             take_or_choose_photo: 'Uzņemiet vai izvēlieties foto',
+            proof_file_too_large:
+                'Piegādes pierādījuma fails ir pārāk liels. Maksimālais izmērs ir 5 MB.',
             upload_proof: 'Augšupielādēt pierādījumu',
             upload_proof_replace: 'Aizstāt pierādījumu',
             upload_proof_photo: 'Augšupielādēt pierādījuma foto',
