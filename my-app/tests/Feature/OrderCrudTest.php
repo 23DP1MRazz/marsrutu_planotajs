@@ -119,10 +119,12 @@ class OrderCrudTest extends TestCase
 
     public function test_dispatcher_can_export_filtered_orders_to_csv(): void
     {
-        $organizationA = Organization::factory()->create();
+        $organizationA = Organization::factory()->create(['name' => 'Ātra Organizācija']);
         $organizationB = Organization::factory()->create();
         $dispatcher = User::factory()->dispatcher($organizationA->id)->create();
         [$clientA, $addressA] = $this->createClientAndAddress($organizationA);
+        $clientA->update(['name' => 'Jānis Šmits']);
+        $addressA->update(['city' => 'Rīga', 'street' => 'Brīvības iela']);
         [$clientB, $addressB] = $this->createClientAndAddress($organizationB);
 
         $matchingOrder = Order::factory()->create([
@@ -130,7 +132,7 @@ class OrderCrudTest extends TestCase
             'client_id' => $clientA->id,
             'address_id' => $addressA->id,
             'status' => 'PENDING',
-            'notes' => 'Export me',
+            'notes' => 'Piezīmes eksportam',
         ]);
 
         Order::factory()->create([
@@ -141,7 +143,9 @@ class OrderCrudTest extends TestCase
             'notes' => 'Do not export me',
         ]);
 
-        $response = $this->actingAs($dispatcher)
+        $response = $this
+            ->withSession(['locale' => 'lv'])
+            ->actingAs($dispatcher)
             ->get(route('dispatcher.orders.export', [
                 'status' => 'PENDING',
                 'search' => $clientA->name,
@@ -154,7 +158,14 @@ class OrderCrudTest extends TestCase
         $content = $response->streamedContent();
 
         $this->assertStringContainsString((string) $matchingOrder->id, $content);
-        $this->assertStringContainsString('Export me', $content);
+        $this->assertStringContainsString('Pasutijuma ID', $content);
+        $this->assertStringContainsString('Atra Organizacija', $content);
+        $this->assertStringContainsString('Janis Smits', $content);
+        $this->assertStringContainsString('Riga, Brivibas iela', $content);
+        $this->assertStringContainsString('Piezimes eksportam', $content);
+        $this->assertStringNotContainsString('Pasūtījuma ID', $content);
+        $this->assertStringNotContainsString('Ātra Organizācija', $content);
+        $this->assertStringNotContainsString('Piezīmes eksportam', $content);
         $this->assertStringNotContainsString('Do not export me', $content);
     }
 

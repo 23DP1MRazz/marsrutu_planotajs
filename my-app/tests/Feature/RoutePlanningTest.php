@@ -488,11 +488,11 @@ class RoutePlanningTest extends TestCase
 
     public function test_dispatcher_can_export_filtered_routes_to_csv(): void
     {
-        $organizationA = Organization::factory()->create(['name' => 'Alpha Org']);
+        $organizationA = Organization::factory()->create(['name' => 'Ātra Org']);
         $organizationB = Organization::factory()->create(['name' => 'Beta Org']);
         $dispatcher = User::factory()->dispatcher($organizationA->id)->create();
         $courierA = $this->createCourier($organizationA);
-        $courierA->update(['name' => 'Alpha Courier']);
+        $courierA->update(['name' => 'Jānis Kurjers']);
         $courierB = $this->createCourier($organizationB);
         $courierB->update(['name' => 'Beta Courier']);
 
@@ -529,7 +529,9 @@ class RoutePlanningTest extends TestCase
             'status' => 'PENDING',
         ]);
 
-        $response = $this->actingAs($dispatcher)
+        $response = $this
+            ->withSession(['locale' => 'lv'])
+            ->actingAs($dispatcher)
             ->get(route('dispatcher.routes.export', [
                 'status' => 'PLANNED',
                 'date' => '2026-04-15',
@@ -541,8 +543,14 @@ class RoutePlanningTest extends TestCase
 
         $content = $response->streamedContent();
 
-        $this->assertStringContainsString('Alpha Courier', $content);
-        $this->assertStringContainsString('Alpha Org', $content);
+        $this->assertStringContainsString('Marsruta ID', $content);
+        $this->assertStringContainsString('Janis Kurjers', $content);
+        $this->assertStringContainsString('Atra Org', $content);
+        $this->assertStringContainsString('Planots', $content);
+        $this->assertStringNotContainsString('Maršruta ID', $content);
+        $this->assertStringNotContainsString('Jānis Kurjers', $content);
+        $this->assertStringNotContainsString('Ātra Org', $content);
+        $this->assertStringNotContainsString('Plānots', $content);
         $this->assertStringNotContainsString('Beta Courier', $content);
         $this->assertStringNotContainsString('Beta Org', $content);
     }

@@ -127,7 +127,7 @@ class OrderController extends Controller
         return response()->streamDownload(function () use ($orders): void {
             $handle = fopen('php://output', 'w');
 
-            fputcsv($handle, [
+            $this->writeAsciiCsvRow($handle, [
                 __('reports.orders.headers.order_id'),
                 __('reports.orders.headers.organization'),
                 __('reports.orders.headers.client'),
@@ -140,7 +140,7 @@ class OrderController extends Controller
             ]);
 
             foreach ($orders as $order) {
-                fputcsv($handle, [
+                $this->writeAsciiCsvRow($handle, [
                     $order->id,
                     $order->organization?->name,
                     $order->client?->name,

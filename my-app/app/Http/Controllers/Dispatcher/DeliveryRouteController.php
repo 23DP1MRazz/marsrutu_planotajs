@@ -111,7 +111,7 @@ class DeliveryRouteController extends Controller
         return response()->streamDownload(function () use ($deliveryRoutes): void {
             $handle = fopen('php://output', 'w');
 
-            fputcsv($handle, [
+            $this->writeAsciiCsvRow($handle, [
                 __('reports.routes.headers.route_id'),
                 __('reports.routes.headers.organization'),
                 __('reports.routes.headers.courier'),
@@ -127,7 +127,7 @@ class DeliveryRouteController extends Controller
 
             foreach ($deliveryRoutes as $deliveryRoute) {
                 if ($deliveryRoute->routeStops->isEmpty()) {
-                    fputcsv($handle, [
+                    $this->writeAsciiCsvRow($handle, [
                         $deliveryRoute->id,
                         $deliveryRoute->organization?->name,
                         $deliveryRoute->courier?->user?->name,
@@ -145,7 +145,7 @@ class DeliveryRouteController extends Controller
                 }
 
                 foreach ($deliveryRoute->routeStops as $routeStop) {
-                    fputcsv($handle, [
+                    $this->writeAsciiCsvRow($handle, [
                         $deliveryRoute->id,
                         $deliveryRoute->organization?->name,
                         $deliveryRoute->courier?->user?->name,
