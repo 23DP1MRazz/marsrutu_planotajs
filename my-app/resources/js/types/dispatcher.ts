@@ -59,6 +59,7 @@ export type OrderRecord = {
     updated_at: string;
     client_name: string | null;
     address_label: string;
+    route_id: number | null;
     can_cancel: boolean;
     can_delete: boolean;
 };
@@ -113,6 +114,7 @@ export type RouteStopRecord = {
     planned_eta: string | null;
     status: string;
     can_remove: boolean;
+    order_url: string;
     proof_view_url: string | null;
     client_name: string | null;
     address_label: string;

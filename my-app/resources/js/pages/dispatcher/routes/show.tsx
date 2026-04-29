@@ -1,9 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Head, useForm } from '@inertiajs/react';
-import {
-    LeafletMap,
-    type LeafletMapMarker,
-} from '@/components/dispatcher/leaflet-map';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { useMemo, useState, type FormEvent } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,
@@ -15,15 +11,19 @@ import {
     backofficeButtonClassName,
 } from '@/components/backoffice/ui';
 import ConfirmActionDialog from '@/components/confirm-action-dialog';
+import {
+    LeafletMap,
+    type LeafletMapMarker,
+} from '@/components/dispatcher/leaflet-map';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
+import type { BreadcrumbItem } from '@/types';
 import type {
     AssignableOrder,
     DeliveryRouteRecord,
     RouteStopRecord,
 } from '@/types/dispatcher';
-import type { BreadcrumbItem } from '@/types';
 
 type DispatcherRoutesShowProps = {
     deliveryRoute: DeliveryRouteRecord;
@@ -37,23 +37,14 @@ export default function DispatcherRoutesShow({
     availableOrders,
 }: DispatcherRoutesShowProps) {
     const { t } = useTranslation();
-    const [orderedStops, setOrderedStops] = useState(stops);
-    const reorderForm = useForm({
-        stop_ids: stops.map((stop) => stop.id),
-    });
+    const defaultStopIds = useMemo(() => stops.map((stop) => stop.id), [stops]);
+    const [orderedStopIds, setOrderedStopIds] = useState(defaultStopIds);
+    const reorderForm = useForm({ stop_ids: [] as number[] });
     const removeStopForm = useForm({
         route_stop: '',
     });
     const [pendingRemoveStop, setPendingRemoveStop] =
         useState<RouteStopRecord | null>(null);
-
-    useEffect(() => {
-        setOrderedStops(stops);
-        reorderForm.setData(
-            'stop_ids',
-            stops.map((stop) => stop.id),
-        );
-    }, [stops]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: t('dashboard.title'), href: '/dashboard' },
@@ -86,6 +77,26 @@ export default function DispatcherRoutesShow({
         form.post(`/dispatcher/routes/${deliveryRoute.id}/orders`);
     };
 
+    const stopIdsMatchCurrentStops = useMemo(
+        () =>
+            orderedStopIds.length === defaultStopIds.length &&
+            defaultStopIds.every((stopId) => orderedStopIds.includes(stopId)),
+        [defaultStopIds, orderedStopIds],
+    );
+    const effectiveStopIds = stopIdsMatchCurrentStops
+        ? orderedStopIds
+        : defaultStopIds;
+    const stopsById = useMemo(
+        () => new Map(stops.map((stop) => [stop.id, stop])),
+        [stops],
+    );
+    const orderedStops = useMemo(
+        () =>
+            effectiveStopIds
+                .map((stopId) => stopsById.get(stopId))
+                .filter((stop): stop is RouteStopRecord => stop !== undefined),
+        [effectiveStopIds, stopsById],
+    );
     const hasLocalReorderChanges = useMemo(
         () => orderedStops.some((stop, index) => stop.id !== stops[index]?.id),
         [orderedStops, stops],
@@ -126,19 +137,17 @@ export default function DispatcherRoutesShow({
             return;
         }
 
-        const nextStops = [...orderedStops];
-        const [movedStop] = nextStops.splice(index, 1);
+        const nextStopIds = orderedStops.map((stop) => stop.id);
+        const [movedStopId] = nextStopIds.splice(index, 1);
 
-        nextStops.splice(targetIndex, 0, movedStop);
-
-        setOrderedStops(nextStops);
-        reorderForm.setData(
-            'stop_ids',
-            nextStops.map((stop) => stop.id),
-        );
+        nextStopIds.splice(targetIndex, 0, movedStopId);
+        setOrderedStopIds(nextStopIds);
     };
 
     const saveStopOrder = () => {
+        reorderForm.transform(() => ({
+            stop_ids: orderedStops.map((stop) => stop.id),
+        }));
         reorderForm.patch(
             `/dispatcher/routes/${deliveryRoute.id}/stops/reorder`,
             {
@@ -221,11 +230,7 @@ export default function DispatcherRoutesShow({
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        setOrderedStops(stops);
-                                        reorderForm.setData(
-                                            'stop_ids',
-                                            stops.map((stop) => stop.id),
-                                        );
+                                        setOrderedStopIds(defaultStopIds);
                                     }}
                                     disabled={reorderForm.processing}
                                     className={backofficeButtonClassName(
@@ -251,10 +256,18 @@ export default function DispatcherRoutesShow({
                                 >
                                     <div className="space-y-1">
                                         <p className="font-semibold text-[#111827]">
-                                            {t('dispatcher.routes.stop_order', {
-                                                number: index + 1,
-                                                id: stop.order_id,
-                                            })}
+                                            <Link
+                                                href={stop.order_url}
+                                                className="hover:text-[#2563eb] hover:underline"
+                                            >
+                                                {t(
+                                                    'dispatcher.routes.stop_order',
+                                                    {
+                                                        number: index + 1,
+                                                        id: stop.order_id,
+                                                    },
+                                                )}
+                                            </Link>
                                         </p>
                                         <p className="text-sm text-[#111827]">
                                             {stop.client_name ?? '-'}
@@ -282,6 +295,12 @@ export default function DispatcherRoutesShow({
                                     </div>
 
                                     <div className="flex flex-wrap gap-2">
+                                        <BackofficeActionLink
+                                            href={stop.order_url}
+                                            variant="outline"
+                                        >
+                                            {t('dispatcher.routes.open_order')}
+                                        </BackofficeActionLink>
                                         <button
                                             type="button"
                                             onClick={() => moveStop(index, -1)}

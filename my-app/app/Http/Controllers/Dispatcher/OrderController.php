@@ -57,6 +57,7 @@ class OrderController extends Controller
         ];
 
         $orders = $this->filteredOrdersQuery($request, $filters)
+            ->with(['routeStops.route:id,date,status'])
             ->withCount([
                 'routeStops',
                 'routeStops as non_pending_route_stops_count' => fn (Builder $query) => $query
@@ -92,6 +93,7 @@ class OrderController extends Controller
                     'address_label' => collect([$order->address?->city, $order->address?->street])
                         ->filter()
                         ->join(', '),
+                    'route_id' => $order->routeStops->first()?->route?->id,
                     'can_cancel' => $this->canCancelOrder($order),
                     'can_delete' => (int) ($order->route_stops_count ?? 0) === 0,
                 ]),
@@ -194,6 +196,8 @@ class OrderController extends Controller
     {
         $this->authorizeDispatcherAccess($request);
         $this->authorize('view', $order);
+        $order->load('routeStops.route:id,date,status');
+        $assignedRoute = $order->routeStops->first()?->route;
 
         return Inertia::render('dispatcher/orders/edit', [
             'orderId' => (string) $order->id,
@@ -208,6 +212,13 @@ class OrderController extends Controller
                 'status',
                 'notes',
             ),
+            'assignedRoute' => $assignedRoute === null
+                ? null
+                : [
+                    'id' => $assignedRoute->id,
+                    'date' => $assignedRoute->date,
+                    'status' => $assignedRoute->status,
+                ],
             'organizations' => $this->organizationsForUser($request),
             'clients' => $this->clientsForUser($request),
             'addresses' => $this->addressesForUser($request),

@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Route as RouteIcon, XCircle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,
@@ -20,18 +20,18 @@ import ConfirmActionDialog from '@/components/confirm-action-dialog';
 import { useLiveFiltering } from '@/hooks/use-live-filtering';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
-import { formatShortDate } from '@/lib/date';
 import {
     type ActionPopup,
     type PopupPosition,
     popupPositionFromElement,
 } from '@/lib/action-popup';
+import { formatShortDate } from '@/lib/date';
+import type { BreadcrumbItem } from '@/types';
 import type {
     OrderFilters,
     OrderRecord,
     OrganizationOption,
 } from '@/types/dispatcher';
-import type { BreadcrumbItem } from '@/types';
 
 const searchSeparator = '||';
 
@@ -82,6 +82,7 @@ export default function DispatcherOrdersIndex({
     >;
     const [draftSearch, setDraftSearch] = useState('');
     const [actionPopup, setActionPopup] = useState<ActionPopup | null>(null);
+    const actionPopupId = useRef(0);
     const [lastActionPosition, setLastActionPosition] =
         useState<PopupPosition | null>(null);
     const [pendingAction, setPendingAction] = useState<{
@@ -148,7 +149,7 @@ export default function DispatcherOrdersIndex({
         }
 
         setActionPopup({
-            id: Date.now(),
+            id: (actionPopupId.current += 1),
             message: actionErrors.order,
             position: lastActionPosition ?? undefined,
             visible: true,
@@ -161,7 +162,7 @@ export default function DispatcherOrdersIndex({
         setLastActionPosition(position);
         actionForm.clearErrors();
         setActionPopup({
-            id: Date.now(),
+            id: (actionPopupId.current += 1),
             message,
             position,
             visible: true,
@@ -536,6 +537,29 @@ export default function DispatcherOrdersIndex({
                                             </td>
                                             <td className="px-4 py-4">
                                                 <div className="flex justify-end gap-1">
+                                                    {order.route_id ? (
+                                                        <BackofficeIconButton
+                                                            asChild
+                                                            title={t(
+                                                                'dispatcher.orders.open_route',
+                                                                {
+                                                                    id: order.route_id,
+                                                                },
+                                                            )}
+                                                            aria-label={t(
+                                                                'dispatcher.orders.open_route',
+                                                                {
+                                                                    id: order.route_id,
+                                                                },
+                                                            )}
+                                                        >
+                                                            <Link
+                                                                href={`/dispatcher/routes/${order.route_id}`}
+                                                            >
+                                                                <RouteIcon className="h-3.5 w-3.5" />
+                                                            </Link>
+                                                        </BackofficeIconButton>
+                                                    ) : null}
                                                     <BackofficeIconButton
                                                         asChild
                                                     >

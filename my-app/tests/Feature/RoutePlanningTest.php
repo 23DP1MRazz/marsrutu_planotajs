@@ -714,6 +714,33 @@ class RoutePlanningTest extends TestCase
         ]);
     }
 
+    public function test_route_detail_includes_order_link_for_each_stop(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = $this->createCourier($organization);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+        ]);
+        $order = $this->createOrder($organization);
+
+        RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $order->id,
+            'seq_no' => 1,
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.routes.show', $deliveryRoute))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/routes/show')
+                ->where('stops.0.order_id', $order->id)
+                ->where('stops.0.order_url', route('dispatcher.orders.edit', $order, false)));
+    }
+
     public function test_dispatcher_cannot_reorder_route_with_missing_or_foreign_stops(): void
     {
         $organizationA = Organization::factory()->create();

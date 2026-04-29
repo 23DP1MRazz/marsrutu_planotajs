@@ -238,6 +238,50 @@ class OrderCrudTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_assigned_order_includes_route_link_data(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courierUser = User::factory()->courier($organization->id)->create();
+        Courier::query()->create([
+            'user_id' => $courierUser->id,
+            'on_duty' => true,
+        ]);
+        [$client, $address] = $this->createClientAndAddress($organization);
+        $order = Order::factory()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'address_id' => $address->id,
+            'status' => 'ASSIGNED',
+        ]);
+        $deliveryRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courierUser->id,
+        ]);
+        RouteStop::factory()->create([
+            'organization_id' => $organization->id,
+            'route_id' => $deliveryRoute->id,
+            'order_id' => $order->id,
+            'seq_no' => 1,
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.orders.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/orders/index')
+                ->where('orders.0.id', $order->id)
+                ->where('orders.0.route_id', $deliveryRoute->id));
+
+        $this->actingAs($dispatcher)
+            ->get(route('dispatcher.orders.edit', $order))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dispatcher/orders/edit')
+                ->where('assignedRoute.id', $deliveryRoute->id)
+                ->where('assignedRoute.status', $deliveryRoute->status));
+    }
+
     public function test_dispatcher_cannot_create_order_with_foreign_client_or_address(): void
     {
         $organizationA = Organization::factory()->create();

@@ -367,6 +367,10 @@ const lv = {
             empty_description:
                 'Mainiet filtrus vai izveidojiet jaunu pasūtījumu.',
             empty_title: 'Pasūtījumi nav atrasti',
+            assigned_route: 'Piešķirtais maršruts',
+            no_route: 'Nav maršruta',
+            open_assigned_route: 'Atvērt piešķirto maršrutu',
+            open_route: 'Atvērt maršrutu #:id',
             order_number: 'Pasūtījums #:id',
             placeholder: 'Klients, adrese, datums, statuss, piezīmes...',
             select_address: 'Izvēlieties adresi',
@@ -391,6 +395,7 @@ const lv = {
             no_available_orders: 'Papildu pasūtījumi nav pieejami.',
             no_stops: 'Pieturas vēl nav piešķirtas.',
             open: 'Atvērt',
+            open_order: 'Atvērt pasūtījumu',
             placeholder: 'Kurjers, klients, adrese, datums, statuss...',
             print: 'Drukāt',
             print_sheet: 'Drukāt maršruta lapu',

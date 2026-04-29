@@ -1,6 +1,6 @@
-import type { FormEvent } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
+import type { FormEvent } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,
@@ -15,22 +15,30 @@ import {
 } from '@/components/backoffice/ui';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
+import { formatShortDate } from '@/lib/date';
+import type { BreadcrumbItem } from '@/types';
 import type {
     AddressOption,
     ClientOption,
+    DeliveryRouteRecord,
     OrderRecord,
     OrganizationOption,
 } from '@/types/dispatcher';
-import type { BreadcrumbItem } from '@/types';
 
 type EditableOrder = Omit<
     OrderRecord,
-    'updated_at' | 'client_name' | 'address_label' | 'can_cancel' | 'can_delete'
+    | 'updated_at'
+    | 'client_name'
+    | 'address_label'
+    | 'route_id'
+    | 'can_cancel'
+    | 'can_delete'
 >;
 
 type DispatcherOrdersEditProps = {
     orderId: string;
     order: EditableOrder;
+    assignedRoute: Pick<DeliveryRouteRecord, 'id' | 'date' | 'status'> | null;
     organizations: OrganizationOption[];
     clients: ClientOption[];
     addresses: AddressOption[];
@@ -40,6 +48,7 @@ type DispatcherOrdersEditProps = {
 export default function DispatcherOrdersEdit({
     orderId,
     order,
+    assignedRoute,
     organizations,
     clients,
     addresses,
@@ -116,8 +125,14 @@ export default function DispatcherOrdersEdit({
         event.preventDefault();
         form.transform((data) => {
             if (!canSelectOrganization) {
-                const { organization_id: _organizationId, ...rest } = data;
-                return rest;
+                return {
+                    client_id: data.client_id,
+                    address_id: data.address_id,
+                    date: data.date,
+                    time_from: data.time_from,
+                    time_to: data.time_to,
+                    notes: data.notes,
+                };
             }
 
             return data;
@@ -134,14 +149,52 @@ export default function DispatcherOrdersEdit({
                     title={`${t('dispatcher.orders.edit_title')} ${orderId}`}
                     description={t('dispatcher.orders.edit_description')}
                     actions={
-                        <BackofficeActionLink
-                            href="/dispatcher/orders"
-                            variant="outline"
-                        >
-                            {t('dispatcher.orders.back')}
-                        </BackofficeActionLink>
+                        <div className="flex flex-wrap gap-2">
+                            {assignedRoute ? (
+                                <BackofficeActionLink
+                                    href={`/dispatcher/routes/${assignedRoute.id}`}
+                                    variant="outline"
+                                >
+                                    {t('dispatcher.orders.open_route', {
+                                        id: assignedRoute.id,
+                                    })}
+                                </BackofficeActionLink>
+                            ) : null}
+                            <BackofficeActionLink
+                                href="/dispatcher/orders"
+                                variant="outline"
+                            >
+                                {t('dispatcher.orders.back')}
+                            </BackofficeActionLink>
+                        </div>
                     }
                 />
+
+                {assignedRoute ? (
+                    <BackofficeCard>
+                        <BackofficeCardBody className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p className="text-xs font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
+                                    {t('dispatcher.orders.assigned_route')}
+                                </p>
+                                <p className="mt-1 font-semibold text-[#111827]">
+                                    {t('dispatcher.routes.detail_title', {
+                                        id: assignedRoute.id,
+                                    })}{' '}
+                                    · {formatShortDate(assignedRoute.date)} ·{' '}
+                                    {t(
+                                        `common.statuses.${assignedRoute.status.toLowerCase()}`,
+                                    )}
+                                </p>
+                            </div>
+                            <BackofficeActionLink
+                                href={`/dispatcher/routes/${assignedRoute.id}`}
+                            >
+                                {t('dispatcher.orders.open_assigned_route')}
+                            </BackofficeActionLink>
+                        </BackofficeCardBody>
+                    </BackofficeCard>
+                ) : null}
 
                 <BackofficeCard>
                     <BackofficeCardBody>
