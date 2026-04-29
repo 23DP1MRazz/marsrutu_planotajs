@@ -247,6 +247,7 @@ class RoutePlanningTest extends TestCase
             'route_id' => $deliveryRoute->id,
             'order_id' => $order->id,
             'seq_no' => 1,
+            'fail_reason' => 'Address was closed',
         ]);
 
         $this->actingAs($dispatcher)
@@ -664,6 +665,7 @@ class RoutePlanningTest extends TestCase
             'route_id' => $deliveryRoute->id,
             'order_id' => $order->id,
             'seq_no' => 1,
+            'fail_reason' => 'Address was closed',
         ]);
 
         $this->actingAs($dispatcher)
@@ -730,6 +732,7 @@ class RoutePlanningTest extends TestCase
             'route_id' => $deliveryRoute->id,
             'order_id' => $order->id,
             'seq_no' => 1,
+            'fail_reason' => 'Address was closed',
         ]);
 
         $this->actingAs($dispatcher)
@@ -738,7 +741,8 @@ class RoutePlanningTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('dispatcher/routes/show')
                 ->where('stops.0.order_id', $order->id)
-                ->where('stops.0.order_url', route('dispatcher.orders.edit', $order, false)));
+                ->where('stops.0.order_url', route('dispatcher.orders.edit', $order, false))
+                ->where('stops.0.fail_reason', 'Address was closed'));
     }
 
     public function test_dispatcher_cannot_reorder_route_with_missing_or_foreign_stops(): void

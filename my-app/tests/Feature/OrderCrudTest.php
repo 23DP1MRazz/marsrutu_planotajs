@@ -263,6 +263,7 @@ class OrderCrudTest extends TestCase
             'route_id' => $deliveryRoute->id,
             'order_id' => $order->id,
             'seq_no' => 1,
+            'fail_reason' => 'Customer unavailable',
         ]);
 
         $this->actingAs($dispatcher)
@@ -271,7 +272,8 @@ class OrderCrudTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('dispatcher/orders/index')
                 ->where('orders.0.id', $order->id)
-                ->where('orders.0.route_id', $deliveryRoute->id));
+                ->where('orders.0.route_id', $deliveryRoute->id)
+                ->where('orders.0.fail_reason', 'Customer unavailable'));
 
         $this->actingAs($dispatcher)
             ->get(route('dispatcher.orders.edit', $order))
@@ -279,7 +281,8 @@ class OrderCrudTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('dispatcher/orders/edit')
                 ->where('assignedRoute.id', $deliveryRoute->id)
-                ->where('assignedRoute.status', $deliveryRoute->status));
+                ->where('assignedRoute.status', $deliveryRoute->status)
+                ->where('failReason', 'Customer unavailable'));
     }
 
     public function test_dispatcher_cannot_create_order_with_foreign_client_or_address(): void

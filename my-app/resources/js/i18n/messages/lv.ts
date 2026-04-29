@@ -368,6 +368,7 @@ const lv = {
                 'Mainiet filtrus vai izveidojiet jaunu pasūtījumu.',
             empty_title: 'Pasūtījumi nav atrasti',
             assigned_route: 'Piešķirtais maršruts',
+            fail_reason_value: 'Neizdošanās iemesls: :reason',
             no_route: 'Nav maršruta',
             open_assigned_route: 'Atvērt piešķirto maršrutu',
             open_route: 'Atvērt maršrutu #:id',

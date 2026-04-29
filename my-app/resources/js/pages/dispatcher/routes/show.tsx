@@ -275,6 +275,16 @@ export default function DispatcherRoutesShow({
                                         <p className="text-sm text-[#6b7280]">
                                             {stop.address_label || '-'}
                                         </p>
+                                        {stop.fail_reason ? (
+                                            <p className="text-sm font-medium text-[#991b1b]">
+                                                {t(
+                                                    'dispatcher.orders.fail_reason_value',
+                                                    {
+                                                        reason: stop.fail_reason,
+                                                    },
+                                                )}
+                                            </p>
+                                        ) : null}
                                         <div className="flex flex-wrap items-center gap-2 pt-1">
                                             <BackofficeStatusBadge
                                                 status={stop.status}

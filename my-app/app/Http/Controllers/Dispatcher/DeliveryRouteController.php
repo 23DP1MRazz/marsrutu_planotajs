@@ -212,6 +212,7 @@ class DeliveryRouteController extends Controller
                 'order_id' => $routeStop->order_id,
                 'planned_eta' => $routeStop->planned_eta,
                 'status' => $routeStop->status,
+                'fail_reason' => $routeStop->fail_reason,
                 'can_remove' => $routeStop->status === 'PENDING',
                 'order_url' => route('dispatcher.orders.edit', $routeStop->order_id, false),
                 'proof_view_url' => $routeStop->proofOfDelivery

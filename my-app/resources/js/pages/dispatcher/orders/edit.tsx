@@ -39,6 +39,7 @@ type DispatcherOrdersEditProps = {
     orderId: string;
     order: EditableOrder;
     assignedRoute: Pick<DeliveryRouteRecord, 'id' | 'date' | 'status'> | null;
+    failReason: string | null;
     organizations: OrganizationOption[];
     clients: ClientOption[];
     addresses: AddressOption[];
@@ -49,6 +50,7 @@ export default function DispatcherOrdersEdit({
     orderId,
     order,
     assignedRoute,
+    failReason,
     organizations,
     clients,
     addresses,
@@ -172,8 +174,8 @@ export default function DispatcherOrdersEdit({
 
                 {assignedRoute ? (
                     <BackofficeCard>
-                        <BackofficeCardBody className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                            <div>
+                        <BackofficeCardBody className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div className="space-y-2">
                                 <p className="text-xs font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
                                     {t('dispatcher.orders.assigned_route')}
                                 </p>
@@ -186,6 +188,16 @@ export default function DispatcherOrdersEdit({
                                         `common.statuses.${assignedRoute.status.toLowerCase()}`,
                                     )}
                                 </p>
+                                {failReason ? (
+                                    <p className="text-sm font-medium text-[#991b1b]">
+                                        {t(
+                                            'dispatcher.orders.fail_reason_value',
+                                            {
+                                                reason: failReason,
+                                            },
+                                        )}
+                                    </p>
+                                ) : null}
                             </div>
                             <BackofficeActionLink
                                 href={`/dispatcher/routes/${assignedRoute.id}`}

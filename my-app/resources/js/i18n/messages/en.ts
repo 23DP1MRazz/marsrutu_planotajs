@@ -366,6 +366,7 @@ const en = {
             empty_description: 'Adjust the filters or create a new order.',
             empty_title: 'No orders found',
             assigned_route: 'Assigned route',
+            fail_reason_value: 'Fail reason: :reason',
             no_route: 'No route',
             open_assigned_route: 'Open assigned route',
             open_route: 'Open route #:id',

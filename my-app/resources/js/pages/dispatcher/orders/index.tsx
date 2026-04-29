@@ -531,9 +531,28 @@ export default function DispatcherOrdersIndex({
                                                 />
                                             </td>
                                             <td className="hidden max-w-[180px] px-4 py-4 text-[#6b7280] lg:table-cell">
-                                                <div className="truncate text-[13px]">
-                                                    {order.notes || '-'}
-                                                </div>
+                                                {order.notes ||
+                                                order.fail_reason ? (
+                                                    <div className="space-y-1 text-[13px]">
+                                                        {order.notes ? (
+                                                            <div className="truncate">
+                                                                {order.notes}
+                                                            </div>
+                                                        ) : null}
+                                                        {order.fail_reason ? (
+                                                            <div className="truncate text-[#991b1b]">
+                                                                {t(
+                                                                    'dispatcher.orders.fail_reason_value',
+                                                                    {
+                                                                        reason: order.fail_reason,
+                                                                    },
+                                                                )}
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                ) : (
+                                                    '-'
+                                                )}
                                             </td>
                                             <td className="px-4 py-4">
                                                 <div className="flex justify-end gap-1">

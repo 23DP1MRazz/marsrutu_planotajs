@@ -94,6 +94,7 @@ class OrderController extends Controller
                         ->filter()
                         ->join(', '),
                     'route_id' => $order->routeStops->first()?->route?->id,
+                    'fail_reason' => $order->routeStops->first()?->fail_reason,
                     'can_cancel' => $this->canCancelOrder($order),
                     'can_delete' => (int) ($order->route_stops_count ?? 0) === 0,
                 ]),
@@ -197,7 +198,8 @@ class OrderController extends Controller
         $this->authorizeDispatcherAccess($request);
         $this->authorize('view', $order);
         $order->load('routeStops.route:id,date,status');
-        $assignedRoute = $order->routeStops->first()?->route;
+        $routeStop = $order->routeStops->first();
+        $assignedRoute = $routeStop?->route;
 
         return Inertia::render('dispatcher/orders/edit', [
             'orderId' => (string) $order->id,
@@ -219,6 +221,7 @@ class OrderController extends Controller
                     'date' => $assignedRoute->date,
                     'status' => $assignedRoute->status,
                 ],
+            'failReason' => $routeStop?->fail_reason,
             'organizations' => $this->organizationsForUser($request),
             'clients' => $this->clientsForUser($request),
             'addresses' => $this->addressesForUser($request),
