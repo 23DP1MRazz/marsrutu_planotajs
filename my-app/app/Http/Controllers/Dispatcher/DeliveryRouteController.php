@@ -405,7 +405,7 @@ class DeliveryRouteController extends Controller
 
         $statuses = $deliveryRoute->routeStops->pluck('status');
 
-        if ($statuses->isNotEmpty() && $statuses->every(fn (string $status) => $status === 'COMPLETED')) {
+        if ($statuses->isNotEmpty() && $statuses->every(fn (string $status) => in_array($status, ['COMPLETED', 'FAILED'], true))) {
             $deliveryRoute->update([
                 'status' => 'DONE',
             ]);

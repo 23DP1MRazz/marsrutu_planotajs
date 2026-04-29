@@ -97,6 +97,7 @@ export default function DispatcherRoutesShow({
                 .filter((stop): stop is RouteStopRecord => stop !== undefined),
         [effectiveStopIds, stopsById],
     );
+    const canReorderStops = deliveryRoute.status !== 'DONE';
     const hasLocalReorderChanges = useMemo(
         () => orderedStops.some((stop, index) => stop.id !== stops[index]?.id),
         [orderedStops, stops],
@@ -215,7 +216,7 @@ export default function DispatcherRoutesShow({
                             </p>
                         </div>
 
-                        {hasLocalReorderChanges ? (
+                        {canReorderStops && hasLocalReorderChanges ? (
                             <div className="flex flex-wrap gap-2">
                                 <button
                                     type="button"
@@ -311,37 +312,48 @@ export default function DispatcherRoutesShow({
                                         >
                                             {t('dispatcher.routes.open_order')}
                                         </BackofficeActionLink>
-                                        <button
-                                            type="button"
-                                            onClick={() => moveStop(index, -1)}
-                                            disabled={
-                                                index === 0 ||
-                                                reorderForm.processing ||
-                                                removeStopForm.processing
-                                            }
-                                            className={backofficeButtonClassName(
-                                                'outline',
-                                                'sm',
-                                            )}
-                                        >
-                                            {t('dispatcher.routes.up')}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => moveStop(index, 1)}
-                                            disabled={
-                                                index ===
-                                                    orderedStops.length - 1 ||
-                                                reorderForm.processing ||
-                                                removeStopForm.processing
-                                            }
-                                            className={backofficeButtonClassName(
-                                                'outline',
-                                                'sm',
-                                            )}
-                                        >
-                                            {t('dispatcher.routes.down')}
-                                        </button>
+                                        {canReorderStops ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        moveStop(index, -1)
+                                                    }
+                                                    disabled={
+                                                        index === 0 ||
+                                                        reorderForm.processing ||
+                                                        removeStopForm.processing
+                                                    }
+                                                    className={backofficeButtonClassName(
+                                                        'outline',
+                                                        'sm',
+                                                    )}
+                                                >
+                                                    {t('dispatcher.routes.up')}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        moveStop(index, 1)
+                                                    }
+                                                    disabled={
+                                                        index ===
+                                                            orderedStops.length -
+                                                                1 ||
+                                                        reorderForm.processing ||
+                                                        removeStopForm.processing
+                                                    }
+                                                    className={backofficeButtonClassName(
+                                                        'outline',
+                                                        'sm',
+                                                    )}
+                                                >
+                                                    {t(
+                                                        'dispatcher.routes.down',
+                                                    )}
+                                                </button>
+                                            </>
+                                        ) : null}
                                         {stop.can_remove ? (
                                             <button
                                                 type="button"

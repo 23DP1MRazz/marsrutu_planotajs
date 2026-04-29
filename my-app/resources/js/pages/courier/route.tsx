@@ -11,12 +11,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
-    CourierEmptyState,
-    CourierMobileBody,
-    CourierMobileHeader,
-    CourierSectionLabel,
-} from '@/components/courier/mobile-ui';
-import {
     BackofficeCard,
     BackofficePage,
     BackofficePageHeader,
@@ -24,16 +18,22 @@ import {
     BackofficeStatusBadge,
     backofficeButtonClassName,
 } from '@/components/backoffice/ui';
+import {
+    CourierEmptyState,
+    CourierMobileBody,
+    CourierMobileHeader,
+    CourierSectionLabel,
+} from '@/components/courier/mobile-ui';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
+import type { SharedData } from '@/types';
 import type {
     CourierRouteRecord,
     CourierRouteStopRecord,
 } from '@/types/courier';
-import type { SharedData } from '@/types';
 
 const maxProofFileSizeInBytes = 5 * 1024 * 1024;
 
@@ -177,11 +177,11 @@ export default function CourierRoutePage({
                   [activeStopId]: true,
               },
     );
-    const completedStopsCount = stops.filter(
-        (stop) => stop.status === 'COMPLETED',
+    const doneStopsCount = stops.filter(
+        (stop) => stop.status === 'COMPLETED' || stop.status === 'FAILED',
     ).length;
     const progressWidth =
-        stops.length === 0 ? 0 : (completedStopsCount / stops.length) * 100;
+        stops.length === 0 ? 0 : (doneStopsCount / stops.length) * 100;
     const statusForm = useForm({
         status: '',
         fail_reason: '',
@@ -189,19 +189,6 @@ export default function CourierRoutePage({
     const proofForm = useForm({
         file: null as File | null,
     });
-
-    useEffect(() => {
-        setExpandedStopIds((current) => {
-            if (activeStopId === null || current[activeStopId]) {
-                return current;
-            }
-
-            return {
-                ...current,
-                [activeStopId]: true,
-            };
-        });
-    }, [activeStopId]);
 
     useEffect(() => {
         if (activeStopId === null) {
@@ -341,7 +328,7 @@ export default function CourierRoutePage({
                                 <BackofficeStatCard
                                     label={t('courier.dashboard.total_stops')}
                                     value={stops.length}
-                                    meta={`${completedStopsCount} ${t('common.statuses.completed').toLowerCase()}`}
+                                    meta={`${doneStopsCount} done`}
                                 />
                             </div>
 
@@ -352,8 +339,8 @@ export default function CourierRoutePage({
                                             Progress
                                         </div>
                                         <div className="mt-2 text-sm text-[#6b7280]">
-                                            {completedStopsCount} /{' '}
-                                            {stops.length} done
+                                            {doneStopsCount} / {stops.length}{' '}
+                                            done
                                         </div>
                                     </div>
                                 </div>
@@ -578,7 +565,7 @@ export default function CourierRoutePage({
                                     Progress
                                 </span>
                                 <span className="text-[13px] font-bold text-[#2563eb]">
-                                    {completedStopsCount} / {stops.length} done
+                                    {doneStopsCount} / {stops.length} done
                                 </span>
                             </div>
                             <div className="h-2 overflow-hidden rounded-full bg-[#e5e7eb]">
@@ -630,7 +617,8 @@ export default function CourierRoutePage({
                                 activeStopId,
                             );
                             const isExpanded =
-                                expandedStopIds[stop.id] ?? false;
+                                expandedStopIds[stop.id] ??
+                                stop.id === activeStopId;
                             const canChangeStatus = !readOnly;
                             const canReopenStop =
                                 !readOnly &&
