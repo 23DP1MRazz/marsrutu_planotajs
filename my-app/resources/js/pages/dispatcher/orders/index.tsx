@@ -624,7 +624,7 @@ export default function DispatcherOrdersIndex({
                               }
                             : undefined
                     }
-                    className={`fixed z-[60] max-w-[min(320px,calc(100vw-2rem))] rounded-lg border border-[#fecaca] bg-white px-4 py-3 text-sm font-medium text-[#991b1b] shadow-[0_18px_40px_rgba(17,24,39,0.16)] transition duration-250 ease-out ${
+                    className={`pointer-events-none fixed z-[60] max-w-[min(320px,calc(100vw-2rem))] rounded-lg border border-[#fecaca] bg-white px-4 py-3 text-sm font-medium text-[#991b1b] shadow-[0_18px_40px_rgba(17,24,39,0.16)] transition duration-250 ease-out ${
                         actionPopup.position ? '' : 'top-20 right-4'
                     } ${
                         actionPopup.visible

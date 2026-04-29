@@ -15,6 +15,7 @@ export type ClientRecord = {
     name: string;
     phone: string;
     updated_at: string;
+    can_delete: boolean;
 };
 
 export type ClientFilters = {
@@ -37,6 +38,7 @@ export type AddressRecord = {
     lat: number | string | null;
     lng: number | string | null;
     updated_at: string;
+    can_delete: boolean;
 };
 
 export type AddressFilters = {

@@ -306,6 +306,8 @@ const en = {
             back: 'Back to addresses',
             create_description: 'Add a new delivery address.',
             create_title: 'Create Address',
+            delete_blocked:
+                'Addresses used by existing orders cannot be deleted.',
             delete_confirm: 'Delete this address?',
             description: 'Manage delivery addresses for your organization.',
             edit_description: 'Update the selected address.',
@@ -320,6 +322,8 @@ const en = {
             back: 'Back to clients',
             create_description: 'Add a new client record.',
             create_title: 'Create Client',
+            delete_blocked:
+                'Clients used by existing orders cannot be deleted.',
             delete_confirm: 'Delete this client?',
             description: 'Manage client records for your organization.',
             edit_description: 'Update the selected client record.',

@@ -307,6 +307,8 @@ const lv = {
             back: 'Atpakaļ uz adresēm',
             create_description: 'Pievienojiet jaunu piegādes adresi.',
             create_title: 'Izveidot adresi',
+            delete_blocked:
+                'Adreses, kas tiek izmantotas esošajos pasūtījumos, nevar dzēst.',
             delete_confirm: 'Dzēst šo adresi?',
             description: 'Pārvaldiet piegādes adreses savai organizācijai.',
             edit_description: 'Atjauniniet izvēlēto adresi.',
@@ -321,6 +323,8 @@ const lv = {
             back: 'Atpakaļ uz klientiem',
             create_description: 'Pievienojiet jaunu klienta ierakstu.',
             create_title: 'Izveidot klientu',
+            delete_blocked:
+                'Klientus, kas tiek izmantoti esošajos pasūtījumos, nevar dzēst.',
             delete_confirm: 'Dzēst šo klientu?',
             description: 'Pārvaldiet klientu ierakstus savai organizācijai.',
             edit_description: 'Atjauniniet izvēlēto klienta ierakstu.',

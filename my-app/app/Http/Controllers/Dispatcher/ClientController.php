@@ -32,7 +32,16 @@ class ClientController extends Controller
 
         return Inertia::render('dispatcher/clients/index', [
             'clients' => $this->filteredClientsQuery($request, $filters)
-                ->get(['id', 'organization_id', 'name', 'phone', 'updated_at']),
+                ->withCount('orders')
+                ->get(['id', 'organization_id', 'name', 'phone', 'updated_at'])
+                ->map(fn (Client $client) => [
+                    'id' => $client->id,
+                    'organization_id' => $client->organization_id,
+                    'name' => $client->name,
+                    'phone' => $client->phone,
+                    'updated_at' => $client->updated_at,
+                    'can_delete' => (int) ($client->orders_count ?? 0) === 0,
+                ]),
             'filters' => $filters,
         ]);
     }

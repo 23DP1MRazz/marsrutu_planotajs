@@ -33,7 +33,18 @@ class AddressController extends Controller
 
         return Inertia::render('dispatcher/addresses/index', [
             'addresses' => $this->filteredAddressesQuery($request, $filters)
-                ->get(['id', 'organization_id', 'city', 'street', 'lat', 'lng', 'updated_at']),
+                ->withCount('orders')
+                ->get(['id', 'organization_id', 'city', 'street', 'lat', 'lng', 'updated_at'])
+                ->map(fn (Address $address) => [
+                    'id' => $address->id,
+                    'organization_id' => $address->organization_id,
+                    'city' => $address->city,
+                    'street' => $address->street,
+                    'lat' => $address->lat,
+                    'lng' => $address->lng,
+                    'updated_at' => $address->updated_at,
+                    'can_delete' => (int) ($address->orders_count ?? 0) === 0,
+                ]),
             'filters' => $filters,
         ]);
     }
