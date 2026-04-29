@@ -1,11 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import {
-    CourierEmptyState,
-    CourierMobileBody,
-    CourierMobileHeader,
-} from '@/components/courier/mobile-ui';
-import {
     BackofficeCard,
     BackofficePage,
     BackofficePageHeader,
@@ -14,6 +9,11 @@ import {
     backofficeButtonClassName,
     backofficeInputClassName,
 } from '@/components/backoffice/ui';
+import {
+    CourierEmptyState,
+    CourierMobileBody,
+    CourierMobileHeader,
+} from '@/components/courier/mobile-ui';
 import { useLiveFiltering } from '@/hooks/use-live-filtering';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from '@/hooks/use-translation';
@@ -29,13 +29,6 @@ type CourierCompletedOrdersPageProps = {
     orders: CourierCompletedOrderRecord[];
     filters: CourierCompletedOrderFilters;
 };
-
-const sortOptions = [
-    { value: 'completed_desc', label: 'Completed (newest)' },
-    { value: 'completed_asc', label: 'Completed (oldest)' },
-    { value: 'route_date_desc', label: 'Route date (newest)' },
-    { value: 'route_date_asc', label: 'Route date (oldest)' },
-];
 
 export default function CourierCompletedOrdersPage({
     orders,
@@ -54,6 +47,24 @@ export default function CourierCompletedOrdersPage({
         ...searchTerms,
         ...(draftSearch.trim() === '' ? [] : [draftSearch.trim()]),
     ]);
+    const sortOptions = [
+        {
+            value: 'completed_desc',
+            label: t('courier.completed_orders.sort.completed_desc'),
+        },
+        {
+            value: 'completed_asc',
+            label: t('courier.completed_orders.sort.completed_asc'),
+        },
+        {
+            value: 'route_date_desc',
+            label: t('courier.completed_orders.sort.route_date_desc'),
+        },
+        {
+            value: 'route_date_asc',
+            label: t('courier.completed_orders.sort.route_date_asc'),
+        },
+    ];
 
     useLiveFiltering({
         data: {
@@ -110,7 +121,9 @@ export default function CourierCompletedOrdersPage({
                                         commitSearch();
                                     }
                                 }}
-                                placeholder="Order, route, client, address..."
+                                placeholder={t(
+                                    'courier.completed_orders.placeholder',
+                                )}
                                 className={backofficeInputClassName}
                             />
                             <input
@@ -138,7 +151,7 @@ export default function CourierCompletedOrdersPage({
 
                         <BackofficeResultsBar
                             count={orders.length}
-                            noun="orders"
+                            noun={t('dispatcher.nouns.orders')}
                             sortValue={filterForm.data.sort}
                             onSortChange={(value) =>
                                 filterForm.setData('sort', value)
@@ -230,7 +243,7 @@ export default function CourierCompletedOrdersPage({
                 <section className="rounded-2xl border border-[#e5e7eb] bg-white">
                     <div className="border-b border-[#e5e7eb] px-4 py-4">
                         <div className="mb-3 text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                            Filters
+                            {t('dispatcher.filters.filters')}
                         </div>
                         <div className="space-y-3">
                             <div className="relative">
@@ -245,12 +258,14 @@ export default function CourierCompletedOrdersPage({
                                             commitSearch();
                                         }
                                     }}
-                                    placeholder="Order, route, client, address..."
+                                    placeholder={t(
+                                        'courier.completed_orders.placeholder',
+                                    )}
                                     className={`${backofficeInputClassName} pr-28`}
                                 />
                                 {draftSearch.trim() !== '' ? (
                                     <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2 py-1 text-[11px] font-semibold text-[#1e40af]">
-                                        Live - Enter
+                                        {t('dispatcher.filters.enter')}
                                     </span>
                                 ) : null}
                             </div>
@@ -310,7 +325,10 @@ export default function CourierCompletedOrdersPage({
 
                     <div className="flex items-center justify-between gap-3 px-4 py-3">
                         <p className="text-sm text-[#6b7280]">
-                            {orders.length} orders
+                            {t('app.tables.showing', {
+                                count: orders.length,
+                                noun: t('dispatcher.nouns.orders'),
+                            })}
                         </p>
                         <select
                             value={filterForm.data.sort}

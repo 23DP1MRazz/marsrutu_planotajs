@@ -1,12 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { Settings } from 'lucide-react';
 import {
-    CourierEmptyState,
-    CourierMobileBody,
-    CourierMobileHeader,
-    CourierSectionLabel,
-} from '@/components/courier/mobile-ui';
-import {
     BackofficeCard,
     BackofficePage,
     BackofficePageHeader,
@@ -14,6 +8,12 @@ import {
     BackofficeStatusBadge,
     backofficeButtonClassName,
 } from '@/components/backoffice/ui';
+import {
+    CourierEmptyState,
+    CourierMobileBody,
+    CourierMobileHeader,
+    CourierSectionLabel,
+} from '@/components/courier/mobile-ui';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
@@ -53,11 +53,13 @@ export default function CourierDashboardPage({
 
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                         <BackofficeStatCard
-                            label="Active route"
+                            label={t('courier.dashboard.active_route')}
                             value={deliveryRoute ? 1 : 0}
                             meta={
                                 deliveryRoute
-                                    ? `Route #${deliveryRoute.id}`
+                                    ? t('courier.dashboard.route_number', {
+                                          id: deliveryRoute.id,
+                                      })
                                     : t('courier.dashboard.no_today_route')
                             }
                             href="/courier/today-route"
@@ -65,19 +67,19 @@ export default function CourierDashboardPage({
                         <BackofficeStatCard
                             label={t('courier.dashboard.done_routes')}
                             value={dashboardSummary.done_routes}
-                            meta="Completed route history"
+                            meta={t('courier.dashboard.done_routes_meta')}
                             href="/courier/routes/completed"
                         />
                         <BackofficeStatCard
                             label={t('courier.dashboard.completed_orders')}
                             value={dashboardSummary.completed_orders}
-                            meta="Delivered and failed stop history"
+                            meta={t('courier.dashboard.completed_orders_meta')}
                             href="/courier/orders/completed"
                         />
                         <BackofficeStatCard
                             label={t('courier.dashboard.upcoming_routes')}
                             value={dashboardSummary.upcoming_routes_count}
-                            meta="Scheduled after today"
+                            meta={t('courier.dashboard.upcoming_routes_meta')}
                             href="/courier/routes/upcoming"
                         />
                     </div>
@@ -90,12 +92,22 @@ export default function CourierDashboardPage({
                                 </div>
                                 <h2 className="mt-2 text-xl font-bold tracking-[-0.03em] text-[#111827]">
                                     {deliveryRoute
-                                        ? `Route #${deliveryRoute.id}`
+                                        ? t('courier.dashboard.route_number', {
+                                              id: deliveryRoute.id,
+                                          })
                                         : t('courier.dashboard.no_today_route')}
                                 </h2>
                                 <p className="mt-1 text-sm text-[#6b7280]">
                                     {deliveryRoute
-                                        ? `${formatShortDate(deliveryRoute.date)} · ${stops.length} stops`
+                                        ? t(
+                                              'courier.dashboard.route_stops_meta',
+                                              {
+                                                  date: formatShortDate(
+                                                      deliveryRoute.date,
+                                                  ),
+                                                  count: stops.length,
+                                              },
+                                          )
                                         : t('courier.dashboard.description')}
                                 </p>
                             </div>
@@ -135,7 +147,9 @@ export default function CourierDashboardPage({
                     </div>
                     <div className="mt-2 text-[22px] font-bold tracking-[-0.03em]">
                         {deliveryRoute
-                            ? `Route #${deliveryRoute.id}`
+                            ? t('courier.dashboard.route_number', {
+                                  id: deliveryRoute.id,
+                              })
                             : t('courier.dashboard.no_today_route')}
                     </div>
                     <div className="mt-1 flex items-center gap-2 text-[12px] text-white/80">
@@ -145,7 +159,11 @@ export default function CourierDashboardPage({
                                     {formatShortDate(deliveryRoute.date)}
                                 </span>
                                 <span>•</span>
-                                <span>{stops.length} stops</span>
+                                <span>
+                                    {t('courier.routes.planned_stops', {
+                                        count: stops.length,
+                                    })}
+                                </span>
                             </>
                         ) : null}
                     </div>
@@ -155,7 +173,7 @@ export default function CourierDashboardPage({
                                 href="/courier/today-route"
                                 className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[#1e40af]"
                             >
-                                Open active route
+                                {t('courier.dashboard.open_active_route')}
                             </Link>
                         ) : null}
                         <Link
@@ -173,7 +191,7 @@ export default function CourierDashboardPage({
                         className="rounded-2xl border border-[#e5e7eb] bg-white px-3 py-4 text-center"
                     >
                         <div className="text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                            Active
+                            {t('courier.dashboard.active_route_short')}
                         </div>
                         <div className="mt-2 text-2xl font-bold tracking-[-0.03em] text-[#111827]">
                             {deliveryRoute ? 1 : 0}
@@ -224,7 +242,9 @@ export default function CourierDashboardPage({
                             <div className="flex items-start justify-between gap-3">
                                 <div>
                                     <div className="text-[15px] font-semibold text-[#111827]">
-                                        Route #{route.id}
+                                        {t('courier.routes.route_number', {
+                                            id: route.id,
+                                        })}
                                     </div>
                                     <div className="mt-1 text-sm text-[#6b7280]">
                                         {formatShortDate(route.date)} ·{' '}
@@ -244,14 +264,14 @@ export default function CourierDashboardPage({
                         href={edit()}
                         className={backofficeButtonClassName('outline')}
                     >
-                        Settings
+                        {t('app.shell.settings')}
                     </Link>
                     <Link
                         href={logout()}
                         as="button"
                         className={backofficeButtonClassName('outline')}
                     >
-                        Sign out
+                        {t('app.shell.sign_out')}
                     </Link>
                 </div>
             </div>

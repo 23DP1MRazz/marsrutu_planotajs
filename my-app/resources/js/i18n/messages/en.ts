@@ -15,11 +15,6 @@ const en = {
             password: 'Password',
             role: 'Your role',
         },
-        appearance: {
-            dark: 'Dark',
-            light: 'Light',
-            system: 'System',
-        },
         confirm_password: {
             description:
                 'This is a secure area of the application. Please confirm your password before continuing.',
@@ -96,6 +91,7 @@ const en = {
             name: 'Name',
             notes: 'Notes',
             organization: 'Organization',
+            organization_id: 'Organization ID',
             phone: 'Phone',
             role: 'Role',
             status: 'Status',
@@ -211,10 +207,6 @@ const en = {
         title: 'Dashboard',
     },
     settings: {
-        appearance: {
-            description: "Update your account's appearance settings",
-            title: 'Appearance settings',
-        },
         delete_account: {
             confirm_description:
                 'Once your account is deleted, all of its resources and data will also be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.',
@@ -227,7 +219,6 @@ const en = {
                 'Please proceed with caution, this cannot be undone.',
         },
         layout: {
-            appearance: 'Appearance',
             description: 'Manage your profile and account settings',
             password: 'Password',
             profile: 'Profile',
@@ -372,6 +363,7 @@ const en = {
             open_route: 'Open route #:id',
             order_number: 'Order #:id',
             placeholder: 'Client, address, date, status, notes...',
+            search_tag: 'Search: :term',
             select_address: 'Select address',
             select_client: 'Select client',
         },
@@ -442,22 +434,39 @@ const en = {
                 'Review delivered orders and open proof files when needed.',
             empty: 'You have no completed orders yet.',
             open_proof: 'Open proof file',
+            placeholder: 'Order, route, client, address...',
             route_date: 'Route date: :date',
+            sort: {
+                completed_asc: 'Completed (oldest)',
+                completed_desc: 'Completed (newest)',
+                route_date_asc: 'Route date (oldest)',
+                route_date_desc: 'Route date (newest)',
+            },
             title: 'Completed orders',
         },
         dashboard: {
+            active_route: 'Active route',
+            active_route_short: 'Active',
             completed_orders: 'Completed orders',
             description:
                 'Open directions fast, update delivery progress, and capture proof from your phone.',
+            done_count: ':done / :total done',
             done_routes: 'Done routes',
+            done_routes_meta: 'Completed route history',
+            completed_orders_meta: 'Delivered and failed stop history',
             no_coordinates: 'No saved coordinates for today’s stops yet.',
             no_today_route: 'No route is assigned to you for today.',
             next_stop: 'Next stop',
+            open_active_route: 'Open active route',
             open_all: 'View all',
+            progress: 'Progress',
             route_status: 'Route status',
+            route_number: 'Route #:id',
+            route_stops_meta: ':date · :count stops',
             title: 'Courier dashboard',
             total_stops: 'Total stops',
             upcoming_routes: 'Upcoming routes',
+            upcoming_routes_meta: 'Scheduled after today',
         },
         routes: {
             back: 'Back to dashboard',
@@ -465,6 +474,16 @@ const en = {
             completed_description: 'Review routes you already finished.',
             completed_title: 'Done routes',
             planned_stops: ':count planned stops',
+            placeholder: 'Route ID, date, status...',
+            route_number: 'Route #:id',
+            sort: {
+                date_asc: 'Date (oldest)',
+                date_desc: 'Date (newest)',
+                date_latest: 'Date (latest)',
+                date_soonest: 'Date (soonest)',
+                stops_asc: 'Stops (low-high)',
+                stops_desc: 'Stops (high-low)',
+            },
             upcoming_description: 'See routes assigned to you after today.',
             upcoming_empty: 'No upcoming routes assigned yet.',
             upcoming_title: 'Upcoming routes',

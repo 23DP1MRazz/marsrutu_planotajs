@@ -196,9 +196,9 @@ export function LeafletMap({
     return (
         <div className={cn('border p-4', className)}>
             <div className="mb-3">
-                <h2 className="font-medium">{t('common.map.title')}</h2>
+                <h2 className="font-medium">{t('app.map.title')}</h2>
                 <p className="text-sm text-muted-foreground">
-                    {t('common.map.description')}
+                    {t('app.map.description')}
                 </p>
             </div>
 
@@ -216,7 +216,7 @@ export function LeafletMap({
                 {visibleStatus === 'idle' && (
                     <div className="absolute inset-0 flex items-center justify-center p-4">
                         <p className="text-center text-sm text-muted-foreground">
-                            {emptyMessage ?? t('common.map.empty')}
+                            {emptyMessage ?? t('app.map.empty')}
                         </p>
                     </div>
                 )}
@@ -224,7 +224,7 @@ export function LeafletMap({
                 {visibleStatus === 'loading' && (
                     <div className="absolute inset-0 flex items-center justify-center p-4">
                         <p className="text-center text-sm text-muted-foreground">
-                            {t('common.map.loading')}
+                            {t('app.map.loading')}
                         </p>
                     </div>
                 )}
@@ -232,7 +232,7 @@ export function LeafletMap({
                 {visibleStatus === 'error' && (
                     <div className="absolute inset-0 flex items-center justify-center p-4">
                         <p className="text-center text-sm text-red-600">
-                            {t('common.map.error')}
+                            {t('app.map.error')}
                         </p>
                     </div>
                 )}

@@ -323,12 +323,17 @@ export default function CourierRoutePage({
                                     value={t(
                                         `common.statuses.${deliveryRoute.status.toLowerCase()}`,
                                     )}
-                                    meta={`Route #${deliveryRoute.id}`}
+                                    meta={t('courier.dashboard.route_number', {
+                                        id: deliveryRoute.id,
+                                    })}
                                 />
                                 <BackofficeStatCard
                                     label={t('courier.dashboard.total_stops')}
                                     value={stops.length}
-                                    meta={`${doneStopsCount} done`}
+                                    meta={t('courier.dashboard.done_count', {
+                                        done: doneStopsCount,
+                                        total: stops.length,
+                                    })}
                                 />
                             </div>
 
@@ -336,11 +341,13 @@ export default function CourierRoutePage({
                                 <div className="mb-4 flex items-center justify-between gap-3">
                                     <div>
                                         <div className="text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                                            Progress
+                                            {t('courier.dashboard.progress')}
                                         </div>
                                         <div className="mt-2 text-sm text-[#6b7280]">
-                                            {doneStopsCount} / {stops.length}{' '}
-                                            done
+                                            {t('courier.dashboard.done_count', {
+                                                done: doneStopsCount,
+                                                total: stops.length,
+                                            })}
                                         </div>
                                     </div>
                                 </div>
@@ -363,7 +370,12 @@ export default function CourierRoutePage({
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
                                                 <div className="text-xs font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
-                                                    Stop {stop.seq_no}
+                                                    {t(
+                                                        'courier.stop.stop_number',
+                                                        {
+                                                            number: stop.seq_no,
+                                                        },
+                                                    )}
                                                 </div>
                                                 <div className="mt-2 text-lg font-semibold text-[#111827]">
                                                     {stop.client_name ??
@@ -541,7 +553,9 @@ export default function CourierRoutePage({
                                     {page.props.auth.user.name}
                                 </div>
                                 <div className="text-[17px] font-bold tracking-[-0.02em]">
-                                    Route #{deliveryRoute.id}
+                                    {t('courier.dashboard.route_number', {
+                                        id: deliveryRoute.id,
+                                    })}
                                 </div>
                                 <div className="mt-1 text-[11px] text-white/80">
                                     {t(
@@ -562,10 +576,13 @@ export default function CourierRoutePage({
                         <section>
                             <div className="mb-2 flex items-center justify-between">
                                 <span className="text-xs font-semibold tracking-[0.06em] text-[#6b7280] uppercase">
-                                    Progress
+                                    {t('courier.dashboard.progress')}
                                 </span>
                                 <span className="text-[13px] font-bold text-[#2563eb]">
-                                    {doneStopsCount} / {stops.length} done
+                                    {t('courier.dashboard.done_count', {
+                                        done: doneStopsCount,
+                                        total: stops.length,
+                                    })}
                                 </span>
                             </div>
                             <div className="h-2 overflow-hidden rounded-full bg-[#e5e7eb]">

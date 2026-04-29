@@ -15,11 +15,6 @@ const lv = {
             password: 'Parole',
             role: 'Jūsu loma',
         },
-        appearance: {
-            dark: 'Tumšs',
-            light: 'Gaišs',
-            system: 'Sistēma',
-        },
         confirm_password: {
             description:
                 'Šī ir droša lietotnes zona. Lūdzu, apstipriniet paroli, lai turpinātu.',
@@ -98,6 +93,7 @@ const lv = {
             name: 'Nosaukums',
             notes: 'Piezīmes',
             organization: 'Organizācija',
+            organization_id: 'Organizācijas ID',
             phone: 'Tālrunis',
             role: 'Loma',
             status: 'Statuss',
@@ -212,10 +208,6 @@ const lv = {
         title: 'Panelis',
     },
     settings: {
-        appearance: {
-            description: 'Atjauniniet konta izskata iestatījumus',
-            title: 'Izskata iestatījumi',
-        },
         delete_account: {
             confirm_description:
                 'Pēc konta dzēšanas visi ar to saistītie resursi un dati tiks neatgriezeniski dzēsti. Lūdzu, ievadiet paroli, lai apstiprinātu konta dzēšanu.',
@@ -228,7 +220,6 @@ const lv = {
                 'Lūdzu, turpiniet uzmanīgi, šo darbību nevar atsaukt.',
         },
         layout: {
-            appearance: 'Izskats',
             description: 'Pārvaldiet profilu un konta iestatījumus',
             password: 'Parole',
             profile: 'Profils',
@@ -374,6 +365,7 @@ const lv = {
             open_route: 'Atvērt maršrutu #:id',
             order_number: 'Pasūtījums #:id',
             placeholder: 'Klients, adrese, datums, statuss, piezīmes...',
+            search_tag: 'Meklēšana: :term',
             select_address: 'Izvēlieties adresi',
             select_client: 'Izvēlieties klientu',
         },
@@ -444,22 +436,39 @@ const lv = {
                 'Pārskatiet piegādātos pasūtījumus un vajadzības gadījumā atveriet pierādījuma failus.',
             empty: 'Jums vēl nav pabeigtu pasūtījumu.',
             open_proof: 'Atvērt pierādījuma failu',
+            placeholder: 'Pasūtījums, maršruts, klients, adrese...',
             route_date: 'Maršruta datums: :date',
+            sort: {
+                completed_asc: 'Pabeigts (vecākais)',
+                completed_desc: 'Pabeigts (jaunākais)',
+                route_date_asc: 'Maršruta datums (vecākais)',
+                route_date_desc: 'Maršruta datums (jaunākais)',
+            },
             title: 'Pabeigtie pasūtījumi',
         },
         dashboard: {
+            active_route: 'Aktīvais maršruts',
+            active_route_short: 'Aktīvs',
             completed_orders: 'Pabeigtie pasūtījumi',
             description:
                 'Ātri atveriet norādes, atjauniniet piegādes progresu un pievienojiet pierādījumu no tālruņa.',
+            done_count: ':done / :total pabeigts',
             done_routes: 'Izpildītie maršruti',
+            done_routes_meta: 'Pabeigto maršrutu vēsture',
+            completed_orders_meta: 'Piegādāto un neveiksmīgo pieturu vēsture',
             no_coordinates: 'Šodienas pieturām vēl nav saglabātu koordinātu.',
             no_today_route: 'Šodien jums nav piešķirts maršruts.',
             next_stop: 'Nākamā pietura',
+            open_active_route: 'Atvērt aktīvo maršrutu',
             open_all: 'Skatīt visus',
+            progress: 'Progress',
             route_status: 'Maršruta statuss',
+            route_number: 'Maršruts #:id',
+            route_stops_meta: ':date · :count pieturas',
             title: 'Kurjera panelis',
             total_stops: 'Kopā pieturas',
             upcoming_routes: 'Gaidāmie maršruti',
+            upcoming_routes_meta: 'Ieplānots pēc šodienas',
         },
         routes: {
             back: 'Atpakaļ uz paneli',
@@ -467,6 +476,16 @@ const lv = {
             completed_description: 'Pārskatiet jau pabeigtos maršrutus.',
             completed_title: 'Izpildītie maršruti',
             planned_stops: ':count plānotas pieturas',
+            placeholder: 'Maršruta ID, datums, statuss...',
+            route_number: 'Maršruts #:id',
+            sort: {
+                date_asc: 'Datums (vecākais)',
+                date_desc: 'Datums (jaunākais)',
+                date_latest: 'Datums (vēlākais)',
+                date_soonest: 'Datums (tuvākais)',
+                stops_asc: 'Pieturas (mazāk-vairāk)',
+                stops_desc: 'Pieturas (vairāk-mazāk)',
+            },
             upcoming_description:
                 'Skatiet maršrutus, kas jums piešķirti pēc šodienas.',
             upcoming_empty: 'Nav piešķirtu gaidāmo maršrutu.',
