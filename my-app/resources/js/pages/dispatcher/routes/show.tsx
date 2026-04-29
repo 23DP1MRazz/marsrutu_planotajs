@@ -419,17 +419,21 @@ export default function DispatcherRoutesShow({
                                 </p>
                             ) : null}
 
-                            <div className="flex flex-wrap gap-2">
-                                <button
-                                    type="submit"
-                                    disabled={form.processing}
-                                    className={backofficeButtonClassName(
-                                        'primary',
-                                    )}
-                                >
-                                    {t('dispatcher.routes.add_selected_orders')}
-                                </button>
-                            </div>
+                            {availableOrders.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        type="submit"
+                                        disabled={form.processing}
+                                        className={backofficeButtonClassName(
+                                            'primary',
+                                        )}
+                                    >
+                                        {t(
+                                            'dispatcher.routes.add_selected_orders',
+                                        )}
+                                    </button>
+                                </div>
+                            ) : null}
                         </form>
                     </BackofficeCardBody>
                 </BackofficeCard>
