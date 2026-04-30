@@ -153,7 +153,7 @@ export function Header() {
                 </a>
                 <nav className="nav">
                     <button
-                        className={`menu-toggle${isMenuOpen ? 'active' : ''}`}
+                        className={`menu-toggle${isMenuOpen ? ' active' : ''}`}
                         id="menuToggle"
                         ref={menuToggleRef}
                         aria-label={t('landing.header.menu')}
@@ -168,7 +168,7 @@ export function Header() {
                         <span />
                     </button>
                     <ul
-                        className={`nav-links${isMenuOpen ? 'active' : ''}`}
+                        className={`nav-links${isMenuOpen ? ' active' : ''}`}
                         id="navLinks"
                         ref={navLinksRef}
                     >

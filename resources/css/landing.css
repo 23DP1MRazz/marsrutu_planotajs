@@ -632,6 +632,49 @@
     }
 }
 
+@media (max-width: 1040px) {
+    .landing-root .nav-links {
+        position: absolute;
+        top: var(--header-height);
+        left: 0;
+        right: 0;
+        background: white;
+        flex-direction: column;
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
+        border-bottom: 1px solid var(--color-border);
+        gap: var(--spacing-md);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-0.75rem);
+        transition:
+            opacity var(--transition-base),
+            transform var(--transition-base),
+            visibility var(--transition-base);
+        visibility: hidden;
+        z-index: 1001;
+    }
+
+    .landing-root .nav-links .nav-link {
+        font-size: 1rem;
+    }
+
+    .landing-root .nav-links .btn {
+        font-size: 1rem;
+    }
+
+    .landing-root .nav-links.active {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+        visibility: visible;
+    }
+
+    .landing-root .menu-toggle {
+        display: flex;
+    }
+}
+
 @media (max-width: 975px) {
     .landing-root .header-container {
         padding: 0 var(--spacing-lg);
@@ -682,36 +725,6 @@
 
     .landing-root section {
         padding: var(--spacing-3xl) var(--spacing-lg);
-    }
-
-    .landing-root .nav-links {
-        display: none;
-        position: absolute;
-        top: var(--header-height);
-        left: 0;
-        right: 0;
-        background: white;
-        flex-direction: column;
-        padding: var(--spacing-lg);
-        box-shadow: var(--shadow-lg);
-        border-bottom: 1px solid var(--color-border);
-        gap: var(--spacing-md);
-    }
-
-    .landing-root .nav-links .nav-link {
-        font-size: 1rem;
-    }
-
-    .landing-root .nav-links .btn {
-        font-size: 1rem;
-    }
-
-    .landing-root .nav-links.active {
-        display: flex;
-    }
-
-    .landing-root .menu-toggle {
-        display: flex;
     }
 
     .landing-root .hero-placeholder {
