@@ -151,6 +151,11 @@ class CourierRouteTest extends TestCase
             ->assertRedirect(route('courier.route.page'));
 
         $this->actingAs($courier)
+            ->get(route('courier.route.show'))
+            ->assertOk()
+            ->assertJsonPath('stops.0.completed_at', '2026-04-15T09:00:00.000000Z');
+
+        $this->actingAs($courier)
             ->patch(route('courier.stops.update', $secondStop), [
                 'status' => 'COMPLETED',
             ])

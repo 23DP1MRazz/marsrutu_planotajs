@@ -279,7 +279,7 @@ class CourierRouteController extends Controller
                     $routeStop->order?->address?->street,
                 ])->filter()->join(', '),
                 'status' => $routeStop->status,
-                'completed_at' => $routeStop->completed_at,
+                'completed_at' => $this->formatTimestamp($routeStop->completed_at),
                 'proof_view_url' => $routeStop->proofOfDelivery
                     ? route('proof-of-delivery.show', $routeStop->proofOfDelivery)
                     : null,
@@ -493,11 +493,11 @@ class CourierRouteController extends Controller
             'id' => $routeStop->id,
             'seq_no' => $routeStop->seq_no,
             'order_id' => $routeStop->order_id,
-            'planned_eta' => $routeStop->planned_eta,
+            'planned_eta' => $this->formatTimestamp($routeStop->planned_eta),
             'time_from' => $routeStop->order?->time_from,
             'time_to' => $routeStop->order?->time_to,
-            'arrived_at' => $routeStop->arrived_at,
-            'completed_at' => $routeStop->completed_at,
+            'arrived_at' => $this->formatTimestamp($routeStop->arrived_at),
+            'completed_at' => $this->formatTimestamp($routeStop->completed_at),
             'status' => $routeStop->status,
             'fail_reason' => $routeStop->fail_reason,
             'proof_file_url' => $routeStop->proofOfDelivery?->file_url,
@@ -518,6 +518,15 @@ class CourierRouteController extends Controller
             'google_maps_url' => $this->googleMapsUrlForStop($routeStop),
             'waze_url' => $this->wazeUrlForStop($routeStop),
         ]);
+    }
+
+    private function formatTimestamp(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return Carbon::parse($value)->toISOString();
     }
 
     private function googleMapsUrlForStop(RouteStop $routeStop): string
