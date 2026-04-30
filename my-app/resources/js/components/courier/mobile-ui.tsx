@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import type { SharedData } from '@/types';
@@ -43,14 +44,17 @@ export function CourierMobileHeader({
                 ) : null}
             </div>
 
-            {rightSlot ?? (
-                <Link
-                    href="/dashboard"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2563eb] to-[#3b82f6] text-[10px] font-bold tracking-[0.03em] text-white"
-                >
-                    {getInitials(page.props.auth.user.name)}
-                </Link>
-            )}
+            <div className="flex shrink-0 items-center gap-2">
+                <LanguageSwitcher size="compact" />
+                {rightSlot ?? (
+                    <Link
+                        href="/dashboard"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2563eb] to-[#3b82f6] text-[10px] font-bold tracking-[0.03em] text-white"
+                    >
+                        {getInitials(page.props.auth.user.name)}
+                    </Link>
+                )}
+            </div>
         </header>
     );
 }

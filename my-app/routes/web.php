@@ -90,6 +90,8 @@ Route::get('dashboard', function (Request $request) {
             ],
             'upcoming_routes' => DeliveryRoute::query()
                 ->where('organization_id', $organizationId)
+                ->where('status', 'PLANNED')
+                ->whereDate('date', '>=', now()->toDateString())
                 ->with('courier.user:id,name')
                 ->withCount('routeStops')
                 ->orderBy('date')

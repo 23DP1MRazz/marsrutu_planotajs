@@ -93,6 +93,62 @@ class DashboardTest extends TestCase
                 ->where('organizationInvitation.registration_url', '/register?join_code=JOIN2026'));
     }
 
+    public function test_dispatcher_dashboard_upcoming_routes_only_shows_nearest_planned_routes(): void
+    {
+        $organization = Organization::factory()->create();
+        $dispatcher = User::factory()->dispatcher($organization->id)->create();
+        $courier = User::factory()->courier($organization->id)->create();
+        $otherCourier = User::factory()->courier($organization->id)->create();
+
+        Courier::query()->create([
+            'user_id' => $courier->id,
+            'on_duty' => false,
+        ]);
+        Courier::query()->create([
+            'user_id' => $otherCourier->id,
+            'on_duty' => false,
+        ]);
+
+        $laterPlannedRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => now()->addDays(3)->toDateString(),
+            'status' => 'PLANNED',
+        ]);
+
+        DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $otherCourier->id,
+            'date' => now()->addDay()->toDateString(),
+            'status' => 'DONE',
+        ]);
+
+        DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => now()->subDay()->toDateString(),
+            'status' => 'PLANNED',
+        ]);
+
+        $nearestPlannedRoute = DeliveryRoute::factory()->create([
+            'organization_id' => $organization->id,
+            'courier_user_id' => $courier->id,
+            'date' => now()->addDay()->toDateString(),
+            'status' => 'PLANNED',
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->has('dashboardSummary.upcoming_routes', 2)
+                ->where('dashboardSummary.upcoming_routes.0.id', $nearestPlannedRoute->id)
+                ->where('dashboardSummary.upcoming_routes.0.status', 'PLANNED')
+                ->where('dashboardSummary.upcoming_routes.1.id', $laterPlannedRoute->id)
+                ->where('dashboardSummary.upcoming_routes.1.status', 'PLANNED'));
+    }
+
     public function test_admin_dashboard_includes_summary_without_dispatcher_join_link_data(): void
     {
         $admin = User::factory()->admin()->create();
