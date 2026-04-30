@@ -472,8 +472,12 @@ const en = {
             back: 'Back to dashboard',
             completed_empty: 'You have no completed routes yet.',
             completed_description: 'Review routes you already finished.',
+            completed_detail_description:
+                'Review completed stops and delivered orders.',
             completed_title: 'Done routes',
             planned_stops: ':count planned stops',
+            planned_detail_description:
+                'See stops and planned orders for this route.',
             placeholder: 'Route ID, date, status...',
             route_number: 'Route #:id',
             sort: {

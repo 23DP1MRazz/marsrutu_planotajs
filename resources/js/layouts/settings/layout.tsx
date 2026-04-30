@@ -1,12 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
-import { CourierMobileHeader } from '@/components/courier/mobile-ui';
 import {
     BackofficeCard,
     BackofficePage,
     BackofficePageHeader,
     backofficeButtonClassName,
 } from '@/components/backoffice/ui';
+import { CourierMobileHeader } from '@/components/courier/mobile-ui';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from '@/hooks/use-translation';

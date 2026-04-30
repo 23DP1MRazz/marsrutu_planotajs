@@ -21,8 +21,10 @@ export function useLiveFiltering<
             return;
         }
 
+        const requestData = JSON.parse(serializedData) as TData;
+
         const timeoutId = window.setTimeout(() => {
-            router.get(url, data, {
+            router.get(url, requestData, {
                 preserveScroll: true,
                 preserveState: true,
                 replace: true,

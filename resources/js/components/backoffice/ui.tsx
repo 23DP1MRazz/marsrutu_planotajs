@@ -1,7 +1,7 @@
-import { Slot } from '@radix-ui/react-slot';
-import type { ComponentProps, ReactNode } from 'react';
 import { Link } from '@inertiajs/react';
+import { Slot } from '@radix-ui/react-slot';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
+import type { ComponentProps, ReactNode } from 'react';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils';
 

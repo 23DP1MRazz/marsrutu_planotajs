@@ -1,5 +1,5 @@
-import type { FormEvent } from 'react';
 import { Head, useForm } from '@inertiajs/react';
+import type { FormEvent } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,

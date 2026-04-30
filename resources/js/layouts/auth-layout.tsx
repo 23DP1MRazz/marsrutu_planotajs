@@ -1,5 +1,5 @@
-import type { AuthLayoutProps } from '@/types';
 import AuthCardLayout from '@/layouts/auth/auth-card-layout';
+import type { AuthLayoutProps } from '@/types';
 
 export default function AuthLayout({
     children,

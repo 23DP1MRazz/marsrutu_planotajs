@@ -56,10 +56,6 @@ class CourierRouteController extends Controller
             'deliveryRoute' => $this->formatRoute($deliveryRoute),
             'stops' => $this->formatStops($deliveryRoute),
             'readOnly' => true,
-            'pageTitle' => 'Route #'.$deliveryRoute->id,
-            'pageDescription' => $deliveryRoute->status === 'DONE'
-                ? 'Review completed stops and delivered orders.'
-                : 'See stops and planned orders for this route.',
             'backHref' => '/dashboard',
         ]);
     }

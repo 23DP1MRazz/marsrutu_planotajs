@@ -16,12 +16,12 @@ import { useLiveFiltering } from '@/hooks/use-live-filtering';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import { formatShortDate } from '@/lib/date';
+import type { BreadcrumbItem } from '@/types';
 import type {
     DeliveryRouteRecord,
     OrganizationOption,
     RouteFilters,
 } from '@/types/dispatcher';
-import type { BreadcrumbItem } from '@/types';
 
 const searchSeparator = '||';
 

@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
-import type { SharedData } from '@/types';
 import en from '@/i18n/messages/en';
 import lv from '@/i18n/messages/lv';
+import type { SharedData } from '@/types';
 
 export const availableLocales = ['en', 'lv'] as const;
 

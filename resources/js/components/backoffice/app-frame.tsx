@@ -12,15 +12,15 @@ import {
     Users,
     X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
-import type { LucideIcon } from 'lucide-react';
 import type { AppLayoutProps, SharedData } from '@/types';
 
 type NavGroup = {
@@ -136,10 +136,6 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
         (page.props.auth.user.role === 'admin'
             ? t('app.shell.platform_admin')
             : t('app.shell.no_organization'));
-
-    useEffect(() => {
-        setMobileNavOpen(false);
-    }, [pathname]);
 
     const handleLogout = () => {
         router.flushAll();
@@ -285,6 +281,9 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                                             <Link
                                                 key={item.href}
                                                 href={item.href}
+                                                onClick={() =>
+                                                    setMobileNavOpen(false)
+                                                }
                                                 className={cn(
                                                     'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition',
                                                     isActive

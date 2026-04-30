@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,
@@ -22,8 +22,8 @@ import {
     type PopupPosition,
     popupPositionFromElement,
 } from '@/lib/action-popup';
-import type { AddressFilters, AddressRecord } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
+import type { AddressFilters, AddressRecord } from '@/types/dispatcher';
 
 const searchSeparator = '||';
 
@@ -64,6 +64,7 @@ export default function DispatcherAddressesIndex({
     const [pendingDeleteAddressId, setPendingDeleteAddressId] = useState<
         number | null
     >(null);
+    const popupId = useRef(0);
     const searchTerms = splitSearchTerms(filterForm.data.search);
     const liveSearch = joinSearchTerms([
         ...searchTerms,
@@ -121,8 +122,9 @@ export default function DispatcherAddressesIndex({
             return;
         }
 
+        popupId.current += 1;
         setActionPopup({
-            id: Date.now(),
+            id: popupId.current,
             message: actionErrors.address,
             position: lastActionPosition ?? undefined,
             visible: true,
@@ -134,8 +136,9 @@ export default function DispatcherAddressesIndex({
 
         setLastActionPosition(position);
         actionForm.clearErrors();
+        popupId.current += 1;
         setActionPopup({
-            id: Date.now(),
+            id: popupId.current,
             message,
             position,
             visible: true,

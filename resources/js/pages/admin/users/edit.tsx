@@ -1,5 +1,6 @@
-import type { FormEvent } from 'react';
 import { Head } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
+import type { FormEvent } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,
@@ -12,9 +13,8 @@ import {
     backofficeInputClassName,
     backofficeSelectClassName,
 } from '@/components/backoffice/ui';
-import AppLayout from '@/layouts/app-layout';
-import { useForm } from '@inertiajs/react';
 import { useTranslation } from '@/hooks/use-translation';
+import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
 type AdminUserEditProps = {

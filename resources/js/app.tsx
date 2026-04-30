@@ -19,7 +19,9 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        initializeI18n((props.initialPage.props as unknown as SharedData).locale);
+        initializeI18n(
+            (props.initialPage.props as unknown as SharedData).locale,
+        );
 
         root.render(
             <StrictMode>
@@ -32,5 +34,4 @@ createInertiaApp({
     },
 });
 
-// This will set light / dark mode on load...
 initializeTheme();

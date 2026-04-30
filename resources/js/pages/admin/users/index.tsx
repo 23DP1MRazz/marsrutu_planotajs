@@ -2,7 +2,6 @@ import { Head, Link } from '@inertiajs/react';
 import {
     BackofficeActionLink,
     BackofficeCard,
-    BackofficeCardBody,
     BackofficeEmptyState,
     BackofficePage,
     BackofficePageHeader,

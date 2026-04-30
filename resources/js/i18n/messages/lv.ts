@@ -474,8 +474,12 @@ const lv = {
             back: 'Atpakaļ uz paneli',
             completed_empty: 'Jums vēl nav pabeigtu maršrutu.',
             completed_description: 'Pārskatiet jau pabeigtos maršrutus.',
+            completed_detail_description:
+                'Pārskatiet pabeigtās pieturas un piegādātos pasūtījumus.',
             completed_title: 'Izpildītie maršruti',
             planned_stops: ':count plānotas pieturas',
+            planned_detail_description:
+                'Skatiet šī maršruta pieturas un plānotos pasūtījumus.',
             placeholder: 'Maršruta ID, datums, statuss...',
             route_number: 'Maršruts #:id',
             sort: {

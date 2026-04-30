@@ -153,9 +153,16 @@ export default function CourierRoutePage({
     const { t } = useTranslation();
     const isMobile = useIsMobile();
     const page = usePage<SharedData>();
-    const resolvedTitle = pageTitle ?? t('courier.today_route');
+    const resolvedTitle =
+        readOnly && deliveryRoute
+            ? t('courier.routes.route_number', { id: deliveryRoute.id })
+            : (pageTitle ?? t('courier.today_route'));
     const resolvedDescription =
-        pageDescription ?? t('courier.dashboard.description');
+        readOnly && deliveryRoute
+            ? deliveryRoute.status === 'DONE'
+                ? t('courier.routes.completed_detail_description')
+                : t('courier.routes.planned_detail_description')
+            : (pageDescription ?? t('courier.dashboard.description'));
     const [failedStopId, setFailedStopId] = useState<number | null>(null);
     const [failReasons, setFailReasons] = useState<Record<number, string>>({});
     const [selectedProofFiles, setSelectedProofFiles] = useState<

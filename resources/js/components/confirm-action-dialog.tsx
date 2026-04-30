@@ -1,3 +1,4 @@
+import { backofficeButtonClassName } from '@/components/backoffice/ui';
 import {
     Dialog,
     DialogContent,
@@ -7,7 +8,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { useTranslation } from '@/hooks/use-translation';
-import { backofficeButtonClassName } from '@/components/backoffice/ui';
 
 type ConfirmActionDialogProps = {
     open: boolean;

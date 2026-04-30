@@ -1,5 +1,5 @@
-import type { FormEvent } from 'react';
 import { Head, useForm } from '@inertiajs/react';
+import type { FormEvent } from 'react';
 import {
     BackofficeActionLink,
     BackofficeCard,
@@ -13,8 +13,8 @@ import {
 } from '@/components/backoffice/ui';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
-import type { OrganizationOption } from '@/types/dispatcher';
 import type { BreadcrumbItem } from '@/types';
+import type { OrganizationOption } from '@/types/dispatcher';
 
 type DispatcherAddressesCreateProps = {
     organizations: OrganizationOption[];
@@ -41,8 +41,11 @@ export default function DispatcherAddressesCreate({
         event.preventDefault();
         form.transform((data) => {
             if (!canSelectOrganization) {
-                const { organization_id: _organizationId, ...rest } = data;
-                return rest;
+                return Object.fromEntries(
+                    Object.entries(data).filter(
+                        ([key]) => key !== 'organization_id',
+                    ),
+                );
             }
 
             return data;
