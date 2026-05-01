@@ -573,7 +573,7 @@ const en = {
             },
             roles: {
                 description:
-                    'Role-based access for dispatchers, couriers, and administrators, each with the right permissions.',
+                    'Role-based access for dispatchers and couriers, each with the right permissions.',
                 title: 'Role management',
             },
             routes: {

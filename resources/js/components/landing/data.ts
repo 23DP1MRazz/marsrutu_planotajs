@@ -14,10 +14,6 @@ export const featureCards = [
         key: 'routes',
     },
     {
-        icon: '🚚',
-        key: 'capacity',
-    },
-    {
         icon: '⏰',
         key: 'windows',
     },

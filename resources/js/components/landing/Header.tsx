@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AnchorHTMLAttributes, MouseEventHandler } from 'react';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/hooks/use-translation';
-import { HEADER_SCROLL_OFFSET_PX } from './data';
 import { AuthButton } from './AuthButton';
+import { HEADER_SCROLL_OFFSET_PX } from './data';
 
 const HEADER_HIDE_SCROLL_THRESHOLD_PX = 100;
 

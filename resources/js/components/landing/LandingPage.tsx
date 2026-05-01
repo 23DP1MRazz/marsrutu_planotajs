@@ -1,7 +1,8 @@
+import { useEffect } from 'react';
+
+import { Footer } from './Footer';
 import { Header } from './Header';
 import { Sections } from './Sections';
-import { Footer } from './Footer';
-import { useEffect } from 'react';
 
 export function LandingPage() {
     useEffect(() => {

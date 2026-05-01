@@ -576,7 +576,7 @@ const lv = {
             },
             roles: {
                 description:
-                    'Lomas balstīta piekļuve: dispečeri, kurjeri, administratori. Katra loma ar atbilstošām tiesībām.',
+                    'Lomas balstīta piekļuve: dispečeri, kurjeri. Katra loma ar atbilstošām tiesībām.',
                 title: 'Lomu pārvaldība',
             },
             routes: {

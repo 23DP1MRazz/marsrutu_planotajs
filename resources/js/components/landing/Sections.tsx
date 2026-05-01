@@ -1,7 +1,7 @@
-import { featureCards, howItWorksSteps, targetUsers } from './data';
-import { AuthButton } from './AuthButton';
-import { LandingLink } from './Header';
 import { useTranslation } from '@/hooks/use-translation';
+import { AuthButton } from './AuthButton';
+import { featureCards, howItWorksSteps, targetUsers } from './data';
+import { LandingLink } from './Header';
 
 function HeroSection() {
     const { t } = useTranslation();
