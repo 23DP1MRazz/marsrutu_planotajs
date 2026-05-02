@@ -19,14 +19,6 @@ const lv = {
             description:
                 'Šī ir droša lietotnes zona. Lūdzu, apstipriniet paroli, lai turpinātu.',
         },
-        forgot_password: {
-            description:
-                'Ievadiet e-pastu, lai saņemtu paroles atiestatīšanas saiti',
-            link: 'Aizmirsāt paroli?',
-            return_to_login: 'Vai atgriezieties uz',
-            submit: 'Nosūtīt paroles atiestatīšanas saiti',
-            title: 'Aizmirsta parole',
-        },
         login: {
             description: 'Pierakstieties, lai pārvaldītu kurjeru maršrutus',
             no_account: 'Nav konta?',
@@ -52,11 +44,6 @@ const lv = {
             join_organization_hint: 'Izmantojiet uzaicinājuma kodu',
             personal_details: 'Personīgā informācija',
             title: 'Izveidot kontu',
-        },
-        reset_password: {
-            description: 'Lūdzu, ievadiet jauno paroli',
-            submit: 'Atiestatīt paroli',
-            title: 'Atiestatīt paroli',
         },
         roles: {
             courier: 'Kurjers',

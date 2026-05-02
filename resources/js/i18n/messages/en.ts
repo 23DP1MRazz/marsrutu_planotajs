@@ -19,13 +19,6 @@ const en = {
             description:
                 'This is a secure area of the application. Please confirm your password before continuing.',
         },
-        forgot_password: {
-            description: 'Enter your email to receive a password reset link',
-            link: 'Forgot password?',
-            return_to_login: 'Or, return to',
-            submit: 'Email password reset link',
-            title: 'Forgot password',
-        },
         login: {
             description: 'Log in to manage your courier routes',
             no_account: "Don't have an account?",
@@ -50,11 +43,6 @@ const en = {
             join_organization_hint: 'Use an invite code to join',
             personal_details: 'Personal details',
             title: 'Create an account',
-        },
-        reset_password: {
-            description: 'Please enter your new password below',
-            submit: 'Reset password',
-            title: 'Reset password',
         },
         roles: {
             courier: 'Courier',

@@ -4,11 +4,9 @@ import { useTranslation } from '@/hooks/use-translation';
 import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
-import { request } from '@/routes/password';
 
 type Props = {
     status?: string;
-    canResetPassword: boolean;
     canRegister: boolean;
 };
 
@@ -18,11 +16,7 @@ const spinnerStyle = {
     verticalAlign: 'middle',
 } as const;
 
-export default function Login({
-    status,
-    canResetPassword,
-    canRegister,
-}: Props) {
+export default function Login({ status, canRegister }: Props) {
     const { t } = useTranslation();
 
     return (
@@ -73,14 +67,6 @@ export default function Login({
                                 <label htmlFor="password">
                                     {t('auth.fields.password')}
                                 </label>
-                                {canResetPassword && (
-                                    <Link
-                                        href={request()}
-                                        className="auth-forgot-link"
-                                    >
-                                        {t('auth.forgot_password.link')}
-                                    </Link>
-                                )}
                             </div>
                             <input
                                 id="password"
