@@ -21,7 +21,7 @@ export const backofficeButtonClassName = (
     size: 'default' | 'sm' = 'default',
 ) =>
     cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-semibold whitespace-nowrap transition-all',
+        'inline-flex min-w-0 max-w-full items-center justify-center gap-2 rounded-lg text-center font-semibold transition-all',
         size === 'sm' ? 'h-9 px-3 text-[13px]' : 'h-10 px-4 text-sm',
         variant === 'primary'
             ? 'bg-[#2563eb] text-white shadow-[0_1px_3px_rgba(37,99,235,0.3)] hover:-translate-y-px hover:bg-[#1e40af] hover:shadow-[0_4px_12px_rgba(37,99,235,0.3)]'
@@ -76,7 +76,7 @@ export function BackofficeCard({
     return (
         <section
             className={cn(
-                'overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)]',
+                'min-w-0 overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)]',
                 className,
             )}
         >
@@ -107,8 +107,8 @@ export function BackofficePanelHeader({
     hrefLabel?: string;
 }) {
     return (
-        <div className="flex flex-col gap-3 border-b border-[#e5e7eb] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+        <div className="flex min-w-0 flex-col gap-3 border-b border-[#e5e7eb] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
                 <h2 className="text-base font-semibold text-[#111827]">
                     {title}
                 </h2>
@@ -117,7 +117,7 @@ export function BackofficePanelHeader({
             {href && hrefLabel ? (
                 <Link
                     href={href}
-                    className="text-sm font-medium text-[#2563eb] transition hover:text-[#1e40af] hover:underline"
+                    className="shrink-0 text-sm font-medium text-[#2563eb] transition hover:text-[#1e40af] hover:underline"
                 >
                     {hrefLabel}
                 </Link>
@@ -229,13 +229,13 @@ export function BackofficeStatCard({
         <Comp
             {...(href ? { href } : {})}
             className={cn(
-                'block rounded-xl border border-[#e5e7eb] bg-white px-5 py-[1.125rem] text-left transition',
+                'block min-w-0 rounded-xl border border-[#e5e7eb] bg-white px-5 py-[1.125rem] text-left transition',
                 href
                     ? 'hover:-translate-y-0.5 hover:border-[#3b82f6] hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08),0_2px_4px_-2px_rgba(0,0,0,0.05)]'
                     : '',
             )}
         >
-            <div className="mb-1.5 text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
+            <div className="mb-1.5 break-words text-[11px] font-semibold tracking-[0.07em] text-[#6b7280] uppercase">
                 {label}
             </div>
             <div
@@ -246,14 +246,14 @@ export function BackofficeStatCard({
             >
                 {value}
             </div>
-            <div className="mt-1.5 flex items-center gap-1 text-xs text-[#6b7280]">
+            <div className="mt-1.5 flex min-w-0 items-start gap-1 text-xs text-[#6b7280]">
                 <span
                     className={cn(
-                        'h-1.5 w-1.5 rounded-full bg-current',
+                        'mt-[0.3125rem] h-1.5 w-1.5 shrink-0 rounded-full bg-current',
                         accent === 'amber' ? 'text-[#f59e0b]' : '',
                     )}
                 />
-                {meta}
+                <span className="min-w-0 break-words">{meta}</span>
             </div>
         </Comp>
     );
@@ -341,13 +341,15 @@ export function BackofficeListItem({
     return (
         <Link
             href={href}
-            className="flex items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-3 transition hover:border-[#e5e7eb] hover:bg-[#f9fafb]"
+            className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-3 transition hover:border-[#e5e7eb] hover:bg-[#f9fafb]"
         >
             <div className="min-w-0 flex-1">
                 <div className="truncate text-[15px] font-semibold text-[#111827]">
                     {title}
                 </div>
-                <div className="mt-0.5 text-xs text-[#6b7280]">{meta}</div>
+                <div className="mt-0.5 truncate text-xs text-[#6b7280]">
+                    {meta}
+                </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
                 {aside}

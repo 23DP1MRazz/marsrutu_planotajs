@@ -182,14 +182,16 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                                             key={item.href}
                                             href={item.href}
                                             className={cn(
-                                                'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition',
+                                                'flex min-w-0 items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition',
                                                 isActive
                                                     ? 'bg-[#eff6ff] text-[#2563eb]'
                                                     : 'text-[#6b7280] hover:bg-[#f9fafb] hover:text-[#111827]',
                                             )}
                                         >
                                             <item.icon className="h-4 w-4 shrink-0" />
-                                            <span>{item.title}</span>
+                                            <span className="min-w-0 truncate">
+                                                {item.title}
+                                            </span>
                                         </Link>
                                     );
                                 })}
@@ -285,14 +287,16 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                                                     setMobileNavOpen(false)
                                                 }
                                                 className={cn(
-                                                    'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition',
+                                                    'flex min-w-0 items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition',
                                                     isActive
                                                         ? 'bg-[#eff6ff] text-[#2563eb]'
                                                         : 'text-[#6b7280] hover:bg-[#f9fafb] hover:text-[#111827]',
                                                 )}
                                             >
                                                 <item.icon className="h-4 w-4 shrink-0" />
-                                                {item.title}
+                                                <span className="min-w-0 truncate">
+                                                    {item.title}
+                                                </span>
                                             </Link>
                                         );
                                     })}
@@ -346,8 +350,8 @@ export function BackofficeAppFrame({ children }: AppLayoutProps) {
                     </div>
                 ) : null}
 
-                <main className="flex-1 md:ml-60">
-                    <div className="animate-[fadeInUp_0.45s_cubic-bezier(.4,0,.2,1)_both] p-4 sm:p-6">
+                <main className="min-w-0 flex-1 md:ml-60">
+                    <div className="min-w-0 animate-[fadeInUp_0.45s_cubic-bezier(.4,0,.2,1)_both] p-4 sm:p-6">
                         {children}
                     </div>
                 </main>
