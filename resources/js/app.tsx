@@ -7,10 +7,10 @@ import { initializeTheme } from './hooks/use-appearance';
 import { initializeI18n } from './lib/i18n';
 import type { SharedData } from './types';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = 'Maršrutu plānotājs';
 
 createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
+    title: () => appName,
     resolve: (name) =>
         resolvePageComponent(
             `./pages/${name}.tsx`,

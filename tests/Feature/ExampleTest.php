@@ -9,10 +9,13 @@ class ExampleTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_returns_a_successful_response()
+    public function test_returns_a_successful_response(): void
     {
         $response = $this->get(route('home'));
 
-        $response->assertOk();
+        $response
+            ->assertOk()
+            ->assertSee('<title inertia>Maršrutu plānotājs</title>', false)
+            ->assertSee('<link rel="icon" href="/favicon.svg" type="image/svg+xml">', false);
     }
 }
