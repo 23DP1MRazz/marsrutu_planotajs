@@ -24,9 +24,13 @@ function HeroSection() {
                         </div>
                     </div>
                     <div className="hero-visual">
-                        <div className="hero-placeholder">
-                            <span>{t('landing.hero.photo')}</span>
-                        </div>
+                        <img
+                            className="hero-image"
+                            src="/images/landing-orders.png"
+                            alt={t('landing.hero.photo')}
+                            width="2870"
+                            height="1658"
+                        />
                     </div>
                 </div>
             </div>

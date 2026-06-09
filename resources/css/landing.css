@@ -326,31 +326,14 @@
     position: relative;
 }
 
-.landing-root .hero-placeholder {
+.landing-root .hero-image {
+    display: block;
     width: 100%;
-    max-width: 520px;
-    aspect-ratio: 4/3;
-    background: white;
+    height: auto;
+    max-width: 720px;
     border-radius: var(--border-radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display);
-    color: var(--color-primary);
-    font-size: 1.5rem;
-    font-weight: 600;
-    position: relative;
-    overflow: hidden;
     box-shadow: var(--shadow-xl);
     border: 1px solid var(--color-border);
-}
-
-.landing-root .hero-placeholder::before {
-    content: '';
-    position: absolute;
-    inset: 24px;
-    border: 2px dashed var(--color-border);
-    border-radius: var(--border-radius);
 }
 
 .landing-root .about {
@@ -727,7 +710,7 @@
         padding: var(--spacing-3xl) var(--spacing-lg);
     }
 
-    .landing-root .hero-placeholder {
+    .landing-root .hero-image {
         max-width: 100%;
     }
 

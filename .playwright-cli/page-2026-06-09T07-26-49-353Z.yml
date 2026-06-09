@@ -1,0 +1,131 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "MARŠRUTU PLĀNOTĀJS" [ref=e6] [cursor=pointer]:
+        - /url: "#"
+      - navigation [ref=e7]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "About" [ref=e10] [cursor=pointer]:
+              - /url: "#about"
+          - listitem [ref=e11]:
+            - link "How it works" [ref=e12] [cursor=pointer]:
+              - /url: "#how-it-works"
+          - listitem [ref=e13]:
+            - link "Features" [ref=e14] [cursor=pointer]:
+              - /url: "#features"
+          - listitem [ref=e15]:
+            - link "Who it is for" [ref=e16] [cursor=pointer]:
+              - /url: "#users"
+          - listitem [ref=e17]:
+            - generic "Language" [ref=e18]:
+              - img [ref=e19]
+              - button "English" [disabled] [ref=e23]: EN
+              - button "Latvian" [ref=e24]: LV
+          - listitem [ref=e25]:
+            - link "Sign in" [ref=e26] [cursor=pointer]:
+              - /url: /login
+  - generic [ref=e29]:
+    - generic [ref=e30]:
+      - heading "Manage courier routes efficiently and clearly" [level=1] [ref=e31]
+      - paragraph [ref=e32]: An internal web system for small and medium delivery companies. Replace spreadsheets with a professional route planning tool.
+      - generic [ref=e33]:
+        - link "Sign in" [ref=e34] [cursor=pointer]:
+          - /url: /login
+        - link "Learn more" [ref=e35] [cursor=pointer]:
+          - /url: "#about"
+    - img "Photo" [ref=e37]
+  - generic [ref=e40]:
+    - heading "About the system" [level=2] [ref=e41]
+    - paragraph [ref=e42]: Maršrutu plānotājs is an internal web application for logistics companies. It provides a centralized and structured way to manage orders, plan routes, and monitor delivery execution in real time.
+    - generic [ref=e43]:
+      - generic [ref=e44]:
+        - heading "Centralized control" [level=3] [ref=e45]
+        - paragraph [ref=e46]: All orders, routes, and couriers in one place. Dispatchers can plan and monitor the full process from one platform.
+      - generic [ref=e47]:
+        - heading "Real-time visibility" [level=3] [ref=e48]
+        - paragraph [ref=e49]: Track delivery statuses and receive online updates. No communication gaps or lost information.
+      - generic [ref=e50]:
+        - heading "Structured workflow" [level=3] [ref=e51]
+        - paragraph [ref=e52]: Replace spreadsheets and informal communication with a professional tool built for logistics work.
+  - generic [ref=e54]:
+    - heading "How it works" [level=2] [ref=e55]
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - generic [ref=e58]: "1"
+        - heading "Order creation" [level=3] [ref=e59]
+        - paragraph [ref=e60]: The dispatcher creates and assigns orders to couriers with addresses and time windows.
+      - generic [ref=e61]:
+        - generic [ref=e62]: "2"
+        - heading "Route organization" [level=3] [ref=e63]
+        - paragraph [ref=e64]: Routes are arranged and reordered for a practical delivery sequence.
+      - generic [ref=e65]:
+        - generic [ref=e66]: "3"
+        - heading "Delivery execution" [level=3] [ref=e67]
+        - paragraph [ref=e68]: Couriers complete deliveries with online status updates at every stop.
+      - generic [ref=e69]:
+        - generic [ref=e70]: "4"
+        - heading "Delivery confirmation" [level=3] [ref=e71]
+        - paragraph [ref=e72]: Proof of delivery is collected as a photo or signature.
+      - generic [ref=e73]:
+        - generic [ref=e74]: "5"
+        - heading "Report generation" [level=3] [ref=e75]
+        - paragraph [ref=e76]: Reports and exports are generated for analysis and documentation.
+  - generic [ref=e78]:
+    - heading "Features" [level=2] [ref=e79]
+    - generic [ref=e80]:
+      - generic [ref=e81]:
+        - generic [ref=e82]: 📍
+        - heading "Route planning" [level=3] [ref=e83]
+        - paragraph [ref=e84]: Create and reorder routes with an intuitive interface. Optimize delivery order according to your needs.
+      - generic [ref=e85]:
+        - generic [ref=e86]: ⏰
+        - heading "Time windows and ETA" [level=3] [ref=e87]
+        - paragraph [ref=e88]: Define delivery time windows and follow the estimated arrival time for each order.
+      - generic [ref=e89]:
+        - generic [ref=e90]: 🔄
+        - heading "Real-time statuses" [level=3] [ref=e91]
+        - paragraph [ref=e92]: "Delivery statuses update online: pending, in progress, delivered, or failed. Everyone sees the latest state."
+      - generic [ref=e93]:
+        - generic [ref=e94]: ✓
+        - heading "Proof of delivery" [level=3] [ref=e95]
+        - paragraph [ref=e96]: Couriers can capture a photo or signature as proof of delivery, saved directly in the system.
+      - generic [ref=e97]:
+        - generic [ref=e98]: 📊
+        - heading "Reports and export" [level=3] [ref=e99]
+        - paragraph [ref=e100]: Generate detailed CSV exports and printable route sheets. Analyze delivery history and performance.
+      - generic [ref=e101]:
+        - generic [ref=e102]: 🔒
+        - heading "Audit log" [level=3] [ref=e103]
+        - paragraph [ref=e104]: A complete history of actions with audit logs. Track who changed what and when.
+      - generic [ref=e105]:
+        - generic [ref=e106]: 👥
+        - heading "Role management" [level=3] [ref=e107]
+        - paragraph [ref=e108]: Role-based access for dispatchers and couriers, each with the right permissions.
+  - generic [ref=e110]:
+    - heading "Who it is for" [level=2] [ref=e111]
+    - generic [ref=e112]:
+      - generic [ref=e113]:
+        - heading "For dispatchers" [level=3] [ref=e114]
+        - paragraph [ref=e115]: Centralized route planning and management
+        - list [ref=e116]:
+          - listitem [ref=e117]: ✓ Quickly create and organize orders
+          - listitem [ref=e118]: ✓ Optimize routes with visual reordering
+          - listitem [ref=e119]: ✓ Follow all couriers and deliveries in real time
+      - generic [ref=e120]:
+        - heading "For couriers" [level=3] [ref=e121]
+        - paragraph [ref=e122]: Simple and clear delivery execution
+        - list [ref=e123]:
+          - listitem [ref=e124]: ✓ View your routes and delivery addresses
+          - listitem [ref=e125]: ✓ Update delivery statuses with one click
+          - listitem [ref=e126]: ✓ Capture proof of delivery with a photo or signature
+  - generic [ref=e128]:
+    - heading "Ready to start?" [level=2] [ref=e129]
+    - paragraph [ref=e130]: Request access to the route planner and manage deliveries more efficiently
+    - link "Sign in" [ref=e131] [cursor=pointer]:
+      - /url: /login
+  - contentinfo [ref=e132]:
+    - generic [ref=e134]:
+      - paragraph [ref=e135]: Route planner for couriers
+      - paragraph [ref=e136]: Internal logistics management system
+      - paragraph [ref=e137]: © 2026 | Educational/internal project
